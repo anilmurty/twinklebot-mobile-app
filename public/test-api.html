@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twinklebot API Tester</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #8B5CF6;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #7C3AED;
+        }
+        .result {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+        }
+        .success {
+            background: #efe;
+            color: #3c3;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .file-input {
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Twinklebot API Tester</h1>
+    
+    <div class="container">
+        <h2>1. Setup</h2>
+        <label>Auth Token (from Supabase):</label>
+        <input type="text" id="token" placeholder="Paste your Supabase JWT token here">
+        <small>Get this from Supabase Dashboard → Authentication → Users → Create/Select user → Copy token</small>
+    </div>
+
+    <div class="container">
+        <h2>2. Story Templates (Public - No Auth Needed)</h2>
+        <button onclick="getTemplates()">Get All Templates</button>
+        <button onclick="getTemplate1()">Get Template 1</button>
+        <button onclick="getTemplate2()">Get Template 2</button>
+        <button onclick="getTemplate(3)">Get Template 3</button>
+        <button onclick="getTemplate(4)">Get Template 4</button>
+        <div id="templates-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>3. Characters</h2>
+        <button onclick="getCharacters()">Get My Characters</button>
+        <hr>
+        <h3>Create Character</h3>
+        <label>Character Name:</label>
+        <input type="text" id="char-name" placeholder="Emma" maxlength="20">
+        <label>Front Photo:</label>
+        <input type="file" id="front-photo" class="file-input" accept="image/*">
+        <label>Left Photo:</label>
+        <input type="file" id="left-photo" class="file-input" accept="image/*">
+        <label>Right Photo:</label>
+        <input type="file" id="right-photo" class="file-input" accept="image/*">
+        <button onclick="createCharacter()">Create Character</button>
+        <div id="characters-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>4. Storybooks</h2>
+        <button onclick="getStorybooks()">Get My Storybooks</button>
+        <hr>
+        <h3>Create Storybook</h3>
+        <label>Character ID:</label>
+        <input type="text" id="storybook-char-id" placeholder="Paste character ID from above">
+        <label>Template ID:</label>
+        <select id="storybook-template-id">
+            <option value="1">1 - Counting Adventure</option>
+            <option value="2">2 - Alphabet Adventure 1 (A-I)</option>
+            <option value="3">3 - Alphabet Adventure 2 (J-R)</option>
+            <option value="4">4 - Alphabet Adventure 3 (S-Z)</option>
+        </select>
+        <button onclick="createStorybook()">Create Storybook</button>
+        <hr>
+        <h3>Check Status</h3>
+        <label>Storybook ID:</label>
+        <input type="text" id="status-storybook-id" placeholder="Paste storybook ID">
+        <button onclick="checkStatus(document.getElementById('status-storybook-id').value)">Check Status</button>
+        
+        <h3>View Storybook (with scenes)</h3>
+        <label>Storybook ID:</label>
+        <input type="text" id="view-storybook-id" placeholder="Paste storybook ID">
+        <button onclick="viewStorybook(document.getElementById('view-storybook-id').value)">View Storybook</button>
+        <div id="storybooks-result" class="result" style="display:none;"></div>
+    </div>
+
+    <div class="container">
+        <h2>5. Profile</h2>
+        <button onclick="getProfile()">Get My Profile</button>
+        <div id="profile-result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/v1';
+        
+        function getToken() {
+            const token = document.getElementById('token').value;
+            if (!token) {
+                alert('Please enter your auth token first!');
+                return null;
+            }
+            return token;
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = 'result ' + (isError ? 'error' : 'success');
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Story Templates
+        async function getTemplates() {
+            try {
+                const response = await fetch(`${API_BASE}/story-templates`);
+                const data = await response.json();
+                showResult('templates-result', data);
+            } catch (error) {
+                showResult('templates-result', { error: error.message }, true);
+            }
+        }
+
+        async function getTemplate(id) {
+            try {
+                const response = await fetch(`${API_BASE}/story-templates/${id}`);
+                const data = await response.json();
+                showResult('templates-result', data);
+            } catch (error) {
+                showResult('templates-result', { error: error.message }, true);
+            }
+        }
+
+        // Fix button onclick handlers
+        function getTemplate1() { getTemplate(1); }
+        function getTemplate2() { getTemplate(2); }
+
+        // Characters
+        async function getCharacters() {
+            const token = getToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/characters`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                showResult('characters-result', data);
+            } catch (error) {
+                showResult('characters-result', { error: error.message }, true);
+            }
+        }
+
+        async function createCharacter() {
+            const token = getToken();
+            if (!token) return;
+
+            const name = document.getElementById('char-name').value;
+            const frontPhoto = document.getElementById('front-photo').files[0];
+            const leftPhoto = document.getElementById('left-photo').files[0];
+            const rightPhoto = document.getElementById('right-photo').files[0];
+
+            if (!name || !frontPhoto || !leftPhoto || !rightPhoto) {
+                alert('Please fill in all fields and select all three photos!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('front_photo', frontPhoto);
+            formData.append('left_photo', leftPhoto);
+            formData.append('right_photo', rightPhoto);
+
+            try {
+                const response = await fetch(`${API_BASE}/characters`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                showResult('characters-result', data);
+                // Clear form
+                document.getElementById('char-name').value = '';
+                document.getElementById('front-photo').value = '';
+                document.getElementById('left-photo').value = '';
+                document.getElementById('right-photo').value = '';
+            } catch (error) {
+                showResult('characters-result', { error: error.message }, true);
+            }
+        }
+
+        // Storybooks
+        async function getStorybooks() {
+            const token = getToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/storybooks`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                showResult('storybooks-result', data);
+            } catch (error) {
+                showResult('storybooks-result', { error: error.message }, true);
+            }
+        }
+
+        async function createStorybook() {
+            const token = getToken();
+            if (!token) return;
+
+            const characterId = document.getElementById('storybook-char-id').value;
+            const templateId = document.getElementById('storybook-template-id').value;
+
+            if (!characterId) {
+                alert('Please enter a character ID!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/storybooks`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        character_id: characterId,
+                        template_id: parseInt(templateId)
+                    })
+                });
+                const data = await response.json();
+                showResult('storybooks-result', data);
+                
+                // If in dev mode, generation starts automatically
+                // Otherwise, show option to trigger manually
+                if (data.id && !data.message?.includes('started')) {
+                    setTimeout(() => {
+                        const triggerBtn = document.createElement('button');
+                        triggerBtn.textContent = `Start Generation for ${data.id}`;
+                        triggerBtn.onclick = () => triggerGeneration(data.id);
+                        triggerBtn.style.marginTop = '10px';
+                        document.getElementById('storybooks-result').appendChild(triggerBtn);
+                    }, 100);
+                }
+            } catch (error) {
+                showResult('storybooks-result', { error: error.message }, true);
+            }
+        }
+
+        async function triggerGeneration(storybookId) {
+            const token = getToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/storybooks/${storybookId}/generate`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                alert('Generation started! Check status in a few minutes.');
+                showResult('storybooks-result', data);
+            } catch (error) {
+                showResult('storybooks-result', { error: error.message }, true);
+            }
+        }
+
+        async function checkStatus(storybookId) {
+            const token = getToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/storybooks/${storybookId}/status`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                showResult('storybooks-result', data);
+            } catch (error) {
+                showResult('storybooks-result', { error: error.message }, true);
+            }
+        }
+
+        async function viewStorybook(storybookId) {
+            const token = getToken();
+            if (!token) return;
+            
+            if (!storybookId) {
+                alert('Please enter a storybook ID');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/storybooks/${storybookId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                
+                // Remove any existing viewer
+                const existingViewer = document.getElementById('storybook-viewer');
+                if (existingViewer) existingViewer.remove();
+                
+                // Format the response nicely for viewing
+                if (data.scenes && Array.isArray(data.scenes)) {
+                    const formatted = {
+                        id: data.id,
+                        title: data.title,
+                        status: data.status,
+                        progress: data.progress,
+                        character: data.character,
+                        template: data.template,
+                        scenes: data.scenes.map((scene, index) => ({
+                            scene_number: scene.scene_number,
+                            text: scene.text,
+                            image_url: scene.image_url,
+                            number: scene.number,
+                            letter: scene.letter
+                        })),
+                        created_at: data.created_at,
+                        completed_at: data.completed_at
+                    };
+                    showResult('storybooks-result', formatted);
+                    
+                    // Also create a visual viewer
+                    displayStorybookViewer(data);
+                } else {
+                    showResult('storybooks-result', data);
+                }
+            } catch (error) {
+                showResult('storybooks-result', { error: error.message }, true);
+            }
+        }
+
+        function displayStorybookViewer(storybook) {
+            const resultDiv = document.getElementById('storybooks-result');
+            const viewerDiv = document.createElement('div');
+            viewerDiv.id = 'storybook-viewer';
+            viewerDiv.style.cssText = 'margin-top: 20px; padding: 20px; background: white; border-radius: 8px; border: 2px solid #8B5CF6;';
+            
+            let html = `<h3 style="color: #8B5CF6; margin-top: 0;">📚 ${storybook.title}</h3>`;
+            html += `<p><strong>Character:</strong> ${storybook.character?.name || 'N/A'}</p>`;
+            html += `<p><strong>Status:</strong> <span style="color: green;">${storybook.status}</span></p>`;
+            html += `<p><strong>Progress:</strong> ${storybook.progress}%</p>`;
+            
+            if (storybook.scenes && Array.isArray(storybook.scenes)) {
+                html += `<h4 style="margin-top: 20px;">Scenes (${storybook.scenes.length}):</h4>`;
+                storybook.scenes.forEach((scene, index) => {
+                    html += `<div style="margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">`;
+                    html += `<h5 style="margin-top: 0;">Scene ${scene.scene_number}${scene.number ? ` - Number: ${scene.number}` : ''}${scene.letter ? ` - Letter: ${scene.letter}` : ''}</h5>`;
+                    if (scene.image_url) {
+                        html += `<img src="${scene.image_url}" alt="Scene ${scene.scene_number}" style="max-width: 100%; height: auto; border-radius: 4px; margin: 10px 0;" />`;
+                    }
+                    // Replace \n with <br> for line breaks
+                    const formattedText = (scene.text || 'No text').replace(/\n/g, '<br>');
+                    html += `<p style="margin: 10px 0; font-size: 14px; line-height: 1.6;">${formattedText}</p>`;
+                    html += `<a href="${scene.image_url}" target="_blank" style="color: #8B5CF6; text-decoration: none;">🔗 Open image in new tab</a>`;
+                    html += `</div>`;
+                });
+            }
+            
+            viewerDiv.innerHTML = html;
+            resultDiv.appendChild(viewerDiv);
+        }
+
+        // Profile
+        async function getProfile() {
+            const token = getToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const data = await response.json();
+                showResult('profile-result', data);
+            } catch (error) {
+                showResult('profile-result', { error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>
+

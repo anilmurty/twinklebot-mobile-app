@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/generate-storybooks",
+      "schedule": "* * * * *"
+    }
+  ]
+}
+

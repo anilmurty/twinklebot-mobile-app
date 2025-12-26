@@ -1,0 +1,60 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
+
+/**
+ * GET /api/v1/storybooks/:id/status
+ * Get storybook generation status
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
+  try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const supabase = createServerClient(request.headers.get('authorization'))
+    const { id } = 'then' in params ? await params : params
+    
+    const { data: storybook, error } = await supabase
+      .from('storybooks')
+      .select('id, status, progress, scenes')
+      .eq('id', id)
+      .eq('user_id', user.data.user?.id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Storybook not found' }, { status: 404 })
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // Calculate current scene and total scenes
+    const scenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
+    const currentScene = scenes.length
+    const totalScenes = scenes.length > 0 
+      ? Math.max(...scenes.map((s: any) => s.scene_number || 0))
+      : 0
+
+    return NextResponse.json({
+      id: storybook.id,
+      status: storybook.status,
+      progress: storybook.progress,
+      current_scene: currentScene,
+      total_scenes: totalScenes,
+      estimated_completion: storybook.status === 'generating' 
+        ? new Date(Date.now() + (totalScenes - currentScene) * 15000).toISOString()
+        : null,
+    })
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
