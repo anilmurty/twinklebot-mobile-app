@@ -47,14 +47,14 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
 
 2. **Environment variables** (`.env.local`):
    ```env
-   # Supabase
+   # Supabase (NEXT_PUBLIC_ prefix required for client-side access)
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-   # Replicate
+   # Replicate (server-side only, no prefix needed)
    REPLICATE_API_TOKEN=your_replicate_token
-   NANOBANANA_MODEL_VERSION=optional_version_id
+   NANOBANANA_MODEL_VERSION=google/nano-banana
 
    # Vercel Cron (production)
    CRON_SECRET=your_random_secret

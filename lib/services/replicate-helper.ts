@@ -2,8 +2,15 @@
  * Helper to get the latest version ID for a Replicate model
  */
 
-const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN!
 const REPLICATE_API_URL = 'https://api.replicate.com/v1'
+
+function getReplicateToken(): string {
+  const token = process.env.REPLICATE_API_TOKEN
+  if (!token) {
+    throw new Error('REPLICATE_API_TOKEN environment variable is not set')
+  }
+  return token
+}
 
 export async function getModelVersion(modelName: string): Promise<string> {
   // Split model name into owner/name (e.g., "google/nano-banana" -> owner: "google", name: "nano-banana")
@@ -18,7 +25,7 @@ export async function getModelVersion(modelName: string): Promise<string> {
       `${REPLICATE_API_URL}/models/${owner}/${name}`,
       {
         headers: {
-          Authorization: `Token ${REPLICATE_API_TOKEN}`,
+          Authorization: `Token ${getReplicateToken()}`,
           'Content-Type': 'application/json',
         },
       }
@@ -38,7 +45,7 @@ export async function getModelVersion(modelName: string): Promise<string> {
       `${REPLICATE_API_URL}/models/${owner}/${name}/versions`,
       {
         headers: {
-          Authorization: `Token ${REPLICATE_API_TOKEN}`,
+          Authorization: `Token ${getReplicateToken()}`,
           'Content-Type': 'application/json',
         },
       }

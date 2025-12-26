@@ -2,8 +2,15 @@
  * Image generation service using Replicate API
  */
 
-const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN!
 const REPLICATE_API_URL = 'https://api.replicate.com/v1'
+
+function getReplicateToken(): string {
+  const token = process.env.REPLICATE_API_TOKEN
+  if (!token) {
+    throw new Error('REPLICATE_API_TOKEN environment variable is not set')
+  }
+  return token
+}
 
 interface ReplicatePrediction {
   id: string
@@ -29,7 +36,7 @@ export async function createPrediction(
   const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
     method: 'POST',
     headers: {
-      Authorization: `Token ${REPLICATE_API_TOKEN}`,
+      Authorization: `Token ${getReplicateToken()}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -55,7 +62,7 @@ export async function createPrediction(
 export async function getPrediction(predictionId: string): Promise<ReplicatePrediction> {
   const response = await fetch(`${REPLICATE_API_URL}/predictions/${predictionId}`, {
     headers: {
-      Authorization: `Token ${REPLICATE_API_TOKEN}`,
+      Authorization: `Token ${getReplicateToken()}`,
     },
   })
 
