@@ -1,49 +1,119 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { User, Mail, CreditCard, Bell, LogOut, Crown } from "lucide-react"
+import { User, Mail, CreditCard, Bell, LogOut, Crown, Loader2 } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
+import { profileApi } from "@/lib/api-client"
+import { useRouter } from "next/navigation"
+
+interface Profile {
+  full_name?: string
+  email?: string
+  subscription_plan?: string
+  stories_per_month?: number
+  custom_stories_per_month?: number
+  stories_generated_this_month?: number
+  characters_count?: number
+  stories_generated_total?: number
+  effective_stories_per_month?: number
+  remaining_stories_this_month?: number
+}
 
 export function ProfileTab() {
+  const router = useRouter()
+  const { user, signOut } = useAuth()
+  const [profile, setProfile] = useState<Profile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchProfile()
+  }, [])
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await profileApi.get()
+      setProfile(data)
+    } catch (err: any) {
+      console.error('Failed to fetch profile:', err)
+      setError(err.message || 'Failed to load profile')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+      router.push('/')
+    } catch (err: any) {
+      console.error('Sign out error:', err)
+      alert(`Sign out failed: ${err.message}`)
+    }
+  }
+
+  const planName = profile?.subscription_plan === 'free' ? 'Free Plan' : 
+                   profile?.subscription_plan === 'premium' ? 'Premium Plan' : 
+                   'Free Plan'
+  
+  const effectiveLimit = profile?.effective_stories_per_month || profile?.stories_per_month || 3
+  const remaining = profile?.remaining_stories_this_month || 0
   return (
     <div className="min-h-full bg-gradient-to-b from-muted/20 to-background">
       <div className="p-6 space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/20">
-              <User className="w-10 h-10 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">John Smith</h1>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Mail className="w-3 h-3" />
-                john.smith@email.com
-              </p>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
-
-          <Card className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-primary" />
-                  <h3 className="font-bold">Free Plan</h3>
-                </div>
-                <p className="text-xs text-muted-foreground">3 stories per month</p>
-              </div>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
-                Upgrade
-              </Button>
-            </div>
+        ) : error ? (
+          <Card className="p-4 bg-destructive/10 border-destructive">
+            <p className="text-destructive">{error}</p>
+            <Button onClick={fetchProfile} size="sm" className="mt-2">
+              Retry
+            </Button>
           </Card>
-        </div>
+        ) : (
+          <>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/20">
+                  <User className="w-10 h-10 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold">{profile?.full_name || user?.email?.split('@')[0] || 'User'}</h1>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Mail className="w-3 h-3" />
+                    {user?.email || profile?.email || 'No email'}
+                  </p>
+                </div>
+              </div>
+
+              <Card className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-primary" />
+                      <h3 className="font-bold">{planName}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{effectiveLimit} stories per month</p>
+                  </div>
+                  <Button size="sm" className="bg-primary hover:bg-primary/90">
+                    Upgrade
+                  </Button>
+                </div>
+              </Card>
+            </div>
 
         <div className="space-y-3">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Account</h2>
 
           <Card className="divide-y">
-            <button className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
+            <button className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                   <CreditCard className="w-5 h-5 text-secondary-foreground" />
@@ -56,7 +126,7 @@ export function ProfileTab() {
               <Badge variant="secondary">Free</Badge>
             </button>
 
-            <button className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors">
+            <button className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                   <Bell className="w-5 h-5 text-secondary-foreground" />
@@ -79,15 +149,15 @@ export function ProfileTab() {
           <Card className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Stories Generated</span>
-              <span className="text-2xl font-bold text-primary">4</span>
+              <span className="text-2xl font-bold text-primary">{profile?.stories_generated_total || 0}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Characters Created</span>
-              <span className="text-2xl font-bold text-primary">2</span>
+              <span className="text-2xl font-bold text-primary">{profile?.characters_count || 0}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Remaining This Month</span>
-              <span className="text-2xl font-bold text-accent-foreground">2/3</span>
+              <span className="text-2xl font-bold text-accent-foreground">{remaining}/{effectiveLimit}</span>
             </div>
           </Card>
         </div>
@@ -108,10 +178,13 @@ export function ProfileTab() {
           variant="outline"
           className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20 bg-transparent"
           size="lg"
+          onClick={handleSignOut}
         >
           <LogOut className="w-4 h-4 mr-2" />
           Sign Out
         </Button>
+          </>
+        )}
       </div>
     </div>
   )

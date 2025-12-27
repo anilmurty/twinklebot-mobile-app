@@ -54,4 +54,5 @@ Before creating a new migration:
 - `005_create_profile_on_auth_trigger.sql` - Auto-create profile when user signs up (recommended)
 - `006_add_limit_override.sql` - Add custom_stories_per_month column for per-user limit overrides (for early users, coupons, etc.)
 - `007_add_alphabet_is_for_line.sql` - Add "A is for APPLE" format line to all alphabet scenes
+- `008_remove_cover_image_url.sql` - Remove cover_image_url column from story_templates (only thumbnail_url is used)
 

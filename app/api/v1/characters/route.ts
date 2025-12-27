@@ -31,14 +31,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Format response
-    const formatted = characters?.map((char: any) => ({
-      id: char.id,
-      name: char.name,
-      front_photo_url: char.front_photo_url,
-      stories_count: char.storybooks?.[0]?.count || 0,
-      created_at: char.created_at,
-    }))
+    // Generate signed URLs for character photos (always generate signed URLs for consistency)
+    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    const formatted = await Promise.all(
+      (characters || []).map(async (char: any) => {
+        let photoUrl = char.front_photo_url
+        
+        // Always generate signed URL for character photos to ensure they're accessible
+        if (photoUrl) {
+          try {
+            // Extract path from URL (handles both public and signed URLs)
+            const urlMatch = photoUrl.match(/character-photos\/(.+)$/)
+            if (urlMatch) {
+              const path = urlMatch[1]
+              photoUrl = await getSignedUrl('character-photos', path, 3600)
+            } else if (photoUrl.includes('character-photos')) {
+              // Fallback: try to extract path from full URL
+              const urlObj = new URL(photoUrl)
+              const pathParts = urlObj.pathname.split('/character-photos/')
+              if (pathParts.length > 1) {
+                photoUrl = await getSignedUrl('character-photos', pathParts[1], 3600)
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to generate signed URL for character ${char.id}:`, err)
+            // Keep original URL if signed URL generation fails
+          }
+        }
+
+        return {
+          id: char.id,
+          name: char.name,
+          front_photo_url: photoUrl,
+          stories_count: char.storybooks?.[0]?.count || 0,
+          created_at: char.created_at,
+        }
+      })
+    )
 
     return NextResponse.json({ characters: formatted || [] })
   } catch (error: any) {

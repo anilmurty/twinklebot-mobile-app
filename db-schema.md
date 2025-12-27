@@ -162,7 +162,6 @@ CREATE TABLE story_templates (
   age_range TEXT NOT NULL,
   scene_count INTEGER NOT NULL,
   cover_label TEXT NOT NULL,
-  cover_image_url TEXT NOT NULL,
   thumbnail_url TEXT NOT NULL,
   generation_model_id INTEGER NOT NULL REFERENCES generation_models(id),
   fixed_prompt_parts JSONB NOT NULL,
@@ -180,8 +179,7 @@ CREATE TABLE story_templates (
 - `age_range`: Target age range (e.g., "2-5 years")
 - `scene_count`: Number of scenes in this template
 - `cover_label`: Label shown on cover (e.g., "1-10", "A-I")
-- `cover_image_url`: URL to pre-generated cover image
-- `thumbnail_url`: URL to thumbnail image
+- `thumbnail_url`: URL to thumbnail image (used in Story Library list view)
 - `generation_model_id`: Foreign key to `generation_models.id`
 - `fixed_prompt_parts`: JSONB containing prompt parts that are the same for all scenes
 - `script_data`: JSONB object containing scene-specific scripts and prompt parts
@@ -464,13 +462,18 @@ Private bucket for storing generated storybook scene images.
 
 ### story-template-assets
 
-Public bucket for story template cover images and thumbnails.
+Public bucket for story template thumbnails.
 
 **Path Structure:**
 ```
-covers/{template_id}.jpg
-thumbnails/{template_id}.jpg
+thumbnails/{descriptive-filename}.jpg
 ```
+
+**Example filenames:**
+- `thumbnails/counting-adventure-1-10.jpg`
+- `thumbnails/alphabet-adventure-1-a-i.jpg`
+- `thumbnails/alphabet-adventure-2-j-r.jpg`
+- `thumbnails/alphabet-adventure-3-s-z.jpg`
 
 **Policies:**
 - Public read access

@@ -27,7 +27,6 @@ BEGIN
     age_range,
     scene_count,
     cover_label,
-    cover_image_url,
     thumbnail_url,
     generation_model_id,
     fixed_prompt_parts,
@@ -40,7 +39,6 @@ BEGIN
     '2-5 years',
     10,
     '1-10',
-    '/colorful-counting-storybook-cover.jpg',
     '/counting-numbers-colorful-illustration.jpg',
     nano_banana_model_id,
     '{
@@ -145,7 +143,6 @@ BEGIN
     age_range,
     scene_count,
     cover_label,
-    cover_image_url,
     thumbnail_url,
     generation_model_id,
     fixed_prompt_parts,
@@ -158,7 +155,6 @@ BEGIN
     '3-6 years',
     9,
     'A-I',
-    '/alphabet-learning-book-cover.jpg',
     '/alphabet-letters-a-to-i-colorful.jpg',
     nano_banana_model_id,
     '{
@@ -255,7 +251,6 @@ BEGIN
     age_range,
     scene_count,
     cover_label,
-    cover_image_url,
     thumbnail_url,
     generation_model_id,
     fixed_prompt_parts,
@@ -268,7 +263,6 @@ BEGIN
     '3-6 years',
     9,
     'J-R',
-    '/alphabet-learning-book-cover.jpg',
     '/alphabet-letters-j-to-r-educational.jpg',
     nano_banana_model_id,
     '{
@@ -365,7 +359,6 @@ BEGIN
     age_range,
     scene_count,
     cover_label,
-    cover_image_url,
     thumbnail_url,
     generation_model_id,
     fixed_prompt_parts,
@@ -378,7 +371,6 @@ BEGIN
     '3-6 years',
     8,
     'S-Z',
-    '/alphabet-learning-book-cover.jpg',
     '/alphabet-letters-s-to-z-learning.jpg',
     nano_banana_model_id,
     '{

@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         progress,
         created_at,
         completed_at,
+        scenes,
         character:characters(id, name),
         template:story_templates(id, title, thumbnail_url)
       `)
@@ -47,6 +48,39 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Generate thumbnails and signed URLs for storybooks
+    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    const storybooksWithThumbnails = await Promise.all(
+      (storybooks || []).map(async (sb: any) => {
+        const result: any = {
+          ...sb,
+          character_name: sb.character?.name || '',
+        }
+
+        // Generate thumbnail from first scene if completed
+        if (sb.status === 'completed' && sb.scenes && Array.isArray(sb.scenes) && sb.scenes.length > 0) {
+          const firstScene = sb.scenes[0]
+          if (firstScene.image_url) {
+            try {
+              const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
+              if (urlMatch) {
+                const signedUrl = await getSignedUrl('storybook-scenes', urlMatch[1], 3600)
+                result.thumbnail_url = signedUrl
+                result.first_scene_image = signedUrl
+              }
+            } catch (err) {
+              console.error(`Failed to generate thumbnail for storybook ${sb.id}:`, err)
+            }
+          }
+        } else {
+          // Use template thumbnail for pending/generating storybooks
+          result.thumbnail_url = sb.template?.thumbnail_url || null
+        }
+
+        return result
+      })
+    )
+
     // Get total count
     let countQuery = supabase
       .from('storybooks')
@@ -60,7 +94,7 @@ export async function GET(request: NextRequest) {
     const { count } = await countQuery
 
     return NextResponse.json({
-      storybooks: storybooks || [],
+      storybooks: storybooksWithThumbnails || [],
       total: count || 0,
     })
   } catch (error: any) {

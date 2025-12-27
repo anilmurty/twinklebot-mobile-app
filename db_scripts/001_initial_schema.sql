@@ -54,7 +54,6 @@ CREATE TABLE IF NOT EXISTS story_templates (
   age_range TEXT NOT NULL,
   scene_count INTEGER NOT NULL,
   cover_label TEXT NOT NULL,
-  cover_image_url TEXT NOT NULL,
   thumbnail_url TEXT NOT NULL,
   generation_model_id INTEGER NOT NULL REFERENCES generation_models(id),
   -- Fixed prompt parts (same for all scenes in this template)

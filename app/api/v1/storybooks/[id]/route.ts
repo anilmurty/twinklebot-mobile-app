@@ -99,10 +99,10 @@ export async function DELETE(
     const supabase = createServerClient(request.headers.get('authorization'))
     const { id } = 'then' in params ? await params : params
     
-    // Check ownership
+    // Check ownership and get scenes
     const { data: storybook } = await supabase
       .from('storybooks')
-      .select('id, user_id')
+      .select('id, user_id, scenes')
       .eq('id', id)
       .single()
 
@@ -116,13 +116,39 @@ export async function DELETE(
       const scenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
       
       await Promise.all(
-        scenes.map((scene: any) => {
+        scenes.map(async (scene: any) => {
           if (scene.image_url) {
-            // Extract path from URL
-            const url = new URL(scene.image_url)
-            const path = url.pathname.split('/storybook-scenes/')[1]
-            if (path) {
-              return deleteFromStorage('storybook-scenes', path).catch(() => {})
+            try {
+              // Extract path from URL
+              // Handle both full URLs and paths
+              let path: string | null = null
+              
+              if (scene.image_url.includes('storybook-scenes/')) {
+                // Extract from full URL or path
+                const match = scene.image_url.match(/storybook-scenes\/(.+)$/)
+                if (match) {
+                  path = match[1]
+                } else {
+                  // Try parsing as URL
+                  try {
+                    const url = new URL(scene.image_url)
+                    path = url.pathname.split('/storybook-scenes/')[1]
+                  } catch {
+                    // If it's already a path, use it directly
+                    if (scene.image_url.startsWith('storybook-scenes/')) {
+                      path = scene.image_url.replace('storybook-scenes/', '')
+                    }
+                  }
+                }
+              }
+              
+              if (path) {
+                await deleteFromStorage('storybook-scenes', path).catch((err) => {
+                  console.error(`Failed to delete scene image ${path}:`, err)
+                })
+              }
+            } catch (err) {
+              console.error(`Error processing scene image deletion:`, err)
             }
           }
         })

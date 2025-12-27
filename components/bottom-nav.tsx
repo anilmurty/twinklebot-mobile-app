@@ -27,7 +27,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-4 py-2 transition-colors flex-1",
+                "flex flex-col items-center justify-center gap-1 px-4 py-2 transition-colors flex-1 cursor-pointer",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >

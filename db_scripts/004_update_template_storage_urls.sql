@@ -3,13 +3,16 @@
 -- Created: 2024-01-01
 --
 -- IMPORTANT: Before running this script:
--- 1. Upload cover images to Supabase Storage: story-template-assets/covers/{template_id}.jpg
--- 2. Upload thumbnail images to Supabase Storage: story-template-assets/thumbnails/{template_id}.jpg
--- 3. Get the public URLs from Supabase Storage
--- 4. Replace the placeholder URLs below with your actual Supabase Storage URLs
+-- 1. Upload thumbnail images to Supabase Storage with descriptive filenames:
+--    - story-template-assets/thumbnails/counting-adventure-1-10.jpg
+--    - story-template-assets/thumbnails/alphabet-adventure-1-a-i.jpg
+--    - story-template-assets/thumbnails/alphabet-adventure-2-j-r.jpg
+--    - story-template-assets/thumbnails/alphabet-adventure-3-s-z.jpg
+-- 2. Get the public URLs from Supabase Storage
+-- 3. Replace the placeholder URLs below with your actual Supabase Storage URLs
 --
 -- Supabase Storage URL format:
--- https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets/{path}
+-- https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/{descriptive-filename}.jpg
 
 DO $$
 DECLARE
@@ -29,29 +32,25 @@ BEGIN
   -- Update Counting Adventure (template_id = 1)
   UPDATE story_templates
   SET
-    cover_image_url = supabase_storage_base_url || '/covers/1.jpg',
-    thumbnail_url = supabase_storage_base_url || '/thumbnails/1.jpg'
+    thumbnail_url = supabase_storage_base_url || '/thumbnails/counting-adventure-1-10.jpg'
   WHERE title = 'Counting Adventure';
   
   -- Update Alphabet Adventure 1 (template_id = 2)
   UPDATE story_templates
   SET
-    cover_image_url = supabase_storage_base_url || '/covers/2.jpg',
-    thumbnail_url = supabase_storage_base_url || '/thumbnails/2.jpg'
+    thumbnail_url = supabase_storage_base_url || '/thumbnails/alphabet-adventure-1-a-i.jpg'
   WHERE title = 'Alphabet Adventure 1';
   
   -- Update Alphabet Adventure 2 (template_id = 3)
   UPDATE story_templates
   SET
-    cover_image_url = supabase_storage_base_url || '/covers/3.jpg',
-    thumbnail_url = supabase_storage_base_url || '/thumbnails/3.jpg'
+    thumbnail_url = supabase_storage_base_url || '/thumbnails/alphabet-adventure-2-j-r.jpg'
   WHERE title = 'Alphabet Adventure 2';
   
   -- Update Alphabet Adventure 3 (template_id = 4)
   UPDATE story_templates
   SET
-    cover_image_url = supabase_storage_base_url || '/covers/4.jpg',
-    thumbnail_url = supabase_storage_base_url || '/thumbnails/4.jpg'
+    thumbnail_url = supabase_storage_base_url || '/thumbnails/alphabet-adventure-3-s-z.jpg'
   WHERE title = 'Alphabet Adventure 3';
   
   RAISE NOTICE 'Updated storage URLs for all story templates';

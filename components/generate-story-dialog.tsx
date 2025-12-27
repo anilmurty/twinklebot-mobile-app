@@ -1,35 +1,87 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Sparkles } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { charactersApi, storybooksApi } from "@/lib/api-client"
+import { useRouter } from "next/navigation"
 
-const mockCharacters = [
-  { id: 1, name: "Emma", photo: "/happy-child.jpg" },
-  { id: 2, name: "Liam", photo: "/smiling-kid.jpg" },
-]
+interface Character {
+  id: string
+  name: string
+  front_photo_url: string
+}
 
 interface GenerateStoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   story: {
+    id: number
     title: string
     description: string
-    scenes: number
+    script_data?: any[]
   }
 }
 
 export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
+  const router = useRouter()
+  const [characters, setCharacters] = useState<Character[]>([])
   const [selectedCharacter, setSelectedCharacter] = useState<string>("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const handleGenerate = () => {
-    // Handle story generation
-    onOpenChange(false)
+  useEffect(() => {
+    if (open) {
+      fetchCharacters()
+    }
+  }, [open])
+
+  const fetchCharacters = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await charactersApi.list()
+      setCharacters(data.characters || [])
+      if (data.characters && data.characters.length > 0) {
+        setSelectedCharacter(data.characters[0].id)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch characters:', err)
+      setError(err.message || 'Failed to load characters')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const handleGenerate = async () => {
+    if (!selectedCharacter) {
+      setError('Please select a character')
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+
+      const result = await storybooksApi.create(selectedCharacter, story.id)
+      
+      onOpenChange(false)
+      // Navigate to storybooks tab or show success message
+      window.location.href = '/?tab=storybooks'
+    } catch (err: any) {
+      console.error('Failed to create storybook:', err)
+      setError(err.message || 'Failed to create storybook. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const sceneCount = story.script_data?.length || 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,33 +99,45 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
         <div className="space-y-6 pt-4">
           <Card className="p-3 bg-accent/50">
             <p className="text-sm">{story.description}</p>
-            <p className="text-xs text-muted-foreground mt-2">{story.scenes} scenes will be generated</p>
+            <p className="text-xs text-muted-foreground mt-2">{sceneCount} scenes will be generated</p>
           </Card>
+
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+              <p className="text-sm text-destructive">{error}</p>
+            </div>
+          )}
 
           <div className="space-y-3">
             <Label>Select Character</Label>
-            <RadioGroup value={selectedCharacter} onValueChange={setSelectedCharacter}>
-              <div className="space-y-2">
-                {mockCharacters.map((character) => (
-                  <Card key={character.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <RadioGroupItem value={character.id.toString()} id={`char-${character.id}`} />
-                      <img
-                        src={character.photo || "/placeholder.svg"}
-                        alt={character.name}
-                        className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                      />
-                      <span className="font-medium">{character.name}</span>
-                    </label>
-                  </Card>
-                ))}
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            </RadioGroup>
-
-            {mockCharacters.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No characters available. Please create a character first.
-              </p>
+            ) : characters.length === 0 ? (
+              <Card className="p-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No characters available. Please create a character first.
+                </p>
+              </Card>
+            ) : (
+              <RadioGroup value={selectedCharacter} onValueChange={setSelectedCharacter}>
+                <div className="space-y-2">
+                  {characters.map((character) => (
+                    <Card key={character.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
+                      <label className="flex items-center gap-3 cursor-pointer w-full">
+                        <RadioGroupItem value={character.id} id={`char-${character.id}`} />
+                        <img
+                          src={character.front_photo_url || "/placeholder.svg"}
+                          alt={character.name}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                        />
+                        <span className="font-medium">{character.name}</span>
+                      </label>
+                    </Card>
+                  ))}
+                </div>
+              </RadioGroup>
             )}
           </div>
 
@@ -91,16 +155,30 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
           </div>
 
           <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1 bg-transparent" onClick={() => onOpenChange(false)}>
+            <Button 
+              variant="outline" 
+              className="flex-1 bg-transparent" 
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
             <Button
               className="flex-1 bg-primary hover:bg-primary/90"
-              disabled={!selectedCharacter}
+              disabled={!selectedCharacter || isSubmitting || characters.length === 0}
               onClick={handleGenerate}
             >
-              <Sparkles className="w-4 h-4 mr-1" />
-              Generate
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  Generate
+                </>
+              )}
             </Button>
           </div>
         </div>
