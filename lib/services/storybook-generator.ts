@@ -57,7 +57,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   const userId = storybook.user_id
   
   // Extract storage path from URL or construct it
-  const getPhotoPath = (url: string, position: string) => {
+  const getPhotoPath = (url: string) => {
+    if (!url || url.trim() === '') {
+      throw new Error('Character photo URL is missing')
+    }
     // Extract path from Supabase Storage URL
     // URL format: https://xxx.supabase.co/storage/v1/object/public/character-photos/user_id/char_id/front.jpg
     // Or: https://xxx.supabase.co/storage/v1/object/sign/character-photos/...
@@ -66,14 +69,17 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       return match[1]
     }
     // Fallback: construct path from character ID
-    return `${userId}/${character.id}/${position}.jpg`
+    return `${userId}/${character.id}/front.jpg`
   }
 
   // Create signed URLs (valid for 1 hour - enough for generation)
+  // Use the same front photo for all three reference positions
+  const frontPhotoPath = getPhotoPath(character.front_photo_url)
+
   const characterPhotos = await Promise.all([
-    getSignedUrl('character-photos', getPhotoPath(character.front_photo_url, 'front'), 3600),
-    getSignedUrl('character-photos', getPhotoPath(character.left_photo_url, 'left'), 3600),
-    getSignedUrl('character-photos', getPhotoPath(character.right_photo_url, 'right'), 3600),
+    getSignedUrl('character-photos', frontPhotoPath, 3600),
+    getSignedUrl('character-photos', frontPhotoPath, 3600), // Use same photo for left
+    getSignedUrl('character-photos', frontPhotoPath, 3600), // Use same photo for right
   ])
   
   console.log('Created signed URLs for character photos (expire in 1 hour)')

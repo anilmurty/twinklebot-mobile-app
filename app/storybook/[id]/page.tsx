@@ -110,30 +110,29 @@ export default function StorybookViewerPage() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
         {scene ? (
           <>
-            {/* Scene Image */}
-            <div className="w-full max-w-md mb-6 relative">
+            {/* Scene Image with Overlaid Text */}
+            <div className="w-full max-w-md relative">
               <img
                 src={scene.image_url || "/placeholder.svg"}
                 alt={`Scene ${currentScene + 1}`}
                 className="w-full h-auto rounded-lg shadow-xl"
               />
-            </div>
-
-            {/* Scene Text */}
-            {(scene.text || scene.script_text) && (
-              <Card className="w-full max-w-md p-6 bg-background/95 backdrop-blur">
-                <div className="space-y-2">
-                  {(scene.text || scene.script_text || '')
-                    .split('\n')
-                    .filter(line => line.trim())
-                    .map((line, idx) => (
-                      <p key={idx} className="text-base leading-relaxed">
-                        {line}
-                      </p>
-                    ))}
+              {/* Text Overlay */}
+              {(scene.text || scene.script_text) && (
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent rounded-b-lg p-4 pt-6">
+                  <div className="space-y-1">
+                    {(scene.text || scene.script_text || '')
+                      .split('\n')
+                      .filter(line => line.trim())
+                      .map((line, idx) => (
+                        <p key={idx} className="text-white text-base leading-relaxed font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                          {line}
+                        </p>
+                      ))}
+                  </div>
                 </div>
-              </Card>
-            )}
+              )}
+            </div>
           </>
         ) : (
           <div className="text-center">

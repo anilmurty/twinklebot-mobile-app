@@ -92,8 +92,6 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const name = formData.get('name') as string
     const frontPhoto = formData.get('front_photo') as File
-    const leftPhoto = formData.get('left_photo') as File
-    const rightPhoto = formData.get('right_photo') as File
 
     // Validation
     if (!name || name.length > 20 || !/^[a-zA-Z0-9]+$/.test(name)) {
@@ -103,10 +101,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!frontPhoto || !leftPhoto || !rightPhoto) {
+    if (!frontPhoto) {
       return NextResponse.json(
-        { error: 'All three photos are required' },
+        { error: 'Photo is required' },
         { status: 400 }
+      )
+    }
+
+    // Validate file size (Vercel has 4.5MB limit)
+    const MAX_FILE_SIZE = 1.4 * 1024 * 1024 // 1.4MB per file
+    if (frontPhoto.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: 'Photo is too large. Maximum size is 1.4MB. Please compress or resize your image.' },
+        { status: 413 }
       )
     }
 
@@ -172,37 +179,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: createError.message }, { status: 500 })
     }
 
-    // Upload photos to storage
+    // Upload photo to storage
     const { uploadToStorage } = await import('@/lib/supabase/storage')
     
-    const [frontUrl, leftUrl, rightUrl] = await Promise.all([
-      uploadToStorage(
-        'character-photos',
-        `${userId}/${character.id}/front.jpg`,
-        await frontPhoto.arrayBuffer(),
-        frontPhoto.type
-      ),
-      uploadToStorage(
-        'character-photos',
-        `${userId}/${character.id}/left.jpg`,
-        await leftPhoto.arrayBuffer(),
-        leftPhoto.type
-      ),
-      uploadToStorage(
-        'character-photos',
-        `${userId}/${character.id}/right.jpg`,
-        await rightPhoto.arrayBuffer(),
-        rightPhoto.type
-      ),
-    ])
+    // Upload the single photo as front.jpg
+    const frontUrl = await uploadToStorage(
+      'character-photos',
+      `${userId}/${character.id}/front.jpg`,
+      await frontPhoto.arrayBuffer(),
+      frontPhoto.type
+    )
 
-    // Update character with photo URLs
+    // Update character with photo URL
     const { data: updatedCharacter, error: updateError } = await supabase
       .from('characters')
       .update({
         front_photo_url: frontUrl,
-        left_photo_url: leftUrl,
-        right_photo_url: rightUrl,
       })
       .eq('id', character.id)
       .select()

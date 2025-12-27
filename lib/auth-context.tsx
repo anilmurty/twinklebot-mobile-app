@@ -1,10 +1,8 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client-browser'
 import type { User } from '@supabase/supabase-js'
-
-const supabase = createClient()
 
 interface AuthContextType {
   user: User | null
@@ -21,24 +19,56 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Create client inside component to ensure fresh cookie access
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return
+      
+      if (error) {
+        // If refresh token is invalid, clear session
+        if (error.message?.includes('Refresh Token')) {
+          console.warn('Invalid refresh token, clearing session:', error.message)
+          supabase.auth.signOut().catch(() => {})
+          setUser(null)
+        } else {
+          console.error('Session error:', error)
+        }
+      } else {
+        setUser(session?.user ?? null)
+      }
       setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return
+      
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESHED') {
+        setUser(session?.user ?? null)
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null)
+      } else if (event === 'SIGNED_IN') {
+        setUser(session?.user ?? null)
+      } else {
+        setUser(session?.user ?? null)
+      }
       setLoading(false)
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
@@ -67,13 +97,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    // Clear session and sign out
     const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    if (error) {
+      // If sign out fails, clear local state anyway
+      console.error('Sign out error:', error)
+      setUser(null)
+      // Force clear cookies
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+      })
+    } else {
+      setUser(null)
+    }
   }
 
   const getToken = async (): Promise<string | null> => {
-    const { data: { session } } = await supabase.auth.getSession()
-    return session?.access_token ?? null
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error) {
+        // If refresh token is invalid, clear session
+        if (error.message?.includes('Refresh Token')) {
+          console.warn('Invalid refresh token, clearing session')
+          await supabase.auth.signOut().catch(() => {})
+          setUser(null)
+          return null
+        }
+        throw error
+      }
+      return session?.access_token ?? null
+    } catch (error: any) {
+      console.error('Error getting token:', error)
+      return null
+    }
   }
 
   return (

@@ -17,61 +17,68 @@ interface CreateCharacterDialogProps {
 
 export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }: CreateCharacterDialogProps) {
   const [name, setName] = useState("")
-  const [photos, setPhotos] = useState<{ front?: File; left?: File; right?: File }>({})
-  const [previews, setPreviews] = useState<{ front?: string; left?: string; right?: string }>({})
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const fileInputRefs = {
-    front: useRef<HTMLInputElement>(null),
-    left: useRef<HTMLInputElement>(null),
-    right: useRef<HTMLInputElement>(null),
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const MAX_FILE_SIZE = 1.4 * 1024 * 1024 // 1.4MB per file (Vercel has 4.5MB total limit)
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B'
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   }
 
-  const handleFileSelect = (position: "front" | "left" | "right", file: File) => {
-    setPhotos((prev) => ({ ...prev, [position]: file }))
+  const handleFileSelect = (file: File) => {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`Photo is too large (${formatFileSize(file.size)}). Maximum size is 1.4MB. Please compress or resize your image.`)
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
+    setPhoto(file)
+    setError(null) // Clear any previous errors
     
     // Create preview URL
     const reader = new FileReader()
     reader.onloadend = () => {
-      setPreviews((prev) => ({ ...prev, [position]: reader.result as string }))
+      setPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
   }
 
-  const handlePhotoUpload = (position: "front" | "left" | "right") => {
-    fileInputRefs[position].current?.click()
+  const handlePhotoUpload = () => {
+    fileInputRef.current?.click()
   }
 
-  const handleFileInputChange = (position: "front" | "left" | "right", e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      handleFileSelect(position, file)
+      handleFileSelect(file)
     }
   }
 
-  const handleRemovePhoto = (position: "front" | "left" | "right") => {
-    setPhotos((prev) => {
-      const newPhotos = { ...prev }
-      delete newPhotos[position]
-      return newPhotos
-    })
-    setPreviews((prev) => {
-      const newPreviews = { ...prev }
-      if (newPreviews[position]) {
-        URL.revokeObjectURL(newPreviews[position]!)
-        delete newPreviews[position]
-      }
-      return newPreviews
-    })
+  const handleRemovePhoto = () => {
+    setPhoto(null)
+    if (preview) {
+      URL.revokeObjectURL(preview)
+      setPreview(null)
+    }
     // Reset file input
-    if (fileInputRefs[position].current) {
-      fileInputRefs[position].current.value = ''
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
   const handleSubmit = async () => {
-    if (!name.trim() || !photos.front || !photos.left || !photos.right) {
-      setError('Please provide a name and all three photos')
+    if (!name.trim() || !photo) {
+      setError('Please provide a name and a photo')
       return
     }
 
@@ -81,16 +88,14 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
 
       const formData = new FormData()
       formData.append('name', name.trim())
-      formData.append('front_photo', photos.front)
-      formData.append('left_photo', photos.left)
-      formData.append('right_photo', photos.right)
+      formData.append('front_photo', photo)
 
       await charactersApi.create(formData)
 
       // Reset form
       setName("")
-      setPhotos({})
-      setPreviews({})
+      setPhoto(null)
+      setPreview(null)
       onOpenChange(false)
       onCharacterCreated?.()
     } catch (err: any) {
@@ -101,14 +106,14 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
     }
   }
 
-  const canSubmit = name.length > 0 && photos.front && photos.left && photos.right && !isSubmitting
+  const canSubmit = name.length > 0 && photo && !isSubmitting
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Create Character</DialogTitle>
-          <DialogDescription>Add your child's photos to create their storybook character</DialogDescription>
+          <DialogDescription>Add your child's photo to create their storybook character</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
@@ -125,56 +130,54 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
           </div>
 
           <div className="space-y-4">
-            <Label>Character Photos (3 required)</Label>
+            <Label>Character Photo</Label>
             <p className="text-xs text-muted-foreground">
-              Upload photos from front, left, and right angles for best results
+              Use a clear front-facing image with good lighting and clearly visible features. Maximum 1.4MB.
             </p>
 
-            <div className="space-y-3">
-              {(["front", "left", "right"] as const).map((position) => (
-                <Card key={position} className="p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-16 h-16 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                      {previews[position] ? (
-                        <img
-                          src={previews[position] || "/placeholder.svg"}
-                          alt={position}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Camera className="w-6 h-6 text-muted-foreground" />
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <p className="font-medium text-sm capitalize">{position} View</p>
-                      <p className="text-xs text-muted-foreground">
-                        {photos[position] ? photos[position]!.name : "No photo yet"}
-                      </p>
-                    </div>
-
-                    <input
-                      ref={fileInputRefs[position]}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleFileInputChange(position, e)}
+            <Card className="p-4">
+              <div className="flex items-center gap-4">
+                <div className="w-24 h-24 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
+                  {preview ? (
+                    <img
+                      src={preview}
+                      alt="Character photo preview"
+                      className="w-full h-full object-cover"
                     />
+                  ) : (
+                    <Camera className="w-8 h-8 text-muted-foreground" />
+                  )}
+                </div>
 
-                    {photos[position] ? (
-                      <Button size="sm" variant="ghost" onClick={() => handleRemovePhoto(position)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" onClick={() => handlePhotoUpload(position)}>
-                        <Upload className="w-3 h-3 mr-1" />
-                        Upload
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">Photo</p>
+                  <p className="text-xs text-muted-foreground">
+                    {photo 
+                      ? `${photo.name} (${formatFileSize(photo.size)})`
+                      : "No photo yet"}
+                  </p>
+                </div>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileInputChange}
+                />
+
+                {photo ? (
+                  <Button size="sm" variant="ghost" onClick={handleRemovePhoto}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={handlePhotoUpload}>
+                    <Upload className="w-3 h-3 mr-1" />
+                    Upload
+                  </Button>
+                )}
+              </div>
+            </Card>
           </div>
 
           {error && (
