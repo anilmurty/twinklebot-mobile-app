@@ -72,17 +72,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     return `${userId}/${character.id}/front.jpg`
   }
 
-  // Create signed URLs (valid for 1 hour - enough for generation)
-  // Use the same front photo for all three reference positions
+  // Create signed URL (valid for 1 hour - enough for generation)
+  // Only use the front photo (single photo upload)
   const frontPhotoPath = getPhotoPath(character.front_photo_url)
 
-  const characterPhotos = await Promise.all([
-    getSignedUrl('character-photos', frontPhotoPath, 3600),
-    getSignedUrl('character-photos', frontPhotoPath, 3600), // Use same photo for left
-    getSignedUrl('character-photos', frontPhotoPath, 3600), // Use same photo for right
-  ])
+  const characterPhoto = await getSignedUrl('character-photos', frontPhotoPath, 3600)
   
-  console.log('Created signed URLs for character photos (expire in 1 hour)')
+  console.log('Created signed URL for character photo (expires in 1 hour)')
 
   const fixedParts = template.fixed_prompt_parts
   const scenes = template.script_data.scenes as SceneTemplate[]
@@ -115,6 +111,17 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           `Generating scene ${sceneTemplate.scene_number} (attempt ${attempt}/3)`
         )
 
+        // Validate required fields
+        if (!fixedParts.subject) {
+          throw new Error('Template missing subject in fixed_prompt_parts')
+        }
+        if (!fixedParts.style) {
+          throw new Error('Template missing style in fixed_prompt_parts')
+        }
+        if (!sceneTemplate.action || sceneTemplate.action.trim() === '') {
+          throw new Error(`Scene ${sceneTemplate.scene_number} missing action field`)
+        }
+
         // Build prompt
         const prompt = buildNanoBananaPrompt(
           {
@@ -130,13 +137,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         console.log(`\n=== Scene ${sceneTemplate.scene_number} ===`)
         console.log(`Character: ${character.name}`)
         console.log(`Prompt length: ${prompt.length} chars`)
-        console.log(`Prompt preview: ${prompt.substring(0, 150)}...`)
-        console.log(`Character photos (${characterPhotos.length}):`, characterPhotos)
+        console.log(`Full prompt:\n${prompt}`)
+        console.log(`Character photo: ${characterPhoto}`)
 
         // Generate image
         const generatedImageUrl = await generateImageWithNanoBanana(
           prompt,
-          characterPhotos,
+          [characterPhoto], // Send only one image
           sceneTemplate.aspect_ratio || '9:16'
         )
         
