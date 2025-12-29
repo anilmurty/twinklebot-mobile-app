@@ -42,88 +42,78 @@ BEGIN
     '/counting-numbers-colorful-illustration.jpg',
     nano_banana_model_id,
     '{
-      "subject": "A vibrant 3D cartoon version of the child from the reference images. The child must have the same hair color, hair length, hair style, skin color, eye color, facial features, height, weight and joyful expression as seen in the photos.",
-      "style": "Whimsical storybook aesthetic, 3D animation style (like Pixar), soft lighting. Ensure the child''s face is clearly visible and the hero of the image. The bottom 20% of the image should be simple grass or sidewalk to allow for a text overlay."
+      "subject": "A vibrant 3D animated version of the person from image_input. The subject must have the same hair color, hair length, hair style, skin color, eye color, facial features, height, weight and joyful expression as the person in image_input. Do not squint the subject''s eyes.",
+      "style": "Storybook aesthetic, 3D animation style (like Pixar), soft lighting. Ensure the subject''s face is clearly visible and is the hero of the image. The bottom 20% of the image should be less noisy for a text overlay. Any numbers (like two butterflies or five apples) should be strictly adhered to."
     }'::jsonb,
     '{
       "scenes": [
         {
           "scene_number": 1,
-          "script_text": "On the way to school, {character_name} saw ONE red airplane in the sky!",
-          "action": "The child is walking to school on a sunny day, pointing up.",
-          "detail": "High in the sky is ONE bright red airplane leaving a white trail.",
+          "script_text": "1 On the way to school, {character_name} saw ONE red airplane in the sky!",
+          "action": "The subject is walking to school on a sunny day, red backpack on their back, pointing up and amused by what they see. High in the sky is exactly 1 bright red airplane leaving a white trail.",
           "number": 1,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 2,
-          "script_text": "In the garden, {character_name} found TWO yellow butterflies dancing!",
-          "action": "The child is in a green garden, reaching out with their hands.",
-          "detail": "TWO bright yellow butterflies are fluttering around the child.",
+          "script_text": "2 In the garden, {character_name} found TWO yellow butterflies dancing!",
+          "action": "The subject is playing in green garden with flowers and other plants and with their house in the background. The subject is reaching out with their hands, trying to catch butterflies. Exactly 2 bright yellow butterflies are fluttering around the subject.",
           "number": 2,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 3,
-          "script_text": "Look at that! {character_name} built a tower with THREE colorful blocks.",
-          "action": "The child is sitting on a cozy rug in a playroom.",
-          "detail": "A tower of THREE wooden blocks (A, B, C) sits in front of them.",
+          "script_text": "3 Look ma, I got you 3 sunflowers! said {character_name}",
+          "action": "The subject is in a flower field, flowers in the background and all around but blurred, blue skies with some patchy clouds. The subject is holding 3 sunflowers in their hand and smiling.",
           "number": 3,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 4,
-          "script_text": "Quack quack! {character_name} counted FOUR ducks swimming in a row.",
-          "action": "The child is sitting by a park pond, waving at the water.",
-          "detail": "FOUR yellow rubber ducks are floating in a perfect line.",
+          "script_text": "4 Woo! {character_name} built a tower with FOUR colorful blocks.",
+          "action": "The subject is sitting on a cozy rug in a playroom. There are other toys in the backround but blurred. A tower of exactly 4 wooden blocks (A, B, C, D) stacked in front of them. There are other alphabet blocks scattered around the subject and a an open play box that contains some of the blocks.",
           "number": 4,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 5,
-          "script_text": "Mmm, how yummy! {character_name} picked FIVE shiny red apples.",
-          "action": "The child is in a kitchen wearing a small white chef''s hat.",
-          "detail": "FIVE large, shiny red apples are sitting in a wooden bowl.",
+          "script_text": "5 Mmm, how yummy! {character_name} picked FIVE shiny red apples.",
+          "action": "The subject is in a kitchen wearing a small white chef''s hat. Exactly 5 large, shiny red apples are sitting in a wooden bowl.",
           "number": 5,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 6,
-          "script_text": "When the sun went down, {character_name} saw SIX bright stars!",
-          "action": "The child is in a backyard at night, looking at the dark sky.",
-          "detail": "SIX glowing stars are twinkling brightly above.",
+          "script_text": "6 When the sun went down, {character_name} saw SIX bright stars!",
+          "action": "The subject is in a backyard at night, looking at the dark sky. Exactly 6 glowing stars are twinkling brightly above.",
           "number": 6,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 7,
-          "script_text": "{character_name} discovered SEVEN beautiful seashells in the sand.",
-          "action": "The child is at a beach, sitting near the gentle waves.",
-          "detail": "SEVEN different colorful seashells are lined up in the sand.",
+          "script_text": "7 {character_name} discovered SEVEN beautiful seashells in the sand.",
+          "action": "The subject is at a beach, sitting near the gentle waves. Exactly 7 different colorful seashells are lined up in the sand.",
           "number": 7,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 8,
-          "script_text": "Deep in the woods, {character_name} and a squirrel found EIGHT acorns.",
-          "action": "The child is in a forest with tall, whimsical trees.",
-          "detail": "EIGHT brown acorns are scattered on the ground near a squirrel.",
+          "script_text": "8 Deep in the woods, {character_name} and a squirrel found EIGHT acorns.",
+          "action": "The subject is in a forest with tall, whimsical trees. Exactly 8 brown acorns are scattered on the ground near a squirrel.",
           "number": 8,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 9,
-          "script_text": "Happy Birthday! {character_name} is holding NINE giant balloons.",
-          "action": "The child is at a birthday party with a joyful expression.",
-          "detail": "NINE large, colorful balloons are tied together in their hand.",
+          "script_text": "9 Happy Birthday! {character_name} is holding NINE giant balloons.",
+          "action": "The subject is sitting by a park pond, waving at the water. Exactly 9 yellow rubber ducks are floating in a perfect line.",
           "number": 9,
           "aspect_ratio": "9:16"
         },
         {
           "scene_number": 10,
-          "script_text": "{character_name} is sitting among TEN blooming flowers.",
-          "action": "The child is sitting in the center of a vibrant flower field.",
-          "detail": "TEN bright pink flowers are blooming in a circle around them.",
+          "script_text": "10 {character_name} is sitting among TEN blooming flowers.",
+          "action": "The subject is at a birthday party with a joyful expression and kids blurred in the bacakground giggling. 10 candles are on a cake, some blown, some flickering and rest solid. The subject has the expression of blowing the candles.",
           "number": 10,
           "aspect_ratio": "9:16"
         }

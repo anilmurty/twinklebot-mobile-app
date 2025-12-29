@@ -123,7 +123,6 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           },
           {
             action: sceneTemplate.action,
-            detail: sceneTemplate.detail,
           },
           character.name
         )

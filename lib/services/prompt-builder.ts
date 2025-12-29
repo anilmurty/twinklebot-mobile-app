@@ -59,19 +59,19 @@ export function buildPrompt(
 
 export function buildNanoBananaPrompt(
   fixedParts: { subject: string; style: string },
-  variableParts: { action: string; detail: string },
+  variableParts: { action: string },
   characterName: string
 ): string {
-  const promptStructure: PromptStructure = {
-    parts_order: ['subject', 'action', 'detail', 'style'],
-    separator: '\n\n',
-    placeholders: {
-      character_name: '{character_name}'
-    },
-    fixed_parts: ['subject', 'style'],
-    variable_parts: ['action', 'detail']
+  // Replace placeholders
+  const replacePlaceholders = (text: string): string => {
+    return text.replace(/{character_name}/g, characterName)
   }
   
-  return buildPrompt(fixedParts, variableParts, promptStructure, characterName)
+  const subject = replacePlaceholders(fixedParts.subject)
+  const style = replacePlaceholders(fixedParts.style)
+  const action = replacePlaceholders(variableParts.action)
+  
+  // Build prompt with labels for subject and style, but not for action
+  return `Subject: ${subject}\n\n${action}\n\nStyle: ${style}`
 }
 
