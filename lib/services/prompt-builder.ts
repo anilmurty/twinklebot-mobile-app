@@ -71,7 +71,7 @@ export function buildNanoBananaPrompt(
   const style = replacePlaceholders(fixedParts.style)
   const action = replacePlaceholders(variableParts.action)
   
-  // Build prompt with labels for subject and style, but not for action
-  return `Subject: ${subject}\n\n${action}\n\nStyle: ${style}`
+  // Build prompt in order: Subject, Style, Action (all with spaces between)
+  return `Subject: ${subject} Style: ${style} ${action}`
 }
 

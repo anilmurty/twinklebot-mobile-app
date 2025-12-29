@@ -6,6 +6,7 @@
 DO $$
 DECLARE
   nano_banana_model_id INTEGER;
+  supabase_storage_base_url TEXT;
 BEGIN
   -- Get the nano-banana model ID
   SELECT id INTO nano_banana_model_id
@@ -16,6 +17,10 @@ BEGIN
   IF nano_banana_model_id IS NULL THEN
     RAISE EXCEPTION 'nano-banana model not found. Please run migration 002_seed_nano_banana_model.sql first.';
   END IF;
+
+  -- Set Supabase Storage base URL
+  -- Format: https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets
+  supabase_storage_base_url := 'https://cxwiutrjgftozbfpnpvv.supabase.co/storage/v1/object/public/story-template-assets';
 
   -- ============================================================================
   -- COUNTING ADVENTURE (10 scenes, numbers 1-10)
@@ -39,7 +44,7 @@ BEGIN
     '2-5 years',
     10,
     '1-10',
-    '/counting-numbers-colorful-illustration.jpg',
+    supabase_storage_base_url || '/thumbnails/counting-adventure-1-10.jpg',
     nano_banana_model_id,
     '{
       "subject": "A vibrant 3D animated version of the person from image_input. The subject must have the same hair color, hair length, hair style, skin color, eye color, facial features, height, weight and joyful expression as the person in image_input. Do not squint the subject''s eyes.",
@@ -145,7 +150,7 @@ BEGIN
     '3-6 years',
     9,
     'A-I',
-    '/alphabet-letters-a-to-i-colorful.jpg',
+    supabase_storage_base_url || '/thumbnails/alphabet-adventure-1-a-i.jpg',
     nano_banana_model_id,
     '{
       "subject": "A vibrant 3D cartoon version of the child from the reference images. The child must have the same hair color, hair length, hair style, skin color, eye color, facial features, height, weight and joyful expression as seen in the photos.",
@@ -253,7 +258,7 @@ BEGIN
     '3-6 years',
     9,
     'J-R',
-    '/alphabet-letters-j-to-r-educational.jpg',
+    supabase_storage_base_url || '/thumbnails/alphabet-adventure-2-j-r.jpg',
     nano_banana_model_id,
     '{
       "subject": "A vibrant 3D cartoon version of the child from the reference images. The child must have the same hair color, hair length, hair style, skin color, eye color, facial features, height, weight and joyful expression as seen in the photos.",
@@ -361,7 +366,7 @@ BEGIN
     '3-6 years',
     8,
     'S-Z',
-    '/alphabet-letters-s-to-z-learning.jpg',
+    supabase_storage_base_url || '/thumbnails/alphabet-adventure-3-s-z.jpg',
     nano_banana_model_id,
     '{
       "subject": "A vibrant 3D cartoon version of the child from the reference images. The child must have the same hair color, hair length, hair style, skin color, eye color, facial features, height, weight and joyful expression as seen in the photos.",

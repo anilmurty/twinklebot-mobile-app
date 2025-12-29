@@ -21,6 +21,7 @@ export function StoryLibraryTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedStory, setSelectedStory] = useState<Template | null>(null)
+  const [failedThumbnails, setFailedThumbnails] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -28,7 +29,13 @@ export function StoryLibraryTab() {
         setLoading(true)
         setError(null)
         const data = await templatesApi.list()
-        setTemplates(data.templates || [])
+        const templatesList = data.templates || []
+        console.log('Fetched templates:', templatesList.map((t: Template) => ({
+          id: t.id,
+          title: t.title,
+          thumbnail_url: t.thumbnail_url
+        })))
+        setTemplates(templatesList)
       } catch (err: any) {
         console.error('Failed to fetch templates:', err)
         setError(err.message || 'Failed to load story templates')
@@ -85,15 +92,15 @@ export function StoryLibraryTab() {
                 <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                   <div className="flex gap-4 p-4">
                     <div className="relative shrink-0">
-                      {thumbnail ? (
+                      {thumbnail && !failedThumbnails.has(template.id) ? (
                         <img
                           src={thumbnail}
                           alt={template.title}
                           className="w-24 h-32 object-cover rounded-lg"
-                          onError={(e) => {
-                            // Fallback to placeholder if image fails to load
-                            const target = e.target as HTMLImageElement
-                            target.src = "/placeholder.svg"
+                          onError={() => {
+                            // Mark this thumbnail as failed
+                            console.error(`Failed to load thumbnail for ${template.title}:`, thumbnail)
+                            setFailedThumbnails(prev => new Set(prev).add(template.id))
                           }}
                         />
                       ) : (

@@ -4,6 +4,7 @@ import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
 import { charactersApi } from "@/lib/api-client"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -16,6 +17,8 @@ interface Character {
 }
 
 export function CharactersTab() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [characters, setCharacters] = useState<Character[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,7 +41,17 @@ export function CharactersTab() {
 
   useEffect(() => {
     fetchCharacters()
-  }, [])
+    
+    // Check if we should open create dialog from URL param
+    const shouldCreate = searchParams.get('create') === 'true'
+    if (shouldCreate) {
+      setShowCreateDialog(true)
+      // Remove the create param from URL
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('create')
+      router.replace(`/?tab=characters${params.toString() ? '&' + params.toString() : ''}`)
+    }
+  }, [searchParams])
 
   const handleDeleteClick = (id: string, name: string) => {
     setDeleteConfirm({ id, name })
@@ -57,8 +70,16 @@ export function CharactersTab() {
     }
   }
 
-  const handleCharacterCreated = () => {
-    fetchCharacters() // Refresh list after creation
+  const handleCharacterCreated = async () => {
+    const wasFirstCharacter = characters.length === 0
+    await fetchCharacters() // Refresh list after creation
+    
+    // If this was the first character, navigate to story library
+    if (wasFirstCharacter) {
+      setTimeout(() => {
+        router.push('/?tab=library')
+      }, 500)
+    }
   }
 
   return (

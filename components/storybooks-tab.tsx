@@ -93,7 +93,8 @@ export function StorybooksTab() {
   }, [searchParams])
 
   const handleCreateCharacter = () => {
-    setShowCreateDialog(true)
+    // Navigate to characters tab with create parameter
+    router.push('/?tab=characters&create=true')
   }
 
   const handleCreateStorybook = () => {
