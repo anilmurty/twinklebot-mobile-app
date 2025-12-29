@@ -24,19 +24,12 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh session if expired - required for Server Components
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // This ensures the session is refreshed on each request
+  await supabase.auth.getUser()
 
-  // If user is signed in and the current path is the landing page, redirect to home
-  if (user && request.nextUrl.pathname === '/') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
-    return NextResponse.redirect(url)
-  }
-
-  // If user is not signed in and trying to access protected routes, redirect to landing
-  // (Add protected routes here if needed in the future)
+  // Note: We don't redirect authenticated users from the landing page
+  // The app handles showing different content based on auth state
+  // If you need to protect routes in the future, add them here
 
   return supabaseResponse
 }
