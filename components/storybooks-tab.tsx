@@ -1,13 +1,14 @@
 "use client"
 
-import { BookOpen, Clock, CheckCircle2, Loader2, Trash2 } from "lucide-react"
+import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
-import { storybooksApi } from "@/lib/api-client"
-import { useRouter } from "next/navigation"
+import { storybooksApi, charactersApi } from "@/lib/api-client"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { CreateCharacterDialog } from "@/components/create-character-dialog"
 
 interface Storybook {
   id: string
@@ -23,14 +24,21 @@ interface Storybook {
 
 export function StorybooksTab() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [storybooks, setStorybooks] = useState<Storybook[]>([])
+  const [characters, setCharacters] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [charactersLoading, setCharactersLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
 
   const fetchStorybooks = async () => {
     try {
-      setLoading(true)
+      // Don't set loading to true on subsequent fetches to avoid UI flicker
+      if (storybooks.length === 0) {
+        setLoading(true)
+      }
       setError(null)
       const data = await storybooksApi.list()
       setStorybooks(data.storybooks || [])
@@ -42,17 +50,60 @@ export function StorybooksTab() {
     }
   }
 
+  const fetchCharacters = async () => {
+    try {
+      setCharactersLoading(true)
+      const data = await charactersApi.list()
+      setCharacters(data.characters || [])
+    } catch (err: any) {
+      console.error('Failed to fetch characters:', err)
+    } finally {
+      setCharactersLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchStorybooks()
-    // Poll for updates every 5 seconds if there are generating storybooks
-    const interval = setInterval(() => {
-      const hasGenerating = storybooks.some(sb => sb.status === 'generating' || sb.status === 'pending')
-      if (hasGenerating) {
-        fetchStorybooks()
-      }
-    }, 5000)
-    return () => clearInterval(interval)
+    fetchCharacters()
   }, [])
+
+  // Poll for updates every 3 seconds if there are generating storybooks
+  useEffect(() => {
+    const hasGenerating = storybooks.some(sb => sb.status === 'generating' || sb.status === 'pending')
+    
+    if (!hasGenerating) {
+      return // Don't poll if nothing is generating
+    }
+
+    // Start polling immediately
+    const interval = setInterval(() => {
+      fetchStorybooks()
+    }, 3000) // Poll every 3 seconds
+
+    return () => clearInterval(interval)
+  }, [storybooks]) // Re-run when storybooks change
+
+  // Refresh when tab becomes active (in case user navigated from story creation)
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'storybooks') {
+      // Refresh immediately when navigating to this tab
+      fetchStorybooks()
+    }
+  }, [searchParams])
+
+  const handleCreateCharacter = () => {
+    setShowCreateDialog(true)
+  }
+
+  const handleCreateStorybook = () => {
+    // Navigate to Story Library tab
+    router.push('/?tab=library')
+  }
+
+  const handleCharacterCreated = () => {
+    fetchCharacters() // Refresh characters list
+  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -121,11 +172,32 @@ export function StorybooksTab() {
             <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center">
               <BookOpen className="w-12 h-12 text-secondary-foreground" />
             </div>
-            <div className="text-center space-y-2">
-              <h3 className="text-lg font-semibold">No storybooks yet</h3>
-              <p className="text-sm text-muted-foreground max-w-xs">
-                Create a character and generate your first personalized storybook!
-              </p>
+            <div className="text-center space-y-4">
+              {charactersLoading ? (
+                <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+              ) : characters.length === 0 ? (
+                <>
+                  <h3 className="text-lg font-semibold">No Storybooks or Characters Yet</h3>
+                  <Button
+                    onClick={handleCreateCharacter}
+                    className="w-full h-auto py-4 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span className="font-semibold">Create First Character</span>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold">No Storybooks Yet</h3>
+                  <Button
+                    onClick={handleCreateStorybook}
+                    className="w-full h-auto py-4 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span className="font-semibold">Create First Storybook</span>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -229,6 +301,12 @@ export function StorybooksTab() {
           </div>
         )}
       </div>
+
+      <CreateCharacterDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        onCharacterCreated={handleCharacterCreated}
+      />
 
       <ConfirmDialog
         open={!!deleteConfirm}

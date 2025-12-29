@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 import { storybooksApi } from "@/lib/api-client"
 
 interface Scene {
@@ -106,26 +106,26 @@ export default function StorybookViewerPage() {
         </div>
       </div>
 
-      {/* Scene Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Scene Content - Full Screen */}
+      <div className="flex-1 relative overflow-hidden">
         {scene ? (
           <>
-            {/* Scene Image with Overlaid Text */}
-            <div className="w-full max-w-md relative">
+            {/* Scene Image - Full Screen */}
+            <div className="absolute inset-0">
               <img
                 src={scene.image_url || "/placeholder.svg"}
                 alt={`Scene ${currentScene + 1}`}
-                className="w-full h-auto rounded-lg shadow-xl"
+                className="w-full h-full object-cover"
               />
               {/* Text Overlay */}
               {(scene.text || scene.script_text) && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent rounded-b-lg p-4 pt-6">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-6 pb-8">
                   <div className="space-y-1">
                     {(scene.text || scene.script_text || '')
                       .split('\n')
                       .filter(line => line.trim())
                       .map((line, idx) => (
-                        <p key={idx} className="text-white text-base leading-relaxed font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                        <p key={idx} className="text-white text-lg leading-relaxed font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                           {line}
                         </p>
                       ))}
@@ -133,36 +133,38 @@ export default function StorybookViewerPage() {
                 </div>
               )}
             </div>
+
+            {/* Navigation Arrows */}
+            {scenes.length > 1 && (
+              <>
+                {/* Left Arrow */}
+                <button
+                  onClick={handlePrevious}
+                  disabled={currentScene === 0}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm"
+                  aria-label="Previous scene"
+                >
+                  <ArrowLeft className="w-6 h-6 text-white" />
+                </button>
+
+                {/* Right Arrow */}
+                <button
+                  onClick={handleNext}
+                  disabled={currentScene === scenes.length - 1}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm"
+                  aria-label="Next scene"
+                >
+                  <ArrowRight className="w-6 h-6 text-white" />
+                </button>
+              </>
+            )}
           </>
         ) : (
-          <div className="text-center">
+          <div className="h-full flex items-center justify-center">
             <p className="text-muted-foreground">No scenes available</p>
           </div>
         )}
       </div>
-
-      {/* Navigation */}
-      {scenes.length > 1 && (
-        <div className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex gap-2 max-w-md mx-auto">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handlePrevious}
-              disabled={currentScene === 0}
-            >
-              Previous
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleNext}
-              disabled={currentScene === scenes.length - 1}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

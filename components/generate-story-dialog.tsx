@@ -71,8 +71,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const result = await storybooksApi.create(selectedCharacter, story.id)
       
       onOpenChange(false)
-      // Navigate to storybooks tab or show success message
-      window.location.href = '/?tab=storybooks'
+      // Navigate to storybooks tab without full page reload
+      router.push('/?tab=storybooks')
     } catch (err: any) {
       console.error('Failed to create storybook:', err)
       setError(err.message || 'Failed to create storybook. Please try again.')
