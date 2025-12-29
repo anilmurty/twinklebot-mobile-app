@@ -105,7 +105,7 @@ export async function pollPrediction(
 export async function generateImageWithNanoBanana(
   prompt: string,
   characterPhotos: string[],
-  aspectRatio: string = '9:16'
+  aspectRatio: string = 'match_input_image'
 ): Promise<string> {
   // Get model version ID (or use provided version)
   let modelVersion = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'

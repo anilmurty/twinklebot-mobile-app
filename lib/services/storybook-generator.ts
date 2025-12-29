@@ -144,7 +144,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         const generatedImageUrl = await generateImageWithNanoBanana(
           prompt,
           [characterPhoto], // Send only one image
-          sceneTemplate.aspect_ratio || '9:16'
+          sceneTemplate.aspect_ratio || 'match_input_image'
         )
         
         console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
