@@ -28,11 +28,22 @@ export async function GET(request: NextRequest) {
         
         // Process thumbnail URL
         if (template.thumbnail_url) {
-          // Check if it's a placeholder path (starts with /) or invalid URL
+          // Check if it's a relative path (starts with /) - convert to Supabase Storage URL
           if (template.thumbnail_url.startsWith('/') && !template.thumbnail_url.startsWith('http')) {
-            // Placeholder path - set to null so frontend can show placeholder
-            console.warn(`[Template ${template.id}] Placeholder thumbnail URL detected: ${template.thumbnail_url}. Run migration 004_update_template_storage_urls.sql to update URLs.`)
-            result.thumbnail_url = null
+            // Convert relative path like "/day-at-the-zoo/cover.png" to Supabase Storage URL
+            const storagePath = template.thumbnail_url.startsWith('/') 
+              ? template.thumbnail_url.slice(1) // Remove leading slash
+              : template.thumbnail_url
+            
+            // Get public URL from Supabase Storage (story-template-assets bucket is public)
+            const { getStorageUrl } = await import('@/lib/supabase/storage')
+            try {
+              result.thumbnail_url = getStorageUrl('story-template-assets', storagePath)
+              console.log(`[Template ${template.id}] Converted relative path to Supabase Storage URL: ${result.thumbnail_url}`)
+            } catch (err) {
+              console.error(`[Template ${template.id}] Failed to get storage URL for ${storagePath}:`, err)
+              result.thumbnail_url = null
+            }
           } else if (template.thumbnail_url.includes('/object/public/')) {
             // Public URL - use as is (bucket is public)
             console.log(`[Template ${template.id}] Using public URL: ${template.thumbnail_url}`)

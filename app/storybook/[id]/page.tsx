@@ -9,6 +9,7 @@ import { storybooksApi } from "@/lib/api-client"
 
 interface Scene {
   scene_number?: number
+  headline?: string
   image_url?: string
   text?: string
   script_text?: string // Fallback for old format
@@ -87,25 +88,13 @@ export default function StorybookViewerPage() {
   const scenes = storybook.scenes || []
   const scene = scenes[currentScene]
 
+  // Format character name: first letter uppercase, rest lowercase
+  const characterName = storybook.character_name 
+    ? storybook.character_name.charAt(0).toUpperCase() + storybook.character_name.slice(1).toLowerCase()
+    : storybook.character_name
+
   return (
     <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <div className="p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.push('/')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <div className="flex-1">
-            <h1 className="font-bold text-lg">{storybook.title}</h1>
-            <p className="text-xs text-muted-foreground">Starring: {storybook.character_name}</p>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {currentScene + 1} / {scenes.length}
-          </div>
-        </div>
-      </div>
-
       {/* Scene Content - Full Screen */}
       <div className="flex-1 relative overflow-hidden">
         {scene ? (
@@ -117,15 +106,39 @@ export default function StorybookViewerPage() {
                 alt={`Scene ${currentScene + 1}`}
                 className="w-full h-full object-cover"
               />
-              {/* Text Overlay */}
+              
+              {/* Top Header with Headline */}
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10">
+                <div className="flex items-center justify-between gap-4">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => router.push('/')}
+                    className="text-white hover:bg-white/20 shrink-0"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                  </Button>
+                  {scene.headline && (
+                    <h1 className="text-white text-xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1">
+                      {scene.headline}
+                    </h1>
+                  )}
+                  <div className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
+                    {currentScene + 1} / {scenes.length}
+                  </div>
+                </div>
+              </div>
+
+              {/* Text Overlay - Centered */}
               {(scene.text || scene.script_text) && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-6 pb-8">
-                  <div className="space-y-1">
+                  <div className="space-y-2 text-center max-w-2xl mx-auto">
                     {(scene.text || scene.script_text || '')
                       .split('\n')
                       .filter(line => line.trim())
                       .map((line, idx) => (
-                        <p key={idx} className="text-white text-lg leading-relaxed font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                        <p key={idx} className="text-white text-lg leading-relaxed font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
                           {line}
                         </p>
                       ))}

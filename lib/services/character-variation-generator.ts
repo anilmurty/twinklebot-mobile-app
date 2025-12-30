@@ -61,7 +61,8 @@ export async function generateCharacterVariations(
   characterId: string,
   templateId: number,
   basePhotoUrl: string,
-  userId: string
+  userId: string,
+  storybookId?: string // Optional: for progress tracking
 ): Promise<CharacterVariations> {
   // Check if variations already exist
   const existing = await getCharacterVariations(characterId, templateId)
@@ -110,6 +111,14 @@ export async function generateCharacterVariations(
 
   // Generate front variation first (uses uploaded photo)
   console.log('Generating front variation (step 1/3)...')
+  if (storybookId) {
+    const { supabaseAdmin } = await import('@/lib/supabase/server')
+    await supabaseAdmin
+      .from('storybooks')
+      .update({ progress: 10, updated_at: new Date().toISOString() })
+      .eq('id', storybookId)
+  }
+  
   const frontUrl = await generateImageWithNanoBanana(
     frontPrompt,
     [signedBasePhotoUrl],
@@ -124,6 +133,14 @@ export async function generateCharacterVariations(
 
   // Generate left and right variations in parallel (both use front variation as input)
   console.log('Generating left and right variations (step 2/3)...')
+  if (storybookId) {
+    const { supabaseAdmin } = await import('@/lib/supabase/server')
+    await supabaseAdmin
+      .from('storybooks')
+      .update({ progress: 20, updated_at: new Date().toISOString() })
+      .eq('id', storybookId)
+  }
+  
   const [leftUrl, rightUrl] = await Promise.all([
     generateImageWithNanoBanana(
       leftPrompt,
@@ -148,6 +165,15 @@ export async function generateCharacterVariations(
       throw new Error(`Right variation generation failed: ${err.message}`)
     }),
   ])
+  
+  // Update progress to 30% after all variations generated
+  if (storybookId) {
+    const { supabaseAdmin } = await import('@/lib/supabase/server')
+    await supabaseAdmin
+      .from('storybooks')
+      .update({ progress: 30, updated_at: new Date().toISOString() })
+      .eq('id', storybookId)
+  }
 
   // Download and upload each variation to Supabase Storage
   const storagePath = `${userId}/${characterId}/${templateId}`

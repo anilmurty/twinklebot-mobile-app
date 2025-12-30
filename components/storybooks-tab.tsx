@@ -281,17 +281,21 @@ export function StorybooksTab() {
                       ) : (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">Generating...</span>
-                            {progress > 0 && <span className="font-medium">{progress}%</span>}
+                            {progress < 30 ? (
+                              <span className="text-muted-foreground">
+                                Generating character images {progress <= 10 ? '1' : progress <= 20 ? '2' : '3'}...
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">Generating scenes...</span>
+                            )}
+                            <span className="font-medium">{progress}%</span>
                           </div>
-                          {progress > 0 && (
-                            <div className="w-full bg-secondary rounded-full h-2">
-                              <div
-                                className="bg-primary h-2 rounded-full transition-all"
-                                style={{ width: `${progress}%` }}
-                              />
-                            </div>
-                          )}
+                          <div className="w-full bg-secondary rounded-full h-2">
+                            <div
+                              className="bg-primary h-2 rounded-full transition-all"
+                              style={{ width: `${Math.max(progress, 5)}%` }} // Show at least 5% for visual feedback
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

@@ -12,6 +12,7 @@ import {
 
 interface SceneTemplate {
   scene_number: number
+  headline?: string
   script_text: string
   base_photo: string // filename from Supabase Storage (story-template-assets/day-at-the-zoo/)
   child_photo: 'front' | 'left' | 'right' // which character variation to use
@@ -66,11 +67,19 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   if (!variations) {
     console.log(`No existing variations found. Generating character variations...`)
     try {
+      // Update progress for character variation generation (0-30%)
+      // Front variation: 10%, Left: 20%, Right: 30%
+      await supabaseAdmin
+        .from('storybooks')
+        .update({ progress: 5, updated_at: new Date().toISOString() })
+        .eq('id', storybookId)
+
       variations = await generateCharacterVariations(
         character.id,
         template.id,
         character.front_photo_url,
-        userId
+        userId,
+        storybookId // Pass storybookId to update progress
       )
       console.log(`✅ Character variations generated successfully`)
     } catch (error: any) {
@@ -90,6 +99,11 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     console.log(`  Front: ${variations.front_variation_url}`)
     console.log(`  Left: ${variations.left_variation_url}`)
     console.log(`  Right: ${variations.right_variation_url}`)
+    // Character variations already exist, set progress to 30%
+    await supabaseAdmin
+      .from('storybooks')
+      .update({ progress: 30, updated_at: new Date().toISOString() })
+      .eq('id', storybookId)
   }
   console.log('=====================================\n')
 
@@ -213,19 +227,21 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           'image/jpeg'
         )
 
-        // Create scene data
-        // Replace [Name] and [NAME] placeholders with character name
-        const scriptText = sceneTemplate.script_text
-          .replace(/\[Name\]/g, character.name)
-          .replace(/\[NAME\]/g, character.name.toUpperCase())
-          .replace(/{character_name}/g, character.name)
+            // Create scene data
+            // Replace [Name] and [NAME] placeholders with character name (title case: first letter uppercase, rest lowercase)
+            const titleCaseName = character.name.charAt(0).toUpperCase() + character.name.slice(1).toLowerCase()
+            const scriptText = sceneTemplate.script_text
+              .replace(/\[Name\]/g, titleCaseName)
+              .replace(/\[NAME\]/g, titleCaseName)
+              .replace(/{character_name}/g, titleCaseName)
 
-        const sceneData = {
-          scene_number: sceneTemplate.scene_number,
-          image_url: storedImageUrl,
-          text: scriptText,
-          generated_at: new Date().toISOString(),
-        }
+            const sceneData = {
+              scene_number: sceneTemplate.scene_number,
+              headline: sceneTemplate.headline,
+              image_url: storedImageUrl,
+              text: scriptText,
+              generated_at: new Date().toISOString(),
+            }
 
         // Update storybook scenes array
         const updatedScenes = [...generatedScenes]
@@ -242,12 +258,14 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         generatedScenes = updatedScenes
 
         // Update storybook in database
-        const progress = Math.round(((i + 1) / totalScenes) * 100)
+        // Progress: 30% (character variations) + 70% for scenes
+        // Each scene is 70% / totalScenes
+        const sceneProgress = Math.round(30 + ((i + 1) / totalScenes) * 70)
         await supabaseAdmin
           .from('storybooks')
           .update({
             scenes: generatedScenes,
-            progress,
+            progress: sceneProgress,
             updated_at: new Date().toISOString(),
           })
           .eq('id', storybookId)

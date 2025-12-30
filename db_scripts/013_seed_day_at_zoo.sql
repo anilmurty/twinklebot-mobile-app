@@ -24,6 +24,7 @@ BEGIN
     "scenes": [
       {
         "scene_number": 1,
+        "headline": "The Grand Entrance",
         "script_text": "[Name] stands wide-eyed at the colorful zoo gates, clutching a paper map and wearing a bright animal-themed sun hat. What a day it is going to be!",
         "base_photo": "entrance.jpeg",
         "child_photo": "front",
@@ -32,7 +33,8 @@ BEGIN
       },
       {
         "scene_number": 2,
-        "script_text": "Time for some monkey business. [NAME] laughs and mimics the playful swinging motions of a family of chimpanzees.",
+        "headline": "Monkey Business",
+        "script_text": "Time for some monkey business. [Name] laughs and mimics the playful swinging motions of a family of chimpanzees.",
         "base_photo": "monkeys.jpeg",
         "child_photo": "right",
         "insertion_prompt": "put the child in the photo, excited, hands in the air. keep everything else the same and make it look natural",
@@ -40,6 +42,7 @@ BEGIN
       },
       {
         "scene_number": 3,
+        "headline": "Feeding A Giraffe",
         "script_text": "Standing on a high wooden platform, [Name] giggles as a giraffe stretches out its long, purple tongue to take a piece of lettuce.",
         "base_photo": "giraffe.jpeg",
         "child_photo": "left",
@@ -48,7 +51,8 @@ BEGIN
       },
       {
         "scene_number": 4,
-        "script_text": "Inside the aquarium, [NAME] presses their nose against the glass as a giant sea turtle glides silently overhead.",
+        "headline": "The Underwater Tunnel",
+        "script_text": "Inside the aquarium, [Name] presses their nose against the glass as a giant sea turtle glides silently overhead.",
         "base_photo": "aquarium.jpeg",
         "child_photo": "left",
         "insertion_prompt": "Add the child into the photo. they should be standing under the giant turtle, firmly on the ground, hands on the glass and face and neck bent upward to admire the turtle. keep everything else the same and make it natural",
@@ -56,6 +60,7 @@ BEGIN
       },
       {
         "scene_number": 5,
+        "headline": "Lunch at the Plaza",
         "script_text": "[Name] sits at a picnic table, enjoying a juice box and a sandwich shaped like a bear while watching a peacock strut by.",
         "base_photo": "lunch.jpeg",
         "child_photo": "right",
@@ -64,6 +69,7 @@ BEGIN
       },
       {
         "scene_number": 6,
+        "headline": "Penguin Parade",
         "script_text": "[Name] watches with delight as a group of penguins waddle across the ice and dive into the chilly blue water.",
         "base_photo": "penguins.jpeg",
         "child_photo": "right",
@@ -72,6 +78,7 @@ BEGIN
       },
       {
         "scene_number": 7,
+        "headline": "The Petting Zoo",
         "script_text": "[Name] gently brushes the soft coat of a friendly pygmy goat while learning how to hold a handful of grain.",
         "base_photo": "goats.jpeg",
         "child_photo": "left",
@@ -80,7 +87,8 @@ BEGIN
       },
       {
         "scene_number": 8,
-        "script_text": "In a quiet, tropical greenhouse, [NAME] stands perfectly still, hoping a bright blue butterfly will land on their shoulder.",
+        "headline": "The Butterfly Garden",
+        "script_text": "In a quiet, tropical greenhouse, [Name] stands perfectly still, hoping a bright blue butterfly will land on their shoulder.",
         "base_photo": "butterflies.jpeg",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, standing on the higher ground with their arm extended and their eyes gazing at he blue butterfly and their face turned towards it. The child''s facial expression that is hoping that the blue butterfly sits on it. keep everything else the same and make it natural",
@@ -88,7 +96,8 @@ BEGIN
       },
       {
         "scene_number": 9,
-        "script_text": "Towards end the day, [NAME] carefully chooses a soft plush elephant to remember their favorite animal from the trip.",
+        "headline": "The Gift Shop",
+        "script_text": "Towards end the day, [Name] carefully chooses a soft plush elephant to remember their favorite animal from the trip.",
         "base_photo": "gift-shop.jpeg",
         "child_photo": "left",
         "insertion_prompt": "put the child in the photo, standing to the right of the penguin stand and examining the big penguin by pressing it with their hands",
@@ -96,7 +105,8 @@ BEGIN
       },
       {
         "scene_number": 10,
-        "script_text": "After a long but fun day, it''s time to go home What will [NAME] explore next?",
+        "headline": "What a day!",
+        "script_text": "After a long but fun day, it''s time to go home What will [Name] explore next?",
         "base_photo": "entrance.jpeg",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand",
