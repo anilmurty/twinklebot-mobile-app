@@ -191,8 +191,12 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
           </div>
 
           <div className="space-y-2">
-            <Label>Gender</Label>
-            <RadioGroup value={gender} onValueChange={(value) => setGender(value as "male" | "female" | "")}>
+            <Label>Gender <span className="text-destructive">*</span></Label>
+            <RadioGroup 
+              value={gender} 
+              onValueChange={(value) => setGender(value as "male" | "female" | "")}
+              className="flex gap-6"
+            >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="male" id="gender-male" />
                 <Label htmlFor="gender-male" className="cursor-pointer font-normal">Male</Label>
@@ -212,66 +216,59 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
 
             <Card className="p-4">
               {preview ? (
-                <div className="space-y-3">
-                  <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-secondary">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
                     <img
                       src={preview}
                       alt="Character photo preview"
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{photo?.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {photo ? formatFileSize(photo.size) : ''}
-                      </p>
-                    </div>
-                    <Button size="sm" variant="ghost" onClick={handleRemovePhoto}>
-                      <X className="w-4 h-4" />
-                    </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{photo?.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {photo ? formatFileSize(photo.size) : ''}
+                    </p>
                   </div>
+                  <Button size="sm" variant="ghost" onClick={handleRemovePhoto}>
+                    <X className="w-4 h-4" />
+                  </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  <div className="w-full aspect-square rounded-lg bg-secondary flex items-center justify-center">
-                    <Camera className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      ref={cameraInputRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={handleFileInputChange}
-                    />
-                    <input
-                      ref={photoLibraryInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileInputChange}
-                    />
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={handleCameraClick}
-                      className="w-full"
-                    >
-                      <Camera className="w-4 h-4 mr-2" />
-                      Camera
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      onClick={handlePhotoLibraryClick}
-                      className="w-full"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Photo Library
-                    </Button>
-                  </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
+                  <input
+                    ref={photoLibraryInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileInputChange}
+                  />
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={handleCameraClick}
+                    className="w-full"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Camera
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={handlePhotoLibraryClick}
+                    className="w-full"
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Photo Library
+                  </Button>
                 </div>
               )}
             </Card>
