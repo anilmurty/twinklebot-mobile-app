@@ -89,9 +89,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const formData = await request.formData()
-    const name = formData.get('name') as string
-    const frontPhoto = formData.get('front_photo') as File
+    const body = await request.json()
+    const { name, photo_path } = body
 
     // Validation
     if (!name || name.length > 20 || !/^[a-zA-Z0-9]+$/.test(name)) {
@@ -101,23 +100,22 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!frontPhoto) {
+    if (!photo_path || typeof photo_path !== 'string') {
       return NextResponse.json(
-        { error: 'Photo is required' },
+        { error: 'Photo path is required' },
         { status: 400 }
       )
     }
 
-    // Validate file size
-    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB per file
-    if (frontPhoto.size > MAX_FILE_SIZE) {
+    // Validate that photo_path is in the correct format and belongs to the user
+    const userId = user.data.user?.id!
+    if (!photo_path.startsWith(`${userId}/temp/`)) {
       return NextResponse.json(
-        { error: 'Photo is too large. Maximum size is 10MB. Please compress or resize your image.' },
-        { status: 413 }
+        { error: 'Invalid photo path' },
+        { status: 400 }
       )
     }
 
-    const userId = user.data.user?.id!
     const userEmail = user.data.user?.email || ''
     const supabase = createServerClient(request.headers.get('authorization'))
     const { supabaseAdmin } = await import('@/lib/supabase/server')
@@ -168,7 +166,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: userId,
         name,
-        front_photo_url: '', // Will update after upload
+        front_photo_url: '', // Will update after moving file
         // left_photo_url and right_photo_url are nullable and not used
       })
       .select()
@@ -178,16 +176,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: createError.message }, { status: 500 })
     }
 
-    // Upload photo to storage
-    const { uploadToStorage } = await import('@/lib/supabase/storage')
+    // Move photo from temp location to final location
+    const { uploadToStorage, deleteFromStorage } = await import('@/lib/supabase/storage')
     
-    // Upload the single photo as front.jpg
+    // Download from temp location
+    const { data: tempFile, error: downloadError } = await supabaseAdmin.storage
+      .from('character-photos')
+      .download(photo_path)
+
+    if (downloadError || !tempFile) {
+      return NextResponse.json(
+        { error: `Failed to download photo: ${downloadError?.message || 'File not found'}` },
+        { status: 500 }
+      )
+    }
+
+    // Upload to final location
+    const finalPath = `${userId}/${character.id}/front.jpg`
     const frontUrl = await uploadToStorage(
       'character-photos',
-      `${userId}/${character.id}/front.jpg`,
-      await frontPhoto.arrayBuffer(),
-      frontPhoto.type
+      finalPath,
+      await tempFile.arrayBuffer(),
+      tempFile.type || 'image/jpeg'
     )
+
+    // Delete temp file
+    await deleteFromStorage('character-photos', photo_path).catch((err) => {
+      console.warn('Failed to delete temp file:', err)
+      // Continue even if temp file deletion fails
+    })
 
     // Update character with photo URL
     const { data: updatedCharacter, error: updateError } = await supabase

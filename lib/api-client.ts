@@ -55,24 +55,10 @@ async function apiRequest<T>(
 export const charactersApi = {
   list: () => apiRequest<{ characters: any[] }>('/characters'),
   get: (id: string) => apiRequest<any>(`/characters/${id}`),
-  create: (data: FormData) => {
-    return getAuthToken().then(async (token) => {
-      const response = await fetch(`${API_BASE}/characters`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-        body: data,
-      })
-      if (!response.ok) {
-        // Handle 413 Payload Too Large with a user-friendly message
-        if (response.status === 413) {
-          throw new Error('File size too large. Maximum size is 10MB per photo. Please compress or resize your images.')
-        }
-        const error = await response.json().catch(() => ({ error: response.statusText }))
-        throw new Error(error.error || `API error: ${response.status}`)
-      }
-      return response.json()
+  create: (data: { name: string; photo_path: string }) => {
+    return apiRequest<any>('/characters', {
+      method: 'POST',
+      body: JSON.stringify(data),
     })
   },
   update: (id: string, data: FormData) => {

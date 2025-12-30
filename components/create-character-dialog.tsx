@@ -86,11 +86,47 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
       setIsSubmitting(true)
       setError(null)
 
-      const formData = new FormData()
-      formData.append('name', name.trim())
-      formData.append('front_photo', photo)
+      // Upload photo directly to Supabase Storage from client
+      // This bypasses Vercel's 4.5MB request body limit
+      const { createClient } = await import('@/lib/supabase/client-browser')
+      const supabase = createClient()
+      
+      // Get current user
+      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      if (!currentUser) {
+        throw new Error('You must be logged in to create a character')
+      }
 
-      await charactersApi.create(formData)
+      // Generate a temporary ID for the upload path
+      // Use crypto.randomUUID() if available, otherwise generate a simple random ID
+      const tempId = typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+      const tempPath = `${currentUser.id}/temp/${tempId}.jpg`
+
+      // Upload to temporary location
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('character-photos')
+        .upload(tempPath, photo, {
+          contentType: photo.type || 'image/jpeg',
+          upsert: false,
+        })
+
+      if (uploadError) {
+        throw new Error(`Failed to upload photo: ${uploadError.message}`)
+      }
+
+      // Get the public URL (we'll move it to final location on server)
+      const { data: urlData } = supabase.storage
+        .from('character-photos')
+        .getPublicUrl(uploadData.path)
+
+      // Send character name and temp photo path to API
+      // API will create character, move file to final location, and update character
+      await charactersApi.create({
+        name: name.trim(),
+        photo_path: uploadData.path, // Send the storage path, not the URL
+      })
 
       // Reset form
       setName("")
