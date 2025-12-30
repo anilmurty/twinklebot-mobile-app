@@ -90,12 +90,19 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, photo_path } = body
+    const { name, gender, photo_path } = body
 
     // Validation
     if (!name || name.length > 20 || !/^[a-zA-Z0-9]+$/.test(name)) {
       return NextResponse.json(
         { error: 'Name must be 1-20 alphanumeric characters' },
+        { status: 400 }
+      )
+    }
+
+    if (!gender || !['male', 'female'].includes(gender)) {
+      return NextResponse.json(
+        { error: 'Gender is required and must be "male" or "female"' },
         { status: 400 }
       )
     }
@@ -166,6 +173,7 @@ export async function POST(request: NextRequest) {
       .insert({
         user_id: userId,
         name,
+        gender,
         front_photo_url: '', // Will update after moving file
         // left_photo_url and right_photo_url are nullable and not used
       })

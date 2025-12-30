@@ -76,6 +76,24 @@ export async function generateCharacterVariations(
 
   console.log(`Generating character variations for character ${characterId} and template ${templateId}`)
 
+  // Fetch character's gender from database
+  const { data: characterData, error: characterError } = await supabaseAdmin
+    .from('characters')
+    .select('gender')
+    .eq('id', characterId)
+    .single()
+
+  if (characterError || !characterData) {
+    throw new Error(`Failed to fetch character data: ${characterError?.message || 'Character not found'}`)
+  }
+
+  const gender = characterData.gender as 'male' | 'female'
+  if (!gender || !['male', 'female'].includes(gender)) {
+    throw new Error(`Invalid or missing gender for character ${characterId}`)
+  }
+
+  console.log(`Character gender: ${gender}`)
+
   // Extract storage path from URL
   const getPhotoPath = (url: string) => {
     if (!url || url.trim() === '') {
@@ -98,8 +116,10 @@ export async function generateCharacterVariations(
   console.log(`[TIMING] Got signed URL: ${Date.now() - signedUrlStart}ms`)
 
   // Generate three variations with prompts for different views
-  // Front variation: Use uploaded photo, dress for zoo
-  const frontPrompt = "dress this child like they're ready for a day at the zoo. safari attire, bright animal-themed sun hat, binoculars dangling, arms on either side and happy expression. keep facial features identical. white background and full length"
+  // Front variation: Use uploaded photo, dress for zoo (gender-specific)
+  const frontPrompt = gender === 'male'
+    ? "dress this little boy to look like he is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
+    : "dress this little girl to look like she is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
   
   // Left and Right variations: Use front variation as input, change facing direction
   const leftPrompt = "Change this so that the child is facing right"

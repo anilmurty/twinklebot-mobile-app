@@ -28,7 +28,7 @@ BEGIN
         "script_text": "[Name] stands wide-eyed at the colorful zoo gates, clutching a paper map and wearing a bright animal-themed sun hat. What a day it is going to be!",
         "base_photo": "entrance.jpeg",
         "child_photo": "front",
-        "insertion_prompt": "put the child in the photo, clutching an open paper map with an expression of amazement and curiosity for what''s ahead. make height proportionate to surroundings and the child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, clutching an open paper map with an expression of amazement and curiosity for what''s ahead. make height proportionate to surroundings and the child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -37,7 +37,7 @@ BEGIN
         "script_text": "Time for some monkey business. [Name] laughs and mimics the playful swinging motions of a family of chimpanzees.",
         "base_photo": "monkeys.jpeg",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, excited and animated. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, excited and animated. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -46,7 +46,7 @@ BEGIN
         "script_text": "Standing on a high wooden platform, [Name] giggles as a giraffe stretches out its long, purple tongue to take a piece of lettuce.",
         "base_photo": "giraffe.jpeg",
         "child_photo": "left",
-        "insertion_prompt": "put the child in the photo, securely behind the raised fence, feeding the giraffe lettuce, expression of excitement and amazement. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it natural",
+        "insertion_prompt": "put the child in the photo, standing on the platform and behind the fence, feeding the giraffe lettuce, expression of excitement and amazement. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -55,7 +55,7 @@ BEGIN
         "script_text": "Inside the aquarium, [NAME] watched in amazement as a sea turtle glides silently overhead.",
         "base_photo": "aquarium.jpeg",
         "child_photo": "left",
-        "insertion_prompt": "put the child into the photo. they should be standing under the giant turtle and looking up at it awestruck. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it natural",
+        "insertion_prompt": "put the child into the photo. they should be standing under the giant turtle and looking up at it awestruck. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -64,7 +64,7 @@ BEGIN
         "script_text": "[Name] sits at a picnic table, enjoying a juice box and a sandwich shaped like a bear while watching a peacock strut by.",
         "base_photo": "lunch.jpeg",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, sitting and sipping a juice box as if they''re posing for a photo. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, sitting and sipping a juice box as if they''re posing for a photo. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -73,7 +73,7 @@ BEGIN
         "script_text": "[Name] watches with delight as a group of penguins waddle across the ice and dive into the chilly blue water.",
         "base_photo": "penguins.jpeg",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, facing the glass and viewing the penguins. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, facing the glass and viewing the penguins. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -82,7 +82,7 @@ BEGIN
         "script_text": "[Name] gently brushes the soft coat of a friendly pygmy goat while learning how to hold a handful of grain.",
         "base_photo": "goats.jpeg",
         "child_photo": "left",
-        "insertion_prompt": "put the child in the photo, on their knees and gently petting the goat with their right hand while feeding the goat grains with their left hand. expression of quiet observation. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, on their knees and gently petting the goat with their right hand while feeding the goat grains with their left hand. expression of quiet observation. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -91,7 +91,7 @@ BEGIN
         "script_text": "In a quiet, tropical greenhouse, [NAME] stands perfectly still, as butterflies flutter around. What a magical place!",
         "base_photo": "butterflies.jpeg",
         "child_photo": "front",
-        "insertion_prompt": "put the child in the photo, standing on the higher ground with their arm extended and their eyes gazing at he blue butterfly and their face turned towards it. The child''s facial expression that is hoping that the blue butterfly sits on it. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, standing firmly on the ground and amazed by all the butterflies around. The child''s facial expression that is hoping that the blue butterfly sits on it. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -100,7 +100,7 @@ BEGIN
         "script_text": "At the gift shop [NAME] carefully chooses a soft plush penguin to remember their favorite animal from the trip.",
         "base_photo": "gift-shop.jpeg",
         "child_photo": "left",
-        "insertion_prompt": "put the child in the photo, standing to the right of the penguin stand and examining the big penguin by pressing it with their hands. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, standing to the right of the penguin stand and clutching a penguin with both hands. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -109,7 +109,7 @@ BEGIN
         "script_text": "After a long but fun day, it''s time to go home What will [Name] explore next?",
         "base_photo": "entrance.jpeg",
         "child_photo": "front",
-        "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand. The child''s image should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       }
     ]

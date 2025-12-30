@@ -55,7 +55,7 @@ async function apiRequest<T>(
 export const charactersApi = {
   list: () => apiRequest<{ characters: any[] }>('/characters'),
   get: (id: string) => apiRequest<any>(`/characters/${id}`),
-  create: (data: { name: string; photo_path: string }) => {
+  create: (data: { name: string; gender: "male" | "female"; photo_path: string }) => {
     return apiRequest<any>('/characters', {
       method: 'POST',
       body: JSON.stringify(data),

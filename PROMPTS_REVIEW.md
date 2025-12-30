@@ -8,7 +8,7 @@ These prompts are used to generate three different views of the character (front
 **Input**: Uploaded character photo  
 **Prompt**:
 ```
-dress this child like they're ready for a day at the zoo. safari attire, bright animal-themed sun hat, binoculars dangling, arms on either side and happy expression. keep facial features identical. white background and full length
+dress this child like they're ready for a day at the zoo. keep facial features identical. white background and full length
 ```
 
 ### Left Variation Prompt

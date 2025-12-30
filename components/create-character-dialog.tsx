@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Camera, Upload, X, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { charactersApi } from "@/lib/api-client"
 
 interface CreateCharacterDialogProps {
@@ -17,6 +18,7 @@ interface CreateCharacterDialogProps {
 
 export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }: CreateCharacterDialogProps) {
   const [name, setName] = useState("")
+  const [gender, setGender] = useState<"male" | "female" | "">("")
   const [photo, setPhoto] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -98,8 +100,8 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
   }
 
   const handleSubmit = async () => {
-    if (!name.trim() || !photo) {
-      setError('Please provide a name and a photo')
+    if (!name.trim() || !photo || !gender) {
+      setError('Please provide a name, gender, and a photo')
       return
     }
 
@@ -142,15 +144,17 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
         .from('character-photos')
         .getPublicUrl(uploadData.path)
 
-      // Send character name and temp photo path to API
+      // Send character name, gender, and temp photo path to API
       // API will create character, move file to final location, and update character
       await charactersApi.create({
         name: name.trim(),
+        gender: gender as "male" | "female",
         photo_path: uploadData.path, // Send the storage path, not the URL
       })
 
       // Reset form
       setName("")
+      setGender("")
       setPhoto(null)
       setPreview(null)
       onOpenChange(false)
@@ -163,7 +167,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
     }
   }
 
-  const canSubmit = name.length > 0 && photo && !isSubmitting
+  const canSubmit = name.length > 0 && gender && photo && !isSubmitting
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -184,6 +188,20 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
               maxLength={20}
             />
             <p className="text-xs text-muted-foreground">{name.length}/20 characters</p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Gender</Label>
+            <RadioGroup value={gender} onValueChange={(value) => setGender(value as "male" | "female" | "")}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="male" id="gender-male" />
+                <Label htmlFor="gender-male" className="cursor-pointer font-normal">Male</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="female" id="gender-female" />
+                <Label htmlFor="gender-female" className="cursor-pointer font-normal">Female</Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <div className="space-y-4">

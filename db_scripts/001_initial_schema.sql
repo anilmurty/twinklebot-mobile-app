@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS characters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name VARCHAR(20) NOT NULL,
+  gender VARCHAR(10) NOT NULL CHECK (gender IN ('male', 'female')),
   front_photo_url TEXT NOT NULL,
   left_photo_url TEXT, -- Nullable, not used (kept for backward compatibility)
   right_photo_url TEXT, -- Nullable, not used (kept for backward compatibility)
