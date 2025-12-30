@@ -73,8 +73,6 @@ export async function PATCH(
     const formData = await request.formData()
     const name = formData.get('name') as string | null
     const frontPhoto = formData.get('front_photo') as File | null
-    const leftPhoto = formData.get('left_photo') as File | null
-    const rightPhoto = formData.get('right_photo') as File | null
 
     const updates: any = {}
 
@@ -106,7 +104,7 @@ export async function PATCH(
       updates.name = name
     }
 
-    // Upload new photos if provided
+    // Upload new photo if provided (only front photo is supported)
     const { uploadToStorage } = await import('@/lib/supabase/storage')
     const userId = user.data.user?.id!
 
@@ -116,24 +114,6 @@ export async function PATCH(
         `${userId}/${id}/front.jpg`,
         await frontPhoto.arrayBuffer(),
         frontPhoto.type
-      )
-    }
-
-    if (leftPhoto) {
-      updates.left_photo_url = await uploadToStorage(
-        'character-photos',
-        `${userId}/${id}/left.jpg`,
-        await leftPhoto.arrayBuffer(),
-        leftPhoto.type
-      )
-    }
-
-    if (rightPhoto) {
-      updates.right_photo_url = await uploadToStorage(
-        'character-photos',
-        `${userId}/${id}/right.jpg`,
-        await rightPhoto.arrayBuffer(),
-        rightPhoto.type
       )
     }
 
@@ -186,15 +166,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Character not found' }, { status: 404 })
     }
 
-    // Delete photos from storage
+    // Delete photo from storage (only front photo is used)
     const { deleteFromStorage } = await import('@/lib/supabase/storage')
     const userId = user.data.user?.id!
 
-    await Promise.all([
-      deleteFromStorage('character-photos', `${userId}/${id}/front.jpg`),
-      deleteFromStorage('character-photos', `${userId}/${id}/left.jpg`),
-      deleteFromStorage('character-photos', `${userId}/${id}/right.jpg`),
-    ]).catch(() => {
+    await deleteFromStorage('character-photos', `${userId}/${id}/front.jpg`).catch(() => {
       // Continue even if storage deletion fails
     })
 

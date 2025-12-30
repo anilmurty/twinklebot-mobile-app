@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS characters (
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   name VARCHAR(20) NOT NULL,
   front_photo_url TEXT NOT NULL,
-  left_photo_url TEXT NOT NULL,
-  right_photo_url TEXT NOT NULL,
+  left_photo_url TEXT, -- Nullable, not used (kept for backward compatibility)
+  right_photo_url TEXT, -- Nullable, not used (kept for backward compatibility)
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, name)

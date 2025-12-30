@@ -169,8 +169,7 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         name,
         front_photo_url: '', // Will update after upload
-        left_photo_url: '',
-        right_photo_url: '',
+        // left_photo_url and right_photo_url are nullable and not used
       })
       .select()
       .single()
