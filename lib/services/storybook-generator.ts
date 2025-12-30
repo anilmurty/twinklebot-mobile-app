@@ -58,76 +58,93 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   const scenes = template.script_data.scenes as SceneTemplate[]
   const totalScenes = scenes.length
 
-  // Check for existing character variations, generate if needed
-  console.log(`\n=== CHECKING CHARACTER VARIATIONS ===`)
-  console.log(`Character ID: ${character.id}`)
-  console.log(`Template ID: ${template.id}`)
-  let variations = await getCharacterVariations(character.id, template.id)
+  try {
+    // Check for existing character variations, generate if needed
+    console.log(`\n=== CHECKING CHARACTER VARIATIONS ===`)
+    console.log(`Character ID: ${character.id}`)
+    console.log(`Template ID: ${template.id}`)
+    let variations = await getCharacterVariations(character.id, template.id)
   
-  if (!variations) {
-    console.log(`No existing variations found. Generating character variations...`)
-    try {
-      // Set progress to 0% - "Starting character creation"
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 0, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
+    if (!variations) {
+      console.log(`No existing variations found. Generating character variations...`)
+      try {
+        // Set progress to 0% - "Starting character creation"
+        await supabaseAdmin
+          .from('storybooks')
+          .update({ progress: 0, updated_at: new Date().toISOString() })
+          .eq('id', storybookId)
 
-      variations = await generateCharacterVariations(
-        character.id,
-        template.id,
-        character.front_photo_url,
-        userId,
-        storybookId // Pass storybookId to update progress
-      )
-      console.log(`✅ Character variations generated successfully`)
-    } catch (error: any) {
-      console.error(`❌ Failed to generate character variations:`, error)
+        variations = await generateCharacterVariations(
+          character.id,
+          template.id,
+          character.front_photo_url,
+          userId,
+          storybookId // Pass storybookId to update progress
+        )
+        console.log(`✅ Character variations generated successfully`)
+      } catch (error: any) {
+        console.error(`❌ Failed to generate character variations:`, error)
+        await supabaseAdmin
+          .from('storybooks')
+          .update({
+            status: 'failed',
+            error_message: `Failed to generate character variations: ${error.message}`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', storybookId)
+        throw error // Stop the process
+      }
+    } else {
+      console.log(`✅ Using existing character variations:`)
+      console.log(`  Front: ${variations.front_variation_url}`)
+      console.log(`  Left: ${variations.left_variation_url}`)
+      console.log(`  Right: ${variations.right_variation_url}`)
+      // Character variations already exist, set progress to 95% (character generation complete)
       await supabaseAdmin
         .from('storybooks')
-        .update({
-          status: 'failed',
-          error_message: `Failed to generate character variations: ${error.message}`,
-          updated_at: new Date().toISOString(),
-        })
+        .update({ progress: 95, updated_at: new Date().toISOString() })
         .eq('id', storybookId)
-      throw error // Stop the process
     }
-  } else {
-    console.log(`✅ Using existing character variations:`)
-    console.log(`  Front: ${variations.front_variation_url}`)
-    console.log(`  Left: ${variations.left_variation_url}`)
-    console.log(`  Right: ${variations.right_variation_url}`)
-    // Character variations already exist, set progress to 95% (character generation complete)
+    console.log('=====================================\n')
+
+    // Initialize scenes array if not exists
+    let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
+
+    // Set progress to 0% for "Starting storybook generation"
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 95, updated_at: new Date().toISOString() })
+      .update({ progress: 100, updated_at: new Date().toISOString() }) // 100 = starting scene generation
       .eq('id', storybookId)
-  }
-  console.log('=====================================\n')
 
-  // Initialize scenes array if not exists
-  let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
+    // Helper function to check if scene already exists in database
+    const checkSceneExists = async (sceneNumber: number): Promise<boolean> => {
+      const { data: currentStorybook } = await supabaseAdmin
+        .from('storybooks')
+        .select('scenes')
+        .eq('id', storybookId)
+        .single()
 
-  // Set progress to 0% for "Starting storybook generation"
-  await supabaseAdmin
-    .from('storybooks')
-    .update({ progress: 100, updated_at: new Date().toISOString() }) // 100 = starting scene generation
-    .eq('id', storybookId)
-
-  // Helper function to generate a single scene
-  const generateScene = async (sceneTemplate: SceneTemplate, attempt: number = 1): Promise<void> => {
-    // Check if already generated
-    const existingScene = generatedScenes.find(
-      (s: any) => s.scene_number === sceneTemplate.scene_number
-    )
-
-    if (existingScene?.image_url) {
-      console.log(`Scene ${sceneTemplate.scene_number} already generated, skipping`)
-      return
+      const currentScenes = Array.isArray(currentStorybook?.scenes) ? currentStorybook.scenes : []
+      const existingScene = currentScenes.find((s: any) => s.scene_number === sceneNumber)
+      const exists = !!existingScene?.image_url
+      
+      if (exists) {
+        console.log(`Scene ${sceneNumber} already exists in database with image_url`)
+      }
+      
+      return exists
     }
 
-    try {
+    // Helper function to generate a single scene
+    const generateScene = async (sceneTemplate: SceneTemplate, attempt: number = 1): Promise<void> => {
+      // Check database first to avoid duplicate predictions
+      const alreadyExists = await checkSceneExists(sceneTemplate.scene_number)
+      if (alreadyExists) {
+        console.log(`Scene ${sceneTemplate.scene_number} already generated in database, skipping`)
+        return
+      }
+
+      try {
       console.log(`Generating scene ${sceneTemplate.scene_number} (attempt ${attempt}/3)`)
 
       // Validate required fields
@@ -190,6 +207,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       console.log(sceneTemplate.insertion_prompt)
       console.log(`\n--- END INSERTION PROMPT ---`)
       console.log('=====================================\n')
+
+      // Double-check database right before creating prediction to avoid race conditions
+      const stillNeeded = !(await checkSceneExists(sceneTemplate.scene_number))
+      if (!stillNeeded) {
+        console.log(`Scene ${sceneTemplate.scene_number} was completed by another process, skipping`)
+        return
+      }
 
       // Create prediction
       const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
@@ -273,74 +297,159 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         })
         .eq('id', storybookId)
 
-      // Update local state
-      generatedScenes = updatedScenes
+        // Update local state
+        generatedScenes = updatedScenes
 
-      console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully`)
-    } catch (error: any) {
-      console.error(`Scene ${sceneTemplate.scene_number} attempt ${attempt} failed:`, error.message)
-      
-      // Retry logic: up to 3 attempts
-      if (attempt < 3) {
-        // Exponential backoff
-        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000))
-        return generateScene(sceneTemplate, attempt + 1)
-      } else {
-        // All retries failed
-        throw new Error(`Failed to generate scene ${sceneTemplate.scene_number} after 3 attempts: ${error.message}`)
+        console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully`)
+      } catch (error: any) {
+        console.error(`Scene ${sceneTemplate.scene_number} attempt ${attempt} failed:`, error.message)
+        
+        // Retry logic: up to 3 attempts
+        if (attempt < 3) {
+          // Exponential backoff
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+          return generateScene(sceneTemplate, attempt + 1)
+        } else {
+          // All retries failed
+          throw new Error(`Failed to generate scene ${sceneTemplate.scene_number} after 3 attempts: ${error.message}`)
+        }
       }
     }
-  }
 
-  // Generate all scenes in parallel
-  console.log(`\n=== STARTING PARALLEL SCENE GENERATION ===`)
-  console.log(`Generating ${totalScenes} scenes concurrently...`)
-  
-  const scenePromises = scenes.map(sceneTemplate => generateScene(sceneTemplate))
-  const results = await Promise.allSettled(scenePromises)
-  
-  // Check for failures
-  const failures = results
-    .map((result, index) => ({ result, sceneNumber: scenes[index].scene_number }))
-    .filter(({ result }) => result.status === 'rejected')
-
-  if (failures.length > 0) {
-    const errorMessages = failures.map(({ result, sceneNumber }) => 
-      `Scene ${sceneNumber}: ${result.status === 'rejected' ? result.reason?.message || 'Unknown error' : ''}`
-    ).join('\n')
+    // Generate all scenes in parallel
+    console.log(`\n=== STARTING PARALLEL SCENE GENERATION ===`)
+    console.log(`Generating ${totalScenes} scenes concurrently...`)
     
-    await supabaseAdmin
+    const scenePromises = scenes.map(sceneTemplate => generateScene(sceneTemplate))
+    const results = await Promise.allSettled(scenePromises)
+    
+    // Check for failures
+    const failures = results
+      .map((result, index) => ({ result, sceneNumber: scenes[index].scene_number }))
+      .filter(({ result }) => result.status === 'rejected')
+
+    if (failures.length > 0) {
+      const errorMessages = failures.map(({ result, sceneNumber }) => 
+        `Scene ${sceneNumber}: ${result.status === 'rejected' ? result.reason?.message || 'Unknown error' : ''}`
+      ).join('\n')
+      
+      await supabaseAdmin
+        .from('storybooks')
+        .update({
+          status: 'failed',
+          error_message: `Failed to generate ${failures.length} scene(s):\n${errorMessages}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', storybookId)
+
+      throw new Error(`Failed to generate ${failures.length} scene(s)`)
+    }
+
+    // Verify all scenes exist in database before marking as complete
+    console.log(`\n=== VERIFYING ALL SCENES ARE COMPLETE ===`)
+    const { data: finalStorybook, error: verifyError } = await supabaseAdmin
+      .from('storybooks')
+      .select('scenes')
+      .eq('id', storybookId)
+      .single()
+
+    if (verifyError) {
+      console.error(`❌ Error verifying scenes:`, verifyError)
+      throw new Error(`Failed to verify scenes: ${verifyError.message}`)
+    }
+
+    const finalScenes = Array.isArray(finalStorybook?.scenes) ? finalStorybook.scenes : []
+    const completedScenes = finalScenes.filter((s: any) => s.image_url).length
+    
+    console.log(`Found ${completedScenes}/${totalScenes} completed scenes in database`)
+    console.log(`Scene numbers with images:`, finalScenes.filter((s: any) => s.image_url).map((s: any) => s.scene_number).sort((a, b) => a - b))
+
+    if (completedScenes < totalScenes) {
+      const missingScenes = scenes
+        .map(s => s.scene_number)
+        .filter(num => !finalScenes.find((s: any) => s.scene_number === num && s.image_url))
+      
+      console.error(`⚠️ Warning: Only ${completedScenes}/${totalScenes} scenes completed. Missing scenes: ${missingScenes.join(', ')}`)
+      
+      await supabaseAdmin
+        .from('storybooks')
+        .update({
+          status: 'failed',
+          error_message: `Only ${completedScenes}/${totalScenes} scenes generated. Missing scenes: ${missingScenes.join(', ')}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', storybookId)
+
+      throw new Error(`Only ${completedScenes}/${totalScenes} scenes generated. Missing: ${missingScenes.join(', ')}`)
+    }
+    
+    console.log(`✅ All ${totalScenes} scenes verified complete`)
+
+    // All scenes generated successfully - mark as completed
+    // Set progress to 200 (which displays as 100% in scene generation phase)
+    // The UI subtracts 100 from progress >= 100 to get scene progress (0-100%)
+    // So 200 - 100 = 100% completion
+    console.log(`✅ All ${totalScenes} scenes verified in database. Marking storybook as completed.`)
+    
+    const { error: updateError } = await supabaseAdmin
       .from('storybooks')
       .update({
-        status: 'failed',
-        error_message: `Failed to generate ${failures.length} scene(s):\n${errorMessages}`,
+        status: 'completed',
+        progress: 200, // Scene generation complete (displays as 100%)
+        completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', storybookId)
 
-    throw new Error(`Failed to generate ${failures.length} scene(s)`)
+    if (updateError) {
+      console.error(`❌ Failed to update storybook status to completed:`, updateError)
+      throw new Error(`Failed to mark storybook as completed: ${updateError.message}`)
+    }
+
+    // Verify the update succeeded
+    const { data: verifyComplete } = await supabaseAdmin
+      .from('storybooks')
+      .select('status')
+      .eq('id', storybookId)
+      .single()
+
+    if (verifyComplete?.status !== 'completed') {
+      console.error(`❌ Storybook status update verification failed. Expected 'completed', got '${verifyComplete?.status}'`)
+      throw new Error(`Storybook status was not set to completed. Current status: ${verifyComplete?.status}`)
+    }
+
+    // Update generation job status
+    const { error: jobUpdateError } = await supabaseAdmin
+      .from('generation_jobs')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+      })
+      .eq('storybook_id', storybookId)
+
+    if (jobUpdateError) {
+      console.error(`⚠️ Warning: Failed to update generation job status:`, jobUpdateError)
+      // Don't throw - storybook is already marked as completed
+    }
+
+    console.log(`✅ Storybook ${storybookId} generation completed - all ${totalScenes} scenes generated successfully`)
+  } catch (error: any) {
+    // Ensure status is updated even if an unexpected error occurs
+    console.error(`❌ Unexpected error during storybook generation:`, error)
+    
+    try {
+      await supabaseAdmin
+        .from('storybooks')
+        .update({
+          status: 'failed',
+          error_message: `Unexpected error: ${error.message || 'Unknown error'}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', storybookId)
+    } catch (updateErr: any) {
+      console.error(`❌ Failed to update storybook status after error:`, updateErr)
+    }
+    
+    throw error // Re-throw to let caller know it failed
   }
-
-  // All scenes generated successfully
-  const finalProgress = 100 + 100 // 200 = all scenes complete (displays as 100%)
-  await supabaseAdmin
-    .from('storybooks')
-    .update({
-      status: 'completed',
-      progress: finalProgress,
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', storybookId)
-
-  // Update generation job status
-  await supabaseAdmin
-    .from('generation_jobs')
-    .update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-    })
-    .eq('storybook_id', storybookId)
-
-  console.log(`✅ Storybook ${storybookId} generation completed - all ${totalScenes} scenes generated successfully`)
 }
