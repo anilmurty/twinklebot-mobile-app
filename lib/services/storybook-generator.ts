@@ -58,20 +58,40 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   const totalScenes = scenes.length
 
   // Check for existing character variations, generate if needed
-  console.log(`Checking for character variations for character ${character.id} and template ${template.id}`)
+  console.log(`\n=== CHECKING CHARACTER VARIATIONS ===`)
+  console.log(`Character ID: ${character.id}`)
+  console.log(`Template ID: ${template.id}`)
   let variations = await getCharacterVariations(character.id, template.id)
   
   if (!variations) {
-    console.log(`Generating character variations for character ${character.id}`)
-    variations = await generateCharacterVariations(
-      character.id,
-      template.id,
-      character.front_photo_url,
-      userId
-    )
+    console.log(`No existing variations found. Generating character variations...`)
+    try {
+      variations = await generateCharacterVariations(
+        character.id,
+        template.id,
+        character.front_photo_url,
+        userId
+      )
+      console.log(`✅ Character variations generated successfully`)
+    } catch (error: any) {
+      console.error(`❌ Failed to generate character variations:`, error)
+      await supabaseAdmin
+        .from('storybooks')
+        .update({
+          status: 'failed',
+          error_message: `Failed to generate character variations: ${error.message}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', storybookId)
+      throw error // Stop the process
+    }
   } else {
-    console.log(`Using existing character variations for character ${character.id}`)
+    console.log(`✅ Using existing character variations:`)
+    console.log(`  Front: ${variations.front_variation_url}`)
+    console.log(`  Left: ${variations.left_variation_url}`)
+    console.log(`  Right: ${variations.right_variation_url}`)
   }
+  console.log('=====================================\n')
 
   // Initialize scenes array if not exists
   let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
@@ -134,11 +154,16 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         // Construct base photo path (from /public/day-at-the-zoo/)
         const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
 
-        console.log(`\n=== Scene ${sceneTemplate.scene_number} ===`)
+        console.log(`\n=== SCENE ${sceneTemplate.scene_number} GENERATION ===`)
         console.log(`Character: ${character.name}`)
-        console.log(`Base photo: ${basePhotoPath}`)
-        console.log(`Character variation: ${sceneTemplate.child_photo}`)
-        console.log(`Insertion prompt: ${sceneTemplate.insertion_prompt}`)
+        console.log(`Base photo path: ${basePhotoPath}`)
+        console.log(`Character variation type: ${sceneTemplate.child_photo}`)
+        console.log(`Character variation URL: ${characterVariationUrl}`)
+        console.log(`\n--- INSERTION PROMPT ---`)
+        console.log(sceneTemplate.insertion_prompt)
+        console.log(`\n--- END INSERTION PROMPT ---`)
+        console.log(`Aspect ratio: ${sceneTemplate.aspect_ratio || 'match_input_image'}`)
+        console.log('=====================================\n')
 
         // Generate image using base photo + character variation + insertion prompt
         const generatedImageUrl = await generateImageWithBasePhotoAndCharacter(

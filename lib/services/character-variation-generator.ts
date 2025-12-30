@@ -27,7 +27,23 @@ export async function getCharacterVariations(
     .eq('template_id', templateId)
     .single()
 
-  if (error || !data) {
+  if (error) {
+    // PGRST116 means no rows found, which is fine
+    if (error.code === 'PGRST116') {
+      return null
+    }
+    // Other errors should be logged
+    console.error('Error checking for character variations:', error)
+    return null
+  }
+
+  if (!data) {
+    return null
+  }
+
+  // Validate that all URLs exist
+  if (!data.front_variation_url || !data.left_variation_url || !data.right_variation_url) {
+    console.warn('Character variations found but URLs are incomplete, will regenerate')
     return null
   }
 
@@ -72,47 +88,126 @@ export async function generateCharacterVariations(
   const signedBasePhotoUrl = await getSignedUrl('character-photos', basePhotoPath, 3600)
 
   // Generate three variations with prompts for different views
-  const variationPrompts = {
-    front: 'Generate a clear front-facing view of this child character, maintaining their exact facial features, hair color, skin tone, and expression. The character should be facing forward, standing naturally.',
-    left: 'Generate a clear left-facing view (profile from left side) of this child character, maintaining their exact facial features, hair color, skin tone, and expression. The character should be turned to show their left profile.',
-    right: 'Generate a clear right-facing view (profile from right side) of this child character, maintaining their exact facial features, hair color, skin tone, and expression. The character should be turned to show their right profile.',
-  }
+  // Front variation: Use uploaded photo, dress for zoo
+  const frontPrompt = "dress this child like they're ready for a day at the zoo. safari attire, bright animal-themed sun hat, binoculars dangling, arms on either side and happy expression. keep facial features identical. white background and full length"
+  
+  // Left and Right variations: Use front variation as input, change facing direction
+  const leftPrompt = "Change this so that the child is facing right"
+  const rightPrompt = "Change this so that the child is facing left"
 
-  // Generate all three variations in parallel
-  const [frontUrl, leftUrl, rightUrl] = await Promise.all([
+  // Log prompts for debugging
+  console.log('\n=== CHARACTER VARIATION GENERATION ===')
+  console.log(`Character ID: ${characterId}`)
+  console.log(`Template ID: ${templateId}`)
+  console.log(`Base photo URL: ${signedBasePhotoUrl}`)
+  console.log('\n--- Front Variation Prompt ---')
+  console.log(frontPrompt)
+  console.log('\n--- Left Variation Prompt ---')
+  console.log(leftPrompt)
+  console.log('\n--- Right Variation Prompt ---')
+  console.log(rightPrompt)
+  console.log('=====================================\n')
+
+  // Generate front variation first (uses uploaded photo)
+  console.log('Generating front variation (step 1/3)...')
+  const frontUrl = await generateImageWithNanoBanana(
+    frontPrompt,
+    [signedBasePhotoUrl],
+    'match_input_image'
+  ).then(url => {
+    console.log('✅ Front variation generated:', url)
+    return url
+  }).catch(err => {
+    console.error('❌ Front variation generation failed:', err)
+    throw new Error(`Front variation generation failed: ${err.message}`)
+  })
+
+  // Generate left and right variations in parallel (both use front variation as input)
+  console.log('Generating left and right variations (step 2/3)...')
+  const [leftUrl, rightUrl] = await Promise.all([
     generateImageWithNanoBanana(
-      variationPrompts.front,
-      [signedBasePhotoUrl],
+      leftPrompt,
+      [frontUrl], // Use front variation as input
       'match_input_image'
-    ),
+    ).then(url => {
+      console.log('✅ Left variation generated:', url)
+      return url
+    }).catch(err => {
+      console.error('❌ Left variation generation failed:', err)
+      throw new Error(`Left variation generation failed: ${err.message}`)
+    }),
     generateImageWithNanoBanana(
-      variationPrompts.left,
-      [signedBasePhotoUrl],
+      rightPrompt,
+      [frontUrl], // Use front variation as input
       'match_input_image'
-    ),
-    generateImageWithNanoBanana(
-      variationPrompts.right,
-      [signedBasePhotoUrl],
-      'match_input_image'
-    ),
+    ).then(url => {
+      console.log('✅ Right variation generated:', url)
+      return url
+    }).catch(err => {
+      console.error('❌ Right variation generation failed:', err)
+      throw new Error(`Right variation generation failed: ${err.message}`)
+    }),
   ])
 
   // Download and upload each variation to Supabase Storage
   const storagePath = `${userId}/${characterId}/${templateId}`
+  console.log(`\nDownloading generated variations and uploading to storage...`)
+  console.log(`Storage bucket: character-variations`)
+  console.log(`Storage path: ${storagePath}`)
 
   const [frontBuffer, leftBuffer, rightBuffer] = await Promise.all([
-    fetch(frontUrl).then((r) => r.arrayBuffer()),
-    fetch(leftUrl).then((r) => r.arrayBuffer()),
-    fetch(rightUrl).then((r) => r.arrayBuffer()),
+    fetch(frontUrl).then((r) => {
+      if (!r.ok) throw new Error(`Failed to download front variation: ${r.status}`)
+      return r.arrayBuffer()
+    }),
+    fetch(leftUrl).then((r) => {
+      if (!r.ok) throw new Error(`Failed to download left variation: ${r.status}`)
+      return r.arrayBuffer()
+    }),
+    fetch(rightUrl).then((r) => {
+      if (!r.ok) throw new Error(`Failed to download right variation: ${r.status}`)
+      return r.arrayBuffer()
+    }),
   ])
 
-  const [frontVariationUrl, leftVariationUrl, rightVariationUrl] = await Promise.all([
-    uploadToStorage('character-variations', `${storagePath}/front.jpg`, frontBuffer, 'image/jpeg'),
-    uploadToStorage('character-variations', `${storagePath}/left.jpg`, leftBuffer, 'image/jpeg'),
-    uploadToStorage('character-variations', `${storagePath}/right.jpg`, rightBuffer, 'image/jpeg'),
-  ])
+  console.log('Uploading variations to Supabase Storage...')
+  let frontVariationUrl: string
+  let leftVariationUrl: string
+  let rightVariationUrl: string
+
+  try {
+    frontVariationUrl = await uploadToStorage('character-variations', `${storagePath}/front.jpg`, frontBuffer, 'image/jpeg')
+    console.log('✅ Front variation uploaded:', frontVariationUrl)
+  } catch (err: any) {
+    console.error('❌ Failed to upload front variation:', err)
+    throw new Error(`Failed to upload front variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
+  }
+
+  try {
+    leftVariationUrl = await uploadToStorage('character-variations', `${storagePath}/left.jpg`, leftBuffer, 'image/jpeg')
+    console.log('✅ Left variation uploaded:', leftVariationUrl)
+  } catch (err: any) {
+    console.error('❌ Failed to upload left variation:', err)
+    // Clean up front variation if left fails
+    await deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {})
+    throw new Error(`Failed to upload left variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
+  }
+
+  try {
+    rightVariationUrl = await uploadToStorage('character-variations', `${storagePath}/right.jpg`, rightBuffer, 'image/jpeg')
+    console.log('✅ Right variation uploaded:', rightVariationUrl)
+  } catch (err: any) {
+    console.error('❌ Failed to upload right variation:', err)
+    // Clean up front and left variations if right fails
+    await Promise.all([
+      deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {}),
+      deleteFromStorage('character-variations', `${storagePath}/left.jpg`).catch(() => {}),
+    ])
+    throw new Error(`Failed to upload right variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
+  }
 
   // Store in database
+  console.log('Saving character variations to database...')
   const { error: insertError } = await supabaseAdmin
     .from('character_variations')
     .insert({
@@ -124,16 +219,21 @@ export async function generateCharacterVariations(
     })
 
   if (insertError) {
+    console.error('❌ Failed to save character variations to database:', insertError)
     // Clean up uploaded files if DB insert fails
     await Promise.all([
       deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {}),
       deleteFromStorage('character-variations', `${storagePath}/left.jpg`).catch(() => {}),
       deleteFromStorage('character-variations', `${storagePath}/right.jpg`).catch(() => {}),
     ])
-    throw new Error(`Failed to save character variations: ${insertError.message}`)
+    throw new Error(`Failed to save character variations to database: ${insertError.message}`)
   }
 
-  console.log(`Successfully generated and stored character variations for character ${characterId}`)
+  console.log(`✅ Successfully generated and stored character variations for character ${characterId}`)
+  console.log('Character variations URLs:')
+  console.log(`  Front: ${frontVariationUrl}`)
+  console.log(`  Left: ${leftVariationUrl}`)
+  console.log(`  Right: ${rightVariationUrl}`)
 
   return {
     front_variation_url: frontVariationUrl,

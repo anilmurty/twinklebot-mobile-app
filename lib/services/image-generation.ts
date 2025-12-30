@@ -265,13 +265,16 @@ export async function generateImageWithBasePhotoAndCharacter(
     ? `${getBaseUrl()}${basePhotoPath}`
     : `${getBaseUrl()}/${basePhotoPath}`
 
-  console.log('Generating with base photo + character variation:', {
-    modelVersion,
-    basePhotoUrl,
-    characterVariationUrl,
-    insertionPromptLength: insertionPrompt.length,
-    aspectRatio
-  })
+  console.log('\n=== SCENE IMAGE GENERATION ===')
+  console.log(`Model version: ${modelVersion}`)
+  console.log(`Base photo URL: ${basePhotoUrl}`)
+  console.log(`Character variation URL: ${characterVariationUrl}`)
+  console.log(`\n--- INSERTION PROMPT (sent to Replicate) ---`)
+  console.log(insertionPrompt)
+  console.log(`\n--- END INSERTION PROMPT ---`)
+  console.log(`Aspect ratio: ${aspectRatio}`)
+  console.log(`Image input array: [basePhotoUrl, characterVariationUrl]`)
+  console.log('=====================================\n')
   
   // Call Replicate API with both images
   // The prompt is the insertion prompt, and we pass both images
