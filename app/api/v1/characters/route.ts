@@ -108,11 +108,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (Vercel has 4.5MB limit)
-    const MAX_FILE_SIZE = 4 * 1024 * 1024 // 4MB per file
+    // Validate file size
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB per file
     if (frontPhoto.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: 'Photo is too large. Maximum size is 4MB. Please compress or resize your image.' },
+        { error: 'Photo is too large. Maximum size is 10MB. Please compress or resize your image.' },
         { status: 413 }
       )
     }

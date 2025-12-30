@@ -67,7 +67,7 @@ export const charactersApi = {
       if (!response.ok) {
         // Handle 413 Payload Too Large with a user-friendly message
         if (response.status === 413) {
-          throw new Error('File size too large. Maximum size is 4MB per photo. Please compress or resize your images.')
+          throw new Error('File size too large. Maximum size is 10MB per photo. Please compress or resize your images.')
         }
         const error = await response.json().catch(() => ({ error: response.statusText }))
         throw new Error(error.error || `API error: ${response.status}`)

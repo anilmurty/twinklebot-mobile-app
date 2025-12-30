@@ -23,7 +23,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const MAX_FILE_SIZE = 4 * 1024 * 1024 // 4MB per file (Vercel has 4.5MB total limit)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB per file
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B'
@@ -34,7 +34,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
   const handleFileSelect = (file: File) => {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
-      setError(`Photo is too large (${formatFileSize(file.size)}). Maximum size is 4MB. Please compress or resize your image.`)
+      setError(`Photo is too large (${formatFileSize(file.size)}). Maximum size is 10MB. Please compress or resize your image.`)
       // Reset the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -132,7 +132,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
           <div className="space-y-4">
             <Label>Character Photo</Label>
             <p className="text-xs text-muted-foreground">
-              Use a clear front-facing image with good lighting and clearly visible features. Maximum 4MB.
+              Use a clear front-facing image with good lighting and clearly visible features. Maximum 10MB.
             </p>
 
             <Card className="p-4">
