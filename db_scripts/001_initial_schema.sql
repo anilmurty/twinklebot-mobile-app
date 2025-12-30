@@ -32,6 +32,18 @@ CREATE TABLE IF NOT EXISTS characters (
   UNIQUE(user_id, name)
 );
 
+-- Character variations table
+CREATE TABLE IF NOT EXISTS character_variations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  character_id UUID NOT NULL REFERENCES characters(id) ON DELETE CASCADE,
+  template_id INTEGER NOT NULL REFERENCES story_templates(id) ON DELETE CASCADE,
+  front_variation_url TEXT NOT NULL,
+  left_variation_url TEXT NOT NULL,
+  right_variation_url TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(character_id, template_id)
+);
+
 -- Generation models table (for flexible model switching)
 CREATE TABLE IF NOT EXISTS generation_models (
   id SERIAL PRIMARY KEY,
@@ -104,6 +116,11 @@ CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
 -- Characters indexes
 CREATE INDEX IF NOT EXISTS idx_characters_user_id ON characters(user_id);
 CREATE INDEX IF NOT EXISTS idx_characters_user_name ON characters(user_id, name);
+
+-- Character variations indexes
+CREATE INDEX IF NOT EXISTS idx_character_variations_character_id ON character_variations(character_id);
+CREATE INDEX IF NOT EXISTS idx_character_variations_template_id ON character_variations(template_id);
+CREATE INDEX IF NOT EXISTS idx_character_variations_character_template ON character_variations(character_id, template_id);
 
 -- Storybooks indexes
 CREATE INDEX IF NOT EXISTS idx_storybooks_user_id ON storybooks(user_id);
@@ -188,6 +205,7 @@ CREATE TRIGGER update_generation_models_updated_at
 -- Enable RLS on all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE characters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE character_variations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE generation_models ENABLE ROW LEVEL SECURITY;
 ALTER TABLE story_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE storybooks ENABLE ROW LEVEL SECURITY;
@@ -224,6 +242,40 @@ DROP POLICY IF EXISTS "Users can delete own characters" ON characters;
 CREATE POLICY "Users can delete own characters"
   ON characters FOR DELETE
   USING (auth.uid() = user_id);
+
+-- Character variations policies
+DROP POLICY IF EXISTS "Users can view own character variations" ON character_variations;
+CREATE POLICY "Users can view own character variations"
+  ON character_variations FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM characters
+      WHERE characters.id = character_variations.character_id
+      AND characters.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can create own character variations" ON character_variations;
+CREATE POLICY "Users can create own character variations"
+  ON character_variations FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM characters
+      WHERE characters.id = character_variations.character_id
+      AND characters.user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Users can delete own character variations" ON character_variations;
+CREATE POLICY "Users can delete own character variations"
+  ON character_variations FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM characters
+      WHERE characters.id = character_variations.character_id
+      AND characters.user_id = auth.uid()
+    )
+  );
 
 -- Generation models policies (admin only for write, public read for active)
 DROP POLICY IF EXISTS "Anyone can view active generation models" ON generation_models;
@@ -276,6 +328,7 @@ CREATE POLICY "Users can view own generation jobs"
 
 COMMENT ON TABLE profiles IS 'User profiles linked to Supabase Auth';
 COMMENT ON TABLE characters IS 'Child characters created by users for storybook generation';
+COMMENT ON TABLE character_variations IS 'Generated character variations (front/left/right) for each character-template combination';
 COMMENT ON TABLE generation_models IS 'Image generation model configurations for flexible model switching';
 COMMENT ON TABLE story_templates IS 'Pre-defined story templates with scripts and prompts';
 COMMENT ON TABLE storybooks IS 'Generated storybooks with scenes stored in JSONB';
@@ -284,8 +337,11 @@ COMMENT ON TABLE generation_jobs IS 'Background job tracking for storybook gener
 COMMENT ON COLUMN characters.name IS 'Character name (max 20 alphanumeric chars, unique per user)';
 COMMENT ON COLUMN generation_models.prompt_structure IS 'JSONB defining how to construct prompts for this model (e.g., order, separators, placeholders)';
 COMMENT ON COLUMN generation_models.api_config IS 'JSONB containing API-specific settings (endpoints, auth, rate limits, etc.)';
-COMMENT ON COLUMN story_templates.fixed_prompt_parts IS 'JSONB containing prompt parts that are the same for all scenes (subject, style)';
-COMMENT ON COLUMN story_templates.script_data IS 'JSONB containing scene-specific scripts and prompt parts (action, detail) with {character_name} placeholders';
+COMMENT ON COLUMN story_templates.fixed_prompt_parts IS 'JSONB containing prompt parts that are the same for all scenes (deprecated in new approach)';
+COMMENT ON COLUMN story_templates.script_data IS 'JSONB containing scene-specific scripts with base_photo, child_photo (front/left/right), and insertion_prompt for each scene';
+COMMENT ON COLUMN character_variations.front_variation_url IS 'URL to front-facing character variation image';
+COMMENT ON COLUMN character_variations.left_variation_url IS 'URL to left-facing character variation image';
+COMMENT ON COLUMN character_variations.right_variation_url IS 'URL to right-facing character variation image';
 COMMENT ON COLUMN storybooks.scenes IS 'JSONB array of generated scenes with image_url, text, and metadata';
 COMMENT ON COLUMN storybooks.status IS 'Generation status: pending, generating, completed, or failed';
 COMMENT ON COLUMN generation_jobs.replicate_prediction_ids IS 'JSONB mapping scene numbers to Replicate prediction IDs';

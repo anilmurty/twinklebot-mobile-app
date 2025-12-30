@@ -185,3 +185,103 @@ export async function generateImageWithNanoBanana(
   return pollPrediction(predictionId)
 }
 
+/**
+ * Generate image using base photo + character variation + insertion prompt
+ * This is the new approach for improved image quality and consistency
+ */
+export async function generateImageWithBasePhotoAndCharacter(
+  basePhotoPath: string, // Path to base photo in /public/day-at-the-zoo/
+  characterVariationUrl: string, // URL to character variation (front/left/right)
+  insertionPrompt: string,
+  aspectRatio: string = 'match_input_image'
+): Promise<string> {
+  // Get model version ID (or use provided version)
+  let modelVersion = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
+  
+  // Version IDs are typically long alphanumeric strings (e.g., "abc123def456...")
+  // Model names contain slashes (e.g., "google/nano-banana")
+  // If it looks like a model name (contains slash), try to fetch version
+  if (modelVersion.includes('/')) {
+    const { getModelVersion } = await import('./replicate-helper')
+    try {
+      const fetchedVersion = await getModelVersion('google/nano-banana')
+      // Check if we got the special marker indicating model doesn't expose versions
+      if (fetchedVersion === 'MODEL_NAME_REQUIRED') {
+        console.log('ℹ️  Model does not expose versions via API, using model name directly')
+        modelVersion = 'google/nano-banana' // Use model name directly
+      } else {
+        console.log('✅ Using model version ID:', fetchedVersion)
+        modelVersion = fetchedVersion
+      }
+    } catch (error: any) {
+      throw new Error(`Failed to get model version. Please set NANOBANANA_MODEL_VERSION in .env.local. ${error.message}`)
+    }
+  } else {
+    // Check if it looks like a valid version ID (long alphanumeric, no slashes)
+    if (modelVersion.length < 30 || !/^[a-z0-9]+$/i.test(modelVersion)) {
+      console.error(`❌ Error: "${modelVersion}" appears to be a prediction ID, not a model version ID.`)
+      console.error('📝 Solution: For models without exposed versions, use the model name:')
+      console.error('   Set NANOBANANA_MODEL_VERSION=google/nano-banana in .env.local')
+      throw new Error(`Invalid version ID format: "${modelVersion}". Use model name "google/nano-banana" instead.`)
+    }
+    console.log('✅ Using provided model version ID:', modelVersion)
+  }
+  
+  // Validate inputs
+  if (!basePhotoPath || basePhotoPath.trim().length === 0) {
+    throw new Error('Base photo path is required')
+  }
+  
+  if (!characterVariationUrl || characterVariationUrl.trim().length === 0) {
+    throw new Error('Character variation URL is required')
+  }
+  
+  if (!insertionPrompt || insertionPrompt.trim().length === 0) {
+    throw new Error('Insertion prompt is required')
+  }
+  
+  // Validate URLs
+  try {
+    new URL(characterVariationUrl)
+  } catch {
+    throw new Error('Invalid character variation URL')
+  }
+
+  // Construct full URL for base photo (from public folder)
+  // In Next.js, public folder files are served from root
+  // For production, use VERCEL_URL or NEXT_PUBLIC_SITE_URL
+  // For development, use localhost
+  const getBaseUrl = () => {
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`
+    }
+    if (process.env.NEXT_PUBLIC_SITE_URL) {
+      return process.env.NEXT_PUBLIC_SITE_URL
+    }
+    return 'http://localhost:3000'
+  }
+
+  const basePhotoUrl = basePhotoPath.startsWith('/') 
+    ? `${getBaseUrl()}${basePhotoPath}`
+    : `${getBaseUrl()}/${basePhotoPath}`
+
+  console.log('Generating with base photo + character variation:', {
+    modelVersion,
+    basePhotoUrl,
+    characterVariationUrl,
+    insertionPromptLength: insertionPrompt.length,
+    aspectRatio
+  })
+  
+  // Call Replicate API with both images
+  // The prompt is the insertion prompt, and we pass both images
+  const predictionId = await createPrediction(modelVersion, {
+    prompt: insertionPrompt,
+    image_input: [basePhotoUrl, characterVariationUrl], // Base photo first, then character variation
+    aspect_ratio: aspectRatio,
+    output_format: 'jpg',
+  })
+
+  return pollPrediction(predictionId)
+}
+

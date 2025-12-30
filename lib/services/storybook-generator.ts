@@ -3,17 +3,19 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { buildNanoBananaPrompt } from './prompt-builder'
-import { generateImageWithNanoBanana } from './image-generation'
+import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { uploadToStorage } from '@/lib/supabase/storage'
+import {
+  getCharacterVariations,
+  generateCharacterVariations,
+} from './character-variation-generator'
 
 interface SceneTemplate {
   scene_number: number
   script_text: string
-  action: string
-  detail: string
-  number?: number
-  letter?: string
+  base_photo: string // filename from /public/day-at-the-zoo/
+  child_photo: 'front' | 'left' | 'right' // which character variation to use
+  insertion_prompt: string // scene-specific insertion instructions
   aspect_ratio?: string
 }
 
@@ -51,38 +53,25 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     throw new Error('Missing character or template data')
   }
 
-  // Get signed URLs for character photos (Replicate needs accessible URLs)
-  // Character photos are in private bucket, so we need signed URLs
-  const { getSignedUrl } = await import('@/lib/supabase/storage')
   const userId = storybook.user_id
-  
-  // Extract storage path from URL or construct it
-  const getPhotoPath = (url: string) => {
-    if (!url || url.trim() === '') {
-      throw new Error('Character photo URL is missing')
-    }
-    // Extract path from Supabase Storage URL
-    // URL format: https://xxx.supabase.co/storage/v1/object/public/character-photos/user_id/char_id/front.jpg
-    // Or: https://xxx.supabase.co/storage/v1/object/sign/character-photos/...
-    const match = url.match(/character-photos\/(.+)$/)
-    if (match) {
-      return match[1]
-    }
-    // Fallback: construct path from character ID
-    return `${userId}/${character.id}/front.jpg`
-  }
-
-  // Create signed URL (valid for 1 hour - enough for generation)
-  // Only use the front photo (single photo upload)
-  const frontPhotoPath = getPhotoPath(character.front_photo_url)
-
-  const characterPhoto = await getSignedUrl('character-photos', frontPhotoPath, 3600)
-  
-  console.log('Created signed URL for character photo (expires in 1 hour)')
-
-  const fixedParts = template.fixed_prompt_parts
   const scenes = template.script_data.scenes as SceneTemplate[]
   const totalScenes = scenes.length
+
+  // Check for existing character variations, generate if needed
+  console.log(`Checking for character variations for character ${character.id} and template ${template.id}`)
+  let variations = await getCharacterVariations(character.id, template.id)
+  
+  if (!variations) {
+    console.log(`Generating character variations for character ${character.id}`)
+    variations = await generateCharacterVariations(
+      character.id,
+      template.id,
+      character.front_photo_url,
+      userId
+    )
+  } else {
+    console.log(`Using existing character variations for character ${character.id}`)
+  }
 
   // Initialize scenes array if not exists
   let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
@@ -112,38 +101,50 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         )
 
         // Validate required fields
-        if (!fixedParts.subject) {
-          throw new Error('Template missing subject in fixed_prompt_parts')
+        if (!sceneTemplate.base_photo || sceneTemplate.base_photo.trim() === '') {
+          throw new Error(`Scene ${sceneTemplate.scene_number} missing base_photo field`)
         }
-        if (!fixedParts.style) {
-          throw new Error('Template missing style in fixed_prompt_parts')
+        if (!sceneTemplate.child_photo || !['front', 'left', 'right'].includes(sceneTemplate.child_photo)) {
+          throw new Error(`Scene ${sceneTemplate.scene_number} missing or invalid child_photo field`)
         }
-        if (!sceneTemplate.action || sceneTemplate.action.trim() === '') {
-          throw new Error(`Scene ${sceneTemplate.scene_number} missing action field`)
+        if (!sceneTemplate.insertion_prompt || sceneTemplate.insertion_prompt.trim() === '') {
+          throw new Error(`Scene ${sceneTemplate.scene_number} missing insertion_prompt field`)
         }
 
-        // Build prompt
-        const prompt = buildNanoBananaPrompt(
-          {
-            subject: fixedParts.subject,
-            style: fixedParts.style,
-          },
-          {
-            action: sceneTemplate.action,
-          },
-          character.name
-        )
+        // Get the appropriate character variation URL
+        let characterVariationUrl: string
+        switch (sceneTemplate.child_photo) {
+          case 'front':
+            characterVariationUrl = variations.front_variation_url
+            break
+          case 'left':
+            characterVariationUrl = variations.left_variation_url
+            break
+          case 'right':
+            characterVariationUrl = variations.right_variation_url
+            break
+          default:
+            throw new Error(`Invalid child_photo value: ${sceneTemplate.child_photo}`)
+        }
+
+        if (!characterVariationUrl) {
+          throw new Error(`Character variation URL not found for ${sceneTemplate.child_photo} view`)
+        }
+
+        // Construct base photo path (from /public/day-at-the-zoo/)
+        const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
 
         console.log(`\n=== Scene ${sceneTemplate.scene_number} ===`)
         console.log(`Character: ${character.name}`)
-        console.log(`Prompt length: ${prompt.length} chars`)
-        console.log(`Full prompt:\n${prompt}`)
-        console.log(`Character photo: ${characterPhoto}`)
+        console.log(`Base photo: ${basePhotoPath}`)
+        console.log(`Character variation: ${sceneTemplate.child_photo}`)
+        console.log(`Insertion prompt: ${sceneTemplate.insertion_prompt}`)
 
-        // Generate image
-        const generatedImageUrl = await generateImageWithNanoBanana(
-          prompt,
-          [characterPhoto], // Send only one image
+        // Generate image using base photo + character variation + insertion prompt
+        const generatedImageUrl = await generateImageWithBasePhotoAndCharacter(
+          basePhotoPath,
+          characterVariationUrl,
+          sceneTemplate.insertion_prompt,
           sceneTemplate.aspect_ratio || 'match_input_image'
         )
         
@@ -166,15 +167,16 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         )
 
         // Create scene data
+        // Replace [Name] and [NAME] placeholders with character name
+        const scriptText = sceneTemplate.script_text
+          .replace(/\[Name\]/g, character.name)
+          .replace(/\[NAME\]/g, character.name.toUpperCase())
+          .replace(/{character_name}/g, character.name)
+
         const sceneData = {
           scene_number: sceneTemplate.scene_number,
           image_url: storedImageUrl,
-          text: sceneTemplate.script_text.replace(
-            /{character_name}/g,
-            character.name
-          ),
-          number: sceneTemplate.number,
-          letter: sceneTemplate.letter,
+          text: scriptText,
           generated_at: new Date().toISOString(),
         }
 
