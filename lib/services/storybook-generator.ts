@@ -13,7 +13,7 @@ import {
 interface SceneTemplate {
   scene_number: number
   script_text: string
-  base_photo: string // filename from /public/day-at-the-zoo/
+  base_photo: string // filename from Supabase Storage (story-template-assets/day-at-the-zoo/)
   child_photo: 'front' | 'left' | 'right' // which character variation to use
   insertion_prompt: string // scene-specific insertion instructions
   aspect_ratio?: string
@@ -151,7 +151,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           throw new Error(`Character variation URL not found for ${sceneTemplate.child_photo} view`)
         }
 
-        // Construct base photo path (from /public/day-at-the-zoo/)
+        // Construct base photo path (from Supabase Storage: story-template-assets/day-at-the-zoo/)
         const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
 
         console.log(`\n=== SCENE ${sceneTemplate.scene_number} GENERATION ===`)

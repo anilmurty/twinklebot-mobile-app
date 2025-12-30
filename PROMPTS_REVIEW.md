@@ -125,7 +125,7 @@ put the child in the photo, they should be walking out after a long day, tired b
 
 2. **Scene Generation**:
    - For each scene:
-     - Base photo URL (from `/public/day-at-the-zoo/`)
+     - Base photo URL (from Supabase Storage: `story-template-assets/day-at-the-zoo/`)
      - Appropriate character variation URL (front/left/right per scene)
      - Insertion prompt (from above)
    - All sent to Replicate API together

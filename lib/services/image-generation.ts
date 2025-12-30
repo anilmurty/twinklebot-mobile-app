@@ -190,7 +190,7 @@ export async function generateImageWithNanoBanana(
  * This is the new approach for improved image quality and consistency
  */
 export async function generateImageWithBasePhotoAndCharacter(
-  basePhotoPath: string, // Path to base photo in /public/day-at-the-zoo/
+  basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
   aspectRatio: string = 'match_input_image'
@@ -247,23 +247,15 @@ export async function generateImageWithBasePhotoAndCharacter(
     throw new Error('Invalid character variation URL')
   }
 
-  // Construct full URL for base photo (from public folder)
-  // In Next.js, public folder files are served from root
-  // For production, use VERCEL_URL or NEXT_PUBLIC_SITE_URL
-  // For development, use localhost
-  const getBaseUrl = () => {
-    if (process.env.VERCEL_URL) {
-      return `https://${process.env.VERCEL_URL}`
-    }
-    if (process.env.NEXT_PUBLIC_SITE_URL) {
-      return process.env.NEXT_PUBLIC_SITE_URL
-    }
-    return 'http://localhost:3000'
-  }
+  // Base photos should be in Supabase Storage (story-template-assets bucket)
+  // Convert path like "/day-at-the-zoo/entrance.jpeg" to "day-at-the-zoo/entrance.jpeg"
+  const storagePath = basePhotoPath.startsWith('/') 
+    ? basePhotoPath.slice(1)
+    : basePhotoPath
 
-  const basePhotoUrl = basePhotoPath.startsWith('/') 
-    ? `${getBaseUrl()}${basePhotoPath}`
-    : `${getBaseUrl()}/${basePhotoPath}`
+  // Get public URL from Supabase Storage
+  const { getStorageUrl } = await import('@/lib/supabase/storage')
+  const basePhotoUrl = getStorageUrl('story-template-assets', storagePath)
 
   console.log('\n=== SCENE IMAGE GENERATION ===')
   console.log(`Model version: ${modelVersion}`)
@@ -274,10 +266,36 @@ export async function generateImageWithBasePhotoAndCharacter(
   console.log(`\n--- END INSERTION PROMPT ---`)
   console.log(`Aspect ratio: ${aspectRatio}`)
   console.log(`Image input array: [basePhotoUrl, characterVariationUrl]`)
+  
+  // Validate URLs are accessible before sending to Replicate
+  console.log('\nValidating URLs are accessible...')
+  try {
+    const basePhotoCheck = await fetch(basePhotoUrl, { method: 'HEAD' })
+    if (!basePhotoCheck.ok) {
+      throw new Error(`Base photo URL returned ${basePhotoCheck.status}: ${basePhotoCheck.statusText}. URL: ${basePhotoUrl}`)
+    }
+    console.log(`✅ Base photo URL is accessible (${basePhotoCheck.status})`)
+  } catch (err: any) {
+    console.error(`❌ Base photo URL validation failed:`, err.message)
+    throw new Error(`Base photo URL is not accessible: ${basePhotoUrl}. Error: ${err.message}`)
+  }
+
+  try {
+    const characterVariationCheck = await fetch(characterVariationUrl, { method: 'HEAD' })
+    if (!characterVariationCheck.ok) {
+      throw new Error(`Character variation URL returned ${characterVariationCheck.status}: ${characterVariationCheck.statusText}. URL: ${characterVariationUrl}`)
+    }
+    console.log(`✅ Character variation URL is accessible (${characterVariationCheck.status})`)
+  } catch (err: any) {
+    console.error(`❌ Character variation URL validation failed:`, err.message)
+    throw new Error(`Character variation URL is not accessible: ${characterVariationUrl}. Error: ${err.message}`)
+  }
+  
   console.log('=====================================\n')
   
   // Call Replicate API with both images
   // The prompt is the insertion prompt, and we pass both images
+  // nano-banana accepts multiple images in the image_input array
   const predictionId = await createPrediction(modelVersion, {
     prompt: insertionPrompt,
     image_input: [basePhotoUrl, characterVariationUrl], // Base photo first, then character variation
