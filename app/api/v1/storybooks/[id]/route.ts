@@ -116,9 +116,12 @@ export async function DELETE(
     const characterId = storybook.character_id
     const templateId = storybook.template_id
 
-    // Delete scenes from storage (if any)
+    // Delete scenes from storage
+    const { deleteFromStorage } = await import('@/lib/supabase/storage')
+    const { supabaseAdmin } = await import('@/lib/supabase/server')
+    
+    // Delete scene images from the scenes array (if any)
     if (storybook.scenes) {
-      const { deleteFromStorage } = await import('@/lib/supabase/storage')
       const scenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
       
       await Promise.all(
@@ -126,21 +129,17 @@ export async function DELETE(
           if (scene.image_url) {
             try {
               // Extract path from URL
-              // Handle both full URLs and paths
               let path: string | null = null
               
               if (scene.image_url.includes('storybook-scenes/')) {
-                // Extract from full URL or path
                 const match = scene.image_url.match(/storybook-scenes\/(.+)$/)
                 if (match) {
                   path = match[1]
                 } else {
-                  // Try parsing as URL
                   try {
                     const url = new URL(scene.image_url)
                     path = url.pathname.split('/storybook-scenes/')[1]
                   } catch {
-                    // If it's already a path, use it directly
                     if (scene.image_url.startsWith('storybook-scenes/')) {
                       path = scene.image_url.replace('storybook-scenes/', '')
                     }
@@ -159,6 +158,33 @@ export async function DELETE(
           }
         })
       )
+    }
+
+    // Also delete all scene images for this storybook ID from storage as a fallback
+    // This ensures cleanup even if scenes weren't properly saved to the database
+    try {
+      const { data: files, error: listError } = await supabaseAdmin.storage
+        .from('storybook-scenes')
+        .list(id, {
+          limit: 100,
+          sortBy: { column: 'name', order: 'asc' }
+        })
+
+      if (!listError && files && files.length > 0) {
+        console.log(`Found ${files.length} scene file(s) in storage for storybook ${id}`)
+        await Promise.all(
+          files.map(async (file) => {
+            const filePath = `${id}/${file.name}`
+            await deleteFromStorage('storybook-scenes', filePath).catch((err) => {
+              console.error(`Failed to delete scene file ${filePath}:`, err)
+            })
+          })
+        )
+        console.log(`✅ Deleted ${files.length} scene file(s) from storage`)
+      }
+    } catch (err) {
+      console.error(`Error listing/deleting scene files from storage:`, err)
+      // Continue even if this fails
     }
 
     // Delete storybook (cascade will handle generation_jobs)

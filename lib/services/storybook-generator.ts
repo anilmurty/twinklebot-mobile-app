@@ -271,12 +271,14 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
       // Upload to Supabase Storage
       const { uploadToStorage } = await import('@/lib/supabase/storage')
+      console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
       const storedImageUrl = await uploadToStorage(
         'storybook-scenes',
         `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
         imageBuffer,
         'image/jpeg'
       )
+      console.log(`✅ Scene ${sceneTemplate.scene_number} image uploaded to storage: ${storedImageUrl}`)
 
       // Create scene data
       const titleCaseName = character.name.charAt(0).toUpperCase() + character.name.slice(1).toLowerCase()
@@ -292,6 +294,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         text: scriptText,
         generated_at: new Date().toISOString(),
       }
+      
+      console.log(`Scene ${sceneTemplate.scene_number} data prepared:`, {
+        scene_number: sceneData.scene_number,
+        headline: sceneData.headline,
+        image_url: sceneData.image_url,
+        has_text: !!sceneData.text,
+      })
 
       // Update storybook scenes array atomically with retry logic to handle race conditions
       // When scenes are generated in parallel, multiple scenes might try to update the array simultaneously
@@ -346,16 +355,18 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         updatedScenes.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
 
         // Update database with new scene
-        const { error: updateError } = await supabaseAdmin
+        const { error: updateError, data: updateData } = await supabaseAdmin
           .from('storybooks')
           .update({
             scenes: updatedScenes,
             updated_at: new Date().toISOString(),
           })
           .eq('id', storybookId)
+          .select('scenes')
 
         if (updateError) {
-          console.error(`Failed to update scenes (attempt ${updateAttempts}):`, updateError)
+          console.error(`❌ Failed to update scenes (attempt ${updateAttempts}):`, updateError)
+          console.error(`Update error details:`, JSON.stringify(updateError, null, 2))
           if (updateAttempts < maxUpdateAttempts) {
             // Exponential backoff
             await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
@@ -365,24 +376,54 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           }
         }
 
+        // Log successful update
+        if (updateData && updateData.length > 0) {
+          console.log(`✅ Scene ${sceneTemplate.scene_number} update query succeeded (attempt ${updateAttempts})`)
+        }
+
         // Verify the update succeeded by checking if our scene is in the database
-        const { data: verifyStorybook } = await supabaseAdmin
+        console.log(`Verifying scene ${sceneTemplate.scene_number} was saved to database...`)
+        const { data: verifyStorybook, error: verifyError } = await supabaseAdmin
           .from('storybooks')
           .select('scenes')
           .eq('id', storybookId)
           .single()
 
+        if (verifyError) {
+          console.error(`❌ Failed to verify scene update:`, verifyError)
+          if (updateAttempts < maxUpdateAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
+            continue
+          } else {
+            throw new Error(`Failed to verify scene update after ${maxUpdateAttempts} attempts: ${verifyError.message}`)
+          }
+        }
+
         const verifyScenes = Array.isArray(verifyStorybook?.scenes) ? verifyStorybook.scenes : []
         const verifyScene = verifyScenes.find((s: any) => s.scene_number === sceneTemplate.scene_number)
+        
+        console.log(`Verification result for scene ${sceneTemplate.scene_number}:`, {
+          found: !!verifyScene,
+          has_image_url: !!verifyScene?.image_url,
+          image_url_matches: verifyScene?.image_url === sceneData.image_url,
+          total_scenes_in_db: verifyScenes.length,
+        })
         
         if (verifyScene?.image_url === sceneData.image_url) {
           // Update succeeded
           updateSuccess = true
           generatedScenes = verifyScenes
           console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully (update attempt ${updateAttempts})`)
+        } else if (verifyScene?.image_url && verifyScene.image_url !== sceneData.image_url) {
+          // Scene exists but with different URL - might be from another process
+          console.log(`⚠️ Scene ${sceneTemplate.scene_number} exists with different image_url. Expected: ${sceneData.image_url}, Found: ${verifyScene.image_url}`)
+          // Consider this a success if the scene has an image_url
+          updateSuccess = true
+          generatedScenes = verifyScenes
+          console.log(`✅ Scene ${sceneTemplate.scene_number} already exists in database, using existing`)
         } else {
           // Update was overwritten by another process, retry
-          console.log(`Scene ${sceneTemplate.scene_number} update was overwritten, retrying (attempt ${updateAttempts}/${maxUpdateAttempts})...`)
+          console.log(`Scene ${sceneTemplate.scene_number} update was overwritten or not found, retrying (attempt ${updateAttempts}/${maxUpdateAttempts})...`)
           if (updateAttempts < maxUpdateAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
           }
@@ -531,6 +572,38 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     
     console.log(`✅ All ${totalScenes} scenes verified complete`)
 
+    // Verify scene images exist in storage
+    console.log(`\n=== VERIFYING SCENE IMAGES IN STORAGE ===`)
+    const { supabaseAdmin: storageAdmin } = await import('@/lib/supabase/server')
+    try {
+      const { data: storageFiles, error: storageError } = await storageAdmin.storage
+        .from('storybook-scenes')
+        .list(storybookId, {
+          limit: 100,
+          sortBy: { column: 'name', order: 'asc' }
+        })
+
+      if (!storageError && storageFiles) {
+        console.log(`Found ${storageFiles.length} scene file(s) in storage for storybook ${storybookId}`)
+        const storageFileNames = storageFiles.map(f => f.name).sort()
+        const expectedFileNames = finalScenes.map((s: any) => `scene-${s.scene_number}.jpg`).sort()
+        console.log(`Storage files:`, storageFileNames)
+        console.log(`Expected files:`, expectedFileNames)
+        
+        const missingFiles = expectedFileNames.filter(name => !storageFileNames.includes(name))
+        if (missingFiles.length > 0) {
+          console.error(`⚠️ Warning: Missing scene files in storage: ${missingFiles.join(', ')}`)
+        } else {
+          console.log(`✅ All scene files verified in storage`)
+        }
+      } else if (storageError) {
+        console.error(`⚠️ Warning: Could not verify storage files:`, storageError)
+      }
+    } catch (err) {
+      console.error(`⚠️ Warning: Error checking storage files:`, err)
+    }
+    console.log(`==========================================\n`)
+
     // Sort scenes by scene_number one final time before marking as completed
     finalScenes.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
     
@@ -557,6 +630,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     }
     
     console.log(`✅ Scenes array validated: ${finalScenes.length} scenes, all with image_url`)
+    console.log(`Scene details:`, finalScenes.map((s: any) => ({
+      scene_number: s.scene_number,
+      has_image_url: !!s.image_url,
+      image_url_preview: s.image_url ? s.image_url.substring(0, 100) + '...' : 'MISSING',
+      has_text: !!s.text,
+      headline: s.headline,
+    })))
 
     // All scenes generated successfully - mark as completed
     // Set progress to 200 (which displays as 100% in scene generation phase)

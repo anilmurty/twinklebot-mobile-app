@@ -168,11 +168,52 @@ export async function DELETE(
 
     // Delete photo from storage (only front photo is used)
     const { deleteFromStorage } = await import('@/lib/supabase/storage')
+    const { supabaseAdmin } = await import('@/lib/supabase/server')
     const userId = user.data.user?.id!
 
-    await deleteFromStorage('character-photos', `${userId}/${id}/front.jpg`).catch(() => {
-      // Continue even if storage deletion fails
+    // Delete front photo from storage
+    await deleteFromStorage('character-photos', `${userId}/${id}/front.jpg`).catch((err) => {
+      console.error(`Failed to delete character photo:`, err)
     })
+
+    // Delete all character variations for this character (across all templates)
+    // First, get all character variations for this character
+    const { data: variations, error: variationsError } = await supabaseAdmin
+      .from('character_variations')
+      .select('template_id, front_variation_url, left_variation_url, right_variation_url')
+      .eq('character_id', id)
+
+    if (!variationsError && variations && variations.length > 0) {
+      console.log(`Found ${variations.length} character variation(s) to delete for character ${id}`)
+      
+      // Delete each variation's files from storage
+      for (const variation of variations) {
+        const storagePath = `${userId}/${id}/${variation.template_id}`
+        await Promise.all([
+          deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch((err) => {
+            console.error(`Failed to delete front variation for template ${variation.template_id}:`, err)
+          }),
+          deleteFromStorage('character-variations', `${storagePath}/left.jpg`).catch((err) => {
+            console.error(`Failed to delete left variation for template ${variation.template_id}:`, err)
+          }),
+          deleteFromStorage('character-variations', `${storagePath}/right.jpg`).catch((err) => {
+            console.error(`Failed to delete right variation for template ${variation.template_id}:`, err)
+          }),
+        ])
+      }
+
+      // Delete all character variations from database
+      const { error: deleteVariationsError } = await supabaseAdmin
+        .from('character_variations')
+        .delete()
+        .eq('character_id', id)
+
+      if (deleteVariationsError) {
+        console.error(`Failed to delete character variations from database:`, deleteVariationsError)
+      } else {
+        console.log(`✅ Deleted ${variations.length} character variation(s) from database`)
+      }
+    }
 
     // Delete character (cascade will handle storybooks)
     const { error } = await supabase
