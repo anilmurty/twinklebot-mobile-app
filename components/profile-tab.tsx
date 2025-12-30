@@ -65,7 +65,7 @@ export function ProfileTab() {
   const remaining = profile?.remaining_stories_this_month || 0
   return (
     <div className="min-h-full bg-gradient-to-b from-muted/20 to-background">
-      <div className="p-6 space-y-6">
+      <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -79,28 +79,28 @@ export function ProfileTab() {
           </Card>
         ) : (
           <>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/20">
-                  <User className="w-10 h-10 text-primary" />
+            <div className="space-y-4 md:space-y-6">
+              <div className="flex items-center gap-4 md:gap-6">
+                <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-primary/10 flex items-center justify-center border-4 border-primary/20">
+                  <User className="w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">{profile?.full_name || user?.email?.split('@')[0] || 'User'}</h1>
-                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                    <Mail className="w-3 h-3" />
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold">{profile?.full_name || user?.email?.split('@')[0] || 'User'}</h1>
+                  <p className="text-sm md:text-base text-muted-foreground flex items-center gap-1">
+                    <Mail className="w-3 h-3 md:w-4 md:h-4" />
                     {user?.email || profile?.email || 'No email'}
                   </p>
                 </div>
               </div>
 
-              <Card className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+              <Card className="p-4 md:p-6 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Crown className="w-5 h-5 text-primary" />
-                      <h3 className="font-bold">{planName}</h3>
+                      <Crown className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+                      <h3 className="font-bold text-base md:text-lg lg:text-xl">{planName}</h3>
                     </div>
-                    <p className="text-xs text-muted-foreground">{effectiveLimit} stories per month</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">{effectiveLimit} stories per month</p>
                   </div>
                   <Button size="sm" className="bg-primary hover:bg-primary/90">
                     Upgrade
@@ -109,8 +109,8 @@ export function ProfileTab() {
               </Card>
             </div>
 
-        <div className="space-y-3">
-          <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Account</h2>
+        <div className="space-y-3 md:space-y-4">
+          <h2 className="font-semibold text-sm md:text-base text-muted-foreground uppercase tracking-wide">Account</h2>
 
           <Card className="divide-y">
             <button className="w-full p-4 flex items-center justify-between hover:bg-accent/50 transition-colors cursor-pointer">
@@ -146,17 +146,17 @@ export function ProfileTab() {
         <div className="space-y-3">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Usage</h2>
 
-          <Card className="p-4 space-y-3">
+          <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Stories Generated</span>
-              <span className="text-2xl font-bold text-primary">{profile?.stories_generated_total || 0}</span>
+              <span className="text-sm md:text-base font-medium">Stories Generated</span>
+              <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary">{profile?.stories_generated_total || 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Characters Created</span>
-              <span className="text-2xl font-bold text-primary">{profile?.characters_count || 0}</span>
+              <span className="text-sm md:text-base font-medium">Characters Created</span>
+              <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary">{profile?.characters_count || 0}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Remaining This Month</span>
+              <span className="text-sm md:text-base font-medium">Remaining This Month</span>
               <span className="text-2xl font-bold text-accent-foreground">{remaining}/{effectiveLimit}</span>
             </div>
           </Card>

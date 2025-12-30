@@ -1,0 +1,38 @@
+"use client"
+
+import { StorybooksTab } from "@/components/storybooks-tab"
+import { CharactersTab } from "@/components/characters-tab"
+import { StoryLibraryTab } from "@/components/story-library-tab"
+import { ProfileTab } from "@/components/profile-tab"
+import { BottomNav } from "@/components/bottom-nav"
+import { useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
+
+interface MobileLayoutProps {
+  activeTab: "storybooks" | "characters" | "library" | "profile"
+  onTabChange: (tab: "storybooks" | "characters" | "library" | "profile") => void
+}
+
+export function MobileLayout({ activeTab, onTabChange }: MobileLayoutProps) {
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab && ['storybooks', 'characters', 'library', 'profile'].includes(tab)) {
+      onTabChange(tab as typeof activeTab)
+    }
+  }, [searchParams, onTabChange])
+
+  return (
+    <main className="h-screen flex flex-col bg-background pb-16 overflow-hidden">
+      <div className="flex-1 overflow-auto">
+        {activeTab === "storybooks" && <StorybooksTab />}
+        {activeTab === "characters" && <CharactersTab />}
+        {activeTab === "library" && <StoryLibraryTab />}
+        {activeTab === "profile" && <ProfileTab />}
+      </div>
+      <BottomNav activeTab={activeTab} onTabChange={onTabChange} />
+    </main>
+  )
+}
+

@@ -66,10 +66,10 @@ export function StoryLibraryTab() {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-accent/20 to-background">
-      <div className="p-6 space-y-6">
+      <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Story Library</h1>
-          <p className="text-muted-foreground">Choose a template for your personalized storybook</p>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
+          <p className="text-muted-foreground text-base md:text-lg">Choose a template for your personalized storybook</p>
         </div>
 
         {loading ? (
@@ -81,7 +81,7 @@ export function StoryLibraryTab() {
             <p className="text-destructive">{error}</p>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {templates.map((template) => {
               const coverLabel = getCoverLabel(template.title)
               const category = getCategory(template.title)
@@ -90,13 +90,13 @@ export function StoryLibraryTab() {
 
               return (
                 <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 p-4">
+                  <div className="flex gap-4 md:gap-6 p-4 md:p-6">
                     <div className="relative shrink-0">
                       {thumbnail && !failedThumbnails.has(template.id) ? (
                         <img
                           src={thumbnail}
                           alt={template.title}
-                          className="w-24 h-32 object-cover rounded-lg"
+                          className="w-24 h-32 md:w-32 md:h-44 lg:w-40 lg:h-56 object-cover rounded-lg"
                           onError={() => {
                             // Mark this thumbnail as failed
                             console.error(`Failed to load thumbnail for ${template.title}:`, thumbnail)
@@ -104,8 +104,8 @@ export function StoryLibraryTab() {
                           }}
                         />
                       ) : (
-                        <div className="w-24 h-32 bg-secondary rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-8 h-8 text-muted-foreground" />
+                        <div className="w-24 h-32 md:w-32 md:h-44 lg:w-40 lg:h-56 bg-secondary rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground" />
                         </div>
                       )}
                       {coverLabel && thumbnail && (
@@ -120,10 +120,10 @@ export function StoryLibraryTab() {
                       </Badge>
                     </div>
 
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2 md:space-y-3">
                       <div>
-                        <h3 className="font-bold text-lg">{template.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{template.description}</p>
+                        <h3 className="font-bold text-lg md:text-xl lg:text-2xl">{template.title}</h3>
+                        <p className="text-sm md:text-base text-muted-foreground line-clamp-2">{template.description}</p>
                       </div>
 
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">

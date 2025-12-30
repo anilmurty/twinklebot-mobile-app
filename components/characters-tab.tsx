@@ -86,15 +86,15 @@ export function CharactersTab() {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-secondary/20 to-background">
-      <div className="p-6 space-y-6">
+      <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Characters</h1>
-          <p className="text-muted-foreground">Your storybook heroes</p>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
+          <p className="text-muted-foreground text-base md:text-lg">Your storybook heroes</p>
         </div>
 
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="w-full h-auto py-4 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
+          className="w-full md:w-auto md:max-w-xs h-auto py-4 md:py-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
         >
           <Plus className="w-5 h-5" />
           <span className="font-semibold">Create New Character</span>
@@ -119,16 +119,16 @@ export function CharactersTab() {
             </p>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {characters.map((character) => (
               <Card key={character.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="flex gap-4 p-4">
+                <div className="flex gap-4 md:gap-6 p-4 md:p-6">
                   <div className="relative shrink-0">
                     {character.front_photo_url ? (
                       <img
                         src={character.front_photo_url}
                         alt={character.name}
-                        className="w-20 h-20 object-cover rounded-full border-4 border-primary/20"
+                        className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 object-cover rounded-full border-4 border-primary/20"
                         onError={(e) => {
                           // Fallback to placeholder if image fails to load
                           const target = e.target as HTMLImageElement
@@ -136,19 +136,19 @@ export function CharactersTab() {
                         }}
                       />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-secondary border-4 border-primary/20 flex items-center justify-center">
-                        <span className="text-lg font-bold text-muted-foreground">
+                      <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-secondary border-4 border-primary/20 flex items-center justify-center">
+                        <span className="text-lg md:text-xl lg:text-2xl font-bold text-muted-foreground">
                           {character.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex-1 space-y-2">
+                  <div className="flex-1 space-y-2 md:space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-bold text-xl">{character.name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-bold text-xl md:text-2xl lg:text-3xl">{character.name}</h3>
+                        <p className="text-sm md:text-base text-muted-foreground">
                           Created {new Date(character.created_at).toLocaleDateString()}
                         </p>
                       </div>

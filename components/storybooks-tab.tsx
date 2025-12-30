@@ -151,10 +151,10 @@ export function StorybooksTab() {
   }
   return (
     <div className="min-h-full bg-gradient-to-b from-primary/5 to-background">
-      <div className="p-6 space-y-6">
+      <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">My Storybooks</h1>
-          <p className="text-muted-foreground">Your personalized adventure library</p>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">My Storybooks</h1>
+          <p className="text-muted-foreground text-base md:text-lg">Your personalized adventure library</p>
         </div>
 
         {loading ? (
@@ -202,7 +202,7 @@ export function StorybooksTab() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {storybooks.map((storybook) => {
               const sceneCount = storybook.scenes?.length || 0
               const progress = storybook.progress || 0
@@ -213,14 +213,14 @@ export function StorybooksTab() {
 
               return (
                 <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 p-4">
+                  <div className="flex gap-4 md:gap-6 p-4 md:p-6">
                     <div className="relative shrink-0">
                       {thumbnailUrl ? (
                         <>
                           <img
                             src={thumbnailUrl}
                             alt={storybook.title}
-                            className="w-24 h-32 object-cover rounded-lg"
+                            className="w-24 h-32 md:w-32 md:h-44 lg:w-40 lg:h-56 object-cover rounded-lg"
                           />
                           {overlay && (
                             <div className="absolute inset-0 flex items-end justify-center pointer-events-none pb-2">
@@ -231,8 +231,8 @@ export function StorybooksTab() {
                           )}
                         </>
                       ) : (
-                        <div className="w-24 h-32 bg-secondary rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-8 h-8 text-muted-foreground" />
+                        <div className="w-24 h-32 md:w-32 md:h-44 lg:w-40 lg:h-56 bg-secondary rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground" />
                         </div>
                       )}
                       {isGenerating && (
@@ -242,11 +242,11 @@ export function StorybooksTab() {
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2 md:space-y-3">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="font-semibold text-lg">{storybook.title}</h3>
-                          <p className="text-sm text-muted-foreground">Starring: {storybook.character_name}</p>
+                          <h3 className="font-semibold text-lg md:text-xl lg:text-2xl">{storybook.title}</h3>
+                          <p className="text-sm md:text-base text-muted-foreground">Starring: {storybook.character_name}</p>
                         </div>
                         <Button
                           size="sm"

@@ -1,18 +1,17 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { StorybooksTab } from "@/components/storybooks-tab"
-import { CharactersTab } from "@/components/characters-tab"
-import { StoryLibraryTab } from "@/components/story-library-tab"
-import { ProfileTab } from "@/components/profile-tab"
-import { BottomNav } from "@/components/bottom-nav"
+import { MobileLayout } from "@/components/mobile-layout"
+import { DesktopLayout } from "@/components/desktop-layout"
 import { LandingPage } from "@/components/landing-page"
 import { useAuth } from "@/lib/auth-context"
 import { useSearchParams } from "next/navigation"
+import { useIsMobile } from "@/lib/utils/device-detection"
 
 function HomeContent() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
+  const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "profile">("storybooks")
 
   useEffect(() => {
@@ -37,17 +36,12 @@ function HomeContent() {
     return <LandingPage />
   }
 
-  return (
-    <main className="h-screen flex flex-col bg-background pb-16 overflow-hidden">
-      <div className="flex-1 overflow-auto">
-        {activeTab === "storybooks" && <StorybooksTab />}
-        {activeTab === "characters" && <CharactersTab />}
-        {activeTab === "library" && <StoryLibraryTab />}
-        {activeTab === "profile" && <ProfileTab />}
-      </div>
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-    </main>
-  )
+  // Render mobile or desktop layout based on device detection
+  if (isMobile) {
+    return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
+  } else {
+    return <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
+  }
 }
 
 export default function Home() {
