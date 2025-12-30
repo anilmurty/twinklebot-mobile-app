@@ -37,7 +37,7 @@ BEGIN
         "script_text": "Time for some monkey business. [Name] laughs and mimics the playful swinging motions of a family of chimpanzees.",
         "base_photo": "monkeys.jpeg",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, excited, hands in the air. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, excited and animated. keep everything else the same and make it look natural",
         "aspect_ratio": "match_input_image"
       },
       {

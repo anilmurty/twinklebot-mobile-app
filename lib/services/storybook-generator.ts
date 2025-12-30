@@ -276,38 +276,102 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         generated_at: new Date().toISOString(),
       }
 
-      // Update storybook scenes array atomically
-      const { data: currentStorybook } = await supabaseAdmin
-        .from('storybooks')
-        .select('scenes')
-        .eq('id', storybookId)
-        .single()
+      // Update storybook scenes array atomically with retry logic to handle race conditions
+      // When scenes are generated in parallel, multiple scenes might try to update the array simultaneously
+      // We need to retry until we successfully update the array with our scene
+      let updateSuccess = false
+      let updateAttempts = 0
+      const maxUpdateAttempts = 5
+      
+      while (!updateSuccess && updateAttempts < maxUpdateAttempts) {
+        updateAttempts++
+        
+        // Fetch current scenes
+        const { data: currentStorybook, error: fetchError } = await supabaseAdmin
+          .from('storybooks')
+          .select('scenes')
+          .eq('id', storybookId)
+          .single()
 
-      const currentScenes = Array.isArray(currentStorybook?.scenes) ? currentStorybook.scenes : []
-      const updatedScenes = [...currentScenes]
-      const existingIndex = updatedScenes.findIndex(
-        (s: any) => s.scene_number === sceneTemplate.scene_number
-      )
+        if (fetchError) {
+          console.error(`Failed to fetch scenes for update (attempt ${updateAttempts}):`, fetchError)
+          if (updateAttempts < maxUpdateAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100 * updateAttempts))
+            continue
+          } else {
+            throw new Error(`Failed to fetch scenes after ${maxUpdateAttempts} attempts: ${fetchError.message}`)
+          }
+        }
 
-      if (existingIndex >= 0) {
-        updatedScenes[existingIndex] = sceneData
-      } else {
-        updatedScenes.push(sceneData)
+        const currentScenes = Array.isArray(currentStorybook?.scenes) ? currentStorybook.scenes : []
+        
+        // Check if scene already exists (another process might have added it)
+        const existingIndex = currentScenes.findIndex(
+          (s: any) => s.scene_number === sceneTemplate.scene_number
+        )
+        
+        if (existingIndex >= 0 && currentScenes[existingIndex]?.image_url) {
+          // Scene already exists with image, skip update
+          console.log(`Scene ${sceneTemplate.scene_number} already exists in database, skipping update`)
+          updateSuccess = true
+          break
+        }
+
+        // Prepare updated scenes array
+        const updatedScenes = [...currentScenes]
+        if (existingIndex >= 0) {
+          updatedScenes[existingIndex] = sceneData
+        } else {
+          updatedScenes.push(sceneData)
+        }
+
+        // Update database with new scene
+        const { error: updateError } = await supabaseAdmin
+          .from('storybooks')
+          .update({
+            scenes: updatedScenes,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', storybookId)
+
+        if (updateError) {
+          console.error(`Failed to update scenes (attempt ${updateAttempts}):`, updateError)
+          if (updateAttempts < maxUpdateAttempts) {
+            // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
+            continue
+          } else {
+            throw new Error(`Failed to update scenes after ${maxUpdateAttempts} attempts: ${updateError.message}`)
+          }
+        }
+
+        // Verify the update succeeded by checking if our scene is in the database
+        const { data: verifyStorybook } = await supabaseAdmin
+          .from('storybooks')
+          .select('scenes')
+          .eq('id', storybookId)
+          .single()
+
+        const verifyScenes = Array.isArray(verifyStorybook?.scenes) ? verifyStorybook.scenes : []
+        const verifyScene = verifyScenes.find((s: any) => s.scene_number === sceneTemplate.scene_number)
+        
+        if (verifyScene?.image_url === sceneData.image_url) {
+          // Update succeeded
+          updateSuccess = true
+          generatedScenes = verifyScenes
+          console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully (update attempt ${updateAttempts})`)
+        } else {
+          // Update was overwritten by another process, retry
+          console.log(`Scene ${sceneTemplate.scene_number} update was overwritten, retrying (attempt ${updateAttempts}/${maxUpdateAttempts})...`)
+          if (updateAttempts < maxUpdateAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
+          }
+        }
       }
 
-      // Update database with new scene
-      await supabaseAdmin
-        .from('storybooks')
-        .update({
-          scenes: updatedScenes,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', storybookId)
-
-        // Update local state
-        generatedScenes = updatedScenes
-
-        console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully`)
+      if (!updateSuccess) {
+        throw new Error(`Failed to update scene ${sceneTemplate.scene_number} after ${maxUpdateAttempts} attempts due to race conditions`)
+      }
       } catch (error: any) {
         console.error(`Scene ${sceneTemplate.scene_number} attempt ${attempt} failed:`, error.message)
         
