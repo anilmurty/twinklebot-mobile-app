@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         completed_at,
         scenes,
         character:characters(id, name),
-        template:story_templates(id, title, thumbnail_url)
+        template:story_templates(id, title, thumbnail_url, scene_count)
       `)
       .eq('user_id', user.data.user?.id)
       .order('created_at', { ascending: false })
@@ -55,8 +55,25 @@ export async function GET(request: NextRequest) {
         const result: any = {
           ...sb,
           character_name: sb.character?.name || '',
+          total_scenes: sb.template?.scene_count || 0, // Add total_scenes from template
         }
 
+        // Always start with template thumbnail, then replace with first scene when available
+        // Default to template thumbnail - convert if it's a relative path
+        let templateThumbnailUrl = sb.template?.thumbnail_url || null
+        if (templateThumbnailUrl && templateThumbnailUrl.startsWith('/') && !templateThumbnailUrl.startsWith('http')) {
+          // Convert relative path like "/day-at-the-zoo/cover.png" to Supabase Storage URL
+          const storagePath = templateThumbnailUrl.slice(1) // Remove leading slash
+          const { getStorageUrl } = await import('@/lib/supabase/storage')
+          try {
+            templateThumbnailUrl = getStorageUrl('story-template-assets', storagePath)
+          } catch (err) {
+            console.error(`Failed to convert template thumbnail URL for storybook ${sb.id}:`, err)
+            templateThumbnailUrl = null
+          }
+        }
+        result.thumbnail_url = templateThumbnailUrl
+        
         // Generate thumbnail from first scene if available (even during generation)
         if (sb.scenes && Array.isArray(sb.scenes) && sb.scenes.length > 0) {
           // Find first scene with an image_url (scenes may not be in order)
@@ -70,25 +87,16 @@ export async function GET(request: NextRequest) {
                 const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
                 if (urlMatch) {
                   const signedUrl = await getSignedUrl('storybook-scenes', urlMatch[1], 3600)
+                  // Replace template thumbnail with first scene image
                   result.thumbnail_url = signedUrl
                   result.first_scene_image = signedUrl
                 }
               } catch (err) {
                 console.error(`Failed to generate thumbnail for storybook ${sb.id}:`, err)
-                // Fall back to template thumbnail on error
-                result.thumbnail_url = sb.template?.thumbnail_url || null
+                // Keep template thumbnail on error
               }
-            } else {
-              // Use template thumbnail if no scene image available yet
-              result.thumbnail_url = sb.template?.thumbnail_url || null
             }
-          } else {
-            // No scenes with images yet, use template thumbnail
-            result.thumbnail_url = sb.template?.thumbnail_url || null
           }
-        } else {
-          // Use template thumbnail for pending/generating storybooks with no scenes yet
-          result.thumbnail_url = sb.template?.thumbnail_url || null
         }
 
         return result

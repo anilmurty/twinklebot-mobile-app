@@ -128,7 +128,7 @@ export async function generateCharacterVariations(
     const { createPrediction, pollPrediction } = await import('./image-generation')
     console.log(`[TIMING] Imported modules: ${Date.now() - importStart}ms`)
     
-    // Create prediction and update progress to 33% when prediction is created
+    // Create prediction and update progress to 40% when prediction is created (10% base + 30% for char 1)
     const predictionCreateStart = Date.now()
     console.log(`[TIMING] Creating first Replicate prediction at ${new Date().toISOString()}`)
     const predictionId = await createPrediction(
@@ -146,9 +146,9 @@ export async function generateCharacterVariations(
     const progressUpdateStart = Date.now()
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 33, updated_at: new Date().toISOString() })
+      .update({ progress: 40, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
-    console.log(`[TIMING] Updated progress to 33%: ${Date.now() - progressUpdateStart}ms`)
+    console.log(`[TIMING] Updated progress to 40%: ${Date.now() - progressUpdateStart}ms`)
     
     // Now poll for result
     const pollStart = Date.now()
@@ -202,10 +202,10 @@ export async function generateCharacterVariations(
       ),
     ])
     
-    // Update progress to 66% when predictions are created
+    // Update progress to 70% when predictions are created (10% base + 30% for char 1 + 30% for char 2)
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 66, updated_at: new Date().toISOString() })
+      .update({ progress: 70, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
     
     // Poll for both results
@@ -229,10 +229,10 @@ export async function generateCharacterVariations(
     leftUrl = leftResult
     rightUrl = rightResult
     
-    // Update progress to 95% after all variations generated
+    // Update progress to 100% after all variations generated (10% base + 30% * 3 = 100%)
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 95, updated_at: new Date().toISOString() })
+      .update({ progress: 100, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
   } else {
     // No storybookId, use regular function

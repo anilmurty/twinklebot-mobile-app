@@ -84,13 +84,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     if (!variations) {
       console.log(`No existing variations found. Generating character variations...`)
       try {
-        // Set progress to 0% - "Starting character creation"
+        // Set progress to 10% - "Starting character creation"
         const progressUpdateStart = Date.now()
         await supabaseAdmin
           .from('storybooks')
-          .update({ progress: 0, updated_at: new Date().toISOString() })
+          .update({ progress: 10, updated_at: new Date().toISOString() })
           .eq('id', storybookId)
-        console.log(`[TIMING] Updated progress to 0%: ${Date.now() - progressUpdateStart}ms`)
+        console.log(`[TIMING] Updated progress to 10%: ${Date.now() - progressUpdateStart}ms`)
 
         const variationGenStart = Date.now()
         console.log(`[TIMING] Starting character variation generation at ${new Date().toISOString()}`)
@@ -121,10 +121,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       console.log(`  Front: ${variations.front_variation_url}`)
       console.log(`  Left: ${variations.left_variation_url}`)
       console.log(`  Right: ${variations.right_variation_url}`)
-      // Character variations already exist, set progress to 95% (character generation complete)
+      // Character variations already exist, set progress to 100% (character generation complete)
       await supabaseAdmin
         .from('storybooks')
-        .update({ progress: 95, updated_at: new Date().toISOString() })
+        .update({ progress: 100, updated_at: new Date().toISOString() })
         .eq('id', storybookId)
     }
     console.log('=====================================\n')
@@ -132,10 +132,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     // Initialize scenes array if not exists
     let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
 
-    // Set progress to 0% for "Starting storybook generation"
+    // Set progress to 110% (10% in scene generation phase) for "Starting storybook generation"
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 100, updated_at: new Date().toISOString() }) // 100 = starting scene generation
+      .update({ progress: 110, updated_at: new Date().toISOString() }) // 110 = 10% in scene generation (100 + 10)
       .eq('id', storybookId)
 
     // Helper function to check if scene already exists in database
@@ -249,7 +249,9 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)
 
       // Update progress when prediction is created
-      const sceneProgress = Math.round(((sceneTemplate.scene_number) / totalScenes) * 100)
+      // Scene progress: 10% base + (scene_number / totalScenes) * 90% = 10% to 100%
+      // Add 100 to indicate scene generation phase
+      const sceneProgress = Math.round(10 + ((sceneTemplate.scene_number) / totalScenes) * 90)
       await supabaseAdmin
         .from('storybooks')
         .update({ progress: 100 + sceneProgress, updated_at: new Date().toISOString() })

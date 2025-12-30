@@ -283,25 +283,26 @@ export function StorybooksTab() {
                           <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground">
                               {progress < 100 ? (
-                                // Character generation phase (0-95%)
-                                progress === 0 ? (
+                                // Character generation phase (10-100%)
+                                progress <= 10 ? (
                                   'Starting character creation...'
-                                ) : progress <= 33 ? (
+                                ) : progress <= 40 ? (
                                   'Generating character 1...'
-                                ) : progress <= 66 ? (
+                                ) : progress <= 70 ? (
                                   'Generating character 2...'
                                 ) : (
                                   'Generating character 3...'
                                 )
                               ) : (
-                                // Scene generation phase (100+)
+                                // Scene generation phase (110+)
                                 (() => {
-                                  const sceneProgress = progress - 100 // Subtract 100 to get actual scene progress
-                                  if (sceneProgress === 0) {
+                                  const sceneProgress = progress - 100 // Subtract 100 to get actual scene progress (10-100%)
+                                  if (sceneProgress <= 10) {
                                     return 'Starting storybook generation...'
                                   }
-                                  const totalScenes = storybook.scenes?.length || 10
-                                  const sceneNumber = Math.ceil((sceneProgress / 100) * totalScenes)
+                                  const totalScenes = storybook.total_scenes || storybook.scenes?.length || 10
+                                  // Calculate scene number: sceneProgress ranges from 10-100, map to scene 1-10
+                                  const sceneNumber = Math.ceil(((sceneProgress - 10) / 90) * totalScenes)
                                   return `Scene ${sceneNumber} of ${totalScenes}...`
                                 })()
                               )}
@@ -313,7 +314,7 @@ export function StorybooksTab() {
                           <div className="w-full bg-secondary rounded-full h-2">
                             <div
                               className="bg-primary h-2 rounded-full transition-all"
-                              style={{ width: `${Math.max(progress < 100 ? progress : progress - 100, 0)}%` }}
+                              style={{ width: `${Math.max(progress < 100 ? progress : progress - 100, 10)}%` }}
                             />
                           </div>
                         </div>
