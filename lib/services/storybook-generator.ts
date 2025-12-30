@@ -151,6 +151,28 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           throw new Error(`Character variation URL not found for ${sceneTemplate.child_photo} view`)
         }
 
+        // Convert character variation URL to signed URL for Replicate access
+        // The character-variations bucket is private, so we need signed URLs
+        const { getSignedUrl } = await import('@/lib/supabase/storage')
+        const extractStoragePath = (url: string): string | null => {
+          // URL format: https://xxx.supabase.co/storage/v1/object/public/character-variations/path
+          // or: https://xxx.supabase.co/storage/v1/object/sign/character-variations/path
+          const match = url.match(/character-variations\/(.+)$/)
+          if (match) {
+            return match[1]
+          }
+          return null
+        }
+
+        const variationStoragePath = extractStoragePath(characterVariationUrl)
+        if (!variationStoragePath) {
+          throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
+        }
+
+        // Create signed URL (valid for 1 hour) for Replicate to access
+        characterVariationUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
+        console.log(`Created signed URL for character variation (expires in 1 hour)`)
+
         // Construct base photo path (from Supabase Storage: story-template-assets/day-at-the-zoo/)
         const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
 
