@@ -435,16 +435,35 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       verifyAttempt++
       console.log(`Verification attempt ${verifyAttempt}/${maxVerifyAttempts}...`)
       
-      const { data: finalStorybook, error: verifyError } = await supabaseAdmin
-        .from('storybooks')
-        .select('scenes')
-        .eq('id', storybookId)
-        .single()
+      let finalStorybook: any = null
+      let verifyError: any = null
+      
+      try {
+        const result = await supabaseAdmin
+          .from('storybooks')
+          .select('scenes')
+          .eq('id', storybookId)
+          .single()
+        
+        finalStorybook = result.data
+        verifyError = result.error
+      } catch (err: any) {
+        verifyError = err
+        console.error(`❌ Exception verifying scenes (attempt ${verifyAttempt}):`, err)
+      }
 
       if (verifyError) {
         console.error(`❌ Error verifying scenes (attempt ${verifyAttempt}):`, verifyError)
+        console.error(`Error code: ${verifyError.code}, Error message: ${verifyError.message}`)
         if (verifyAttempt === maxVerifyAttempts) {
-          throw new Error(`Failed to verify scenes after ${maxVerifyAttempts} attempts: ${verifyError.message}`)
+          // If verification fails but we know scenes exist, try to proceed anyway
+          console.error(`⚠️ Verification failed after ${maxVerifyAttempts} attempts, but proceeding with final scenes from last successful fetch`)
+          if (finalScenes.length === totalScenes) {
+            console.log(`⚠️ Using cached scenes array (${finalScenes.length} scenes) since verification is failing`)
+            break
+          } else {
+            throw new Error(`Failed to verify scenes after ${maxVerifyAttempts} attempts: ${verifyError.message}`)
+          }
         }
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, verifyAttempt) * 1000))
         continue
@@ -497,6 +516,30 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
     // Sort scenes by scene_number one final time before marking as completed
     finalScenes.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
+    
+    // Validate scenes array before saving
+    if (finalScenes.length !== totalScenes) {
+      console.error(`❌ Scene count mismatch: Expected ${totalScenes}, found ${finalScenes.length}`)
+      throw new Error(`Scene count mismatch: Expected ${totalScenes}, found ${finalScenes.length}`)
+    }
+    
+    const sceneNumbers = finalScenes.map((s: any) => s.scene_number).sort((a, b) => a - b)
+    const expectedSceneNumbers = scenes.map(s => s.scene_number).sort((a, b) => a - b)
+    
+    if (JSON.stringify(sceneNumbers) !== JSON.stringify(expectedSceneNumbers)) {
+      console.error(`❌ Scene numbers mismatch: Expected ${JSON.stringify(expectedSceneNumbers)}, found ${JSON.stringify(sceneNumbers)}`)
+      throw new Error(`Scene numbers mismatch: Expected ${expectedSceneNumbers.join(', ')}, found ${sceneNumbers.join(', ')}`)
+    }
+    
+    // Validate all scenes have required fields
+    for (const scene of finalScenes) {
+      if (!scene.scene_number || !scene.image_url) {
+        console.error(`❌ Invalid scene data:`, scene)
+        throw new Error(`Scene ${scene.scene_number || 'unknown'} is missing required fields`)
+      }
+    }
+    
+    console.log(`✅ Scenes array validated: ${finalScenes.length} scenes, all with image_url`)
 
     // All scenes generated successfully - mark as completed
     // Set progress to 200 (which displays as 100% in scene generation phase)
@@ -504,33 +547,74 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     // So 200 - 100 = 100% completion
     // Database constraint allows 0-200 (migration 014)
     console.log(`✅ All ${totalScenes} scenes verified in database. Marking storybook as completed.`)
+    console.log(`Final scenes array length: ${finalScenes.length}`)
+    console.log(`Final scenes scene_numbers:`, finalScenes.map((s: any) => s.scene_number).sort((a, b) => a - b))
     
-    const { error: updateError } = await supabaseAdmin
-      .from('storybooks')
-      .update({
-        status: 'completed',
-        progress: 200, // Scene generation complete (displays as 100%)
-        scenes: finalScenes, // Ensure scenes are sorted before final save
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', storybookId)
+    // Retry the completion update in case of transient errors
+    let completionUpdateSuccess = false
+    let completionAttempts = 0
+    const maxCompletionAttempts = 3
+    
+    while (!completionUpdateSuccess && completionAttempts < maxCompletionAttempts) {
+      completionAttempts++
+      console.log(`Attempting to mark storybook as completed (attempt ${completionAttempts}/${maxCompletionAttempts})...`)
+      
+      const { error: updateError, data: updateData } = await supabaseAdmin
+        .from('storybooks')
+        .update({
+          status: 'completed',
+          progress: 200, // Scene generation complete (displays as 100%)
+          scenes: finalScenes, // Ensure scenes are sorted before final save
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', storybookId)
+        .select('status')
 
-    if (updateError) {
-      console.error(`❌ Failed to update storybook status to completed:`, updateError)
-      throw new Error(`Failed to mark storybook as completed: ${updateError.message}`)
+      if (updateError) {
+        console.error(`❌ Failed to update storybook status to completed (attempt ${completionAttempts}):`, updateError)
+        if (completionAttempts < maxCompletionAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * completionAttempts))
+          continue
+        } else {
+          throw new Error(`Failed to mark storybook as completed after ${maxCompletionAttempts} attempts: ${updateError.message}`)
+        }
+      }
+
+      // Verify the update succeeded
+      const { data: verifyComplete, error: verifyError } = await supabaseAdmin
+        .from('storybooks')
+        .select('status')
+        .eq('id', storybookId)
+        .single()
+
+      if (verifyError) {
+        console.error(`❌ Error verifying completion status (attempt ${completionAttempts}):`, verifyError)
+        if (completionAttempts < maxCompletionAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * completionAttempts))
+          continue
+        } else {
+          throw new Error(`Failed to verify completion status after ${maxCompletionAttempts} attempts: ${verifyError.message}`)
+        }
+      }
+
+      if (verifyComplete?.status === 'completed') {
+        console.log(`✅ Storybook successfully marked as completed on attempt ${completionAttempts}`)
+        completionUpdateSuccess = true
+        break
+      } else {
+        console.error(`❌ Storybook status update verification failed. Expected 'completed', got '${verifyComplete?.status}'`)
+        if (completionAttempts < maxCompletionAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * completionAttempts))
+          continue
+        } else {
+          throw new Error(`Storybook status was not set to completed after ${maxCompletionAttempts} attempts. Current status: ${verifyComplete?.status}`)
+        }
+      }
     }
-
-    // Verify the update succeeded
-    const { data: verifyComplete } = await supabaseAdmin
-      .from('storybooks')
-      .select('status')
-      .eq('id', storybookId)
-      .single()
-
-    if (verifyComplete?.status !== 'completed') {
-      console.error(`❌ Storybook status update verification failed. Expected 'completed', got '${verifyComplete?.status}'`)
-      throw new Error(`Storybook status was not set to completed. Current status: ${verifyComplete?.status}`)
+    
+    if (!completionUpdateSuccess) {
+      throw new Error(`Failed to mark storybook as completed after ${maxCompletionAttempts} attempts`)
     }
 
     // Update generation job status
