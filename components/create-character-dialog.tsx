@@ -21,7 +21,8 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
   const [preview, setPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const photoLibraryInputRef = useRef<HTMLInputElement>(null)
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB per file
 
@@ -35,9 +36,12 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       setError(`Photo is too large (${formatFileSize(file.size)}). Maximum size is 10MB. Please compress or resize your image.`)
-      // Reset the file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+      // Reset the file inputs
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = ''
+      }
+      if (photoLibraryInputRef.current) {
+        photoLibraryInputRef.current.value = ''
       }
       return
     }
@@ -51,10 +55,22 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
       setPreview(reader.result as string)
     }
     reader.readAsDataURL(file)
+    
+    // Reset both inputs
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = ''
+    }
+    if (photoLibraryInputRef.current) {
+      photoLibraryInputRef.current.value = ''
+    }
   }
 
-  const handlePhotoUpload = () => {
-    fileInputRef.current?.click()
+  const handleCameraClick = () => {
+    cameraInputRef.current?.click()
+  }
+
+  const handlePhotoLibraryClick = () => {
+    photoLibraryInputRef.current?.click()
   }
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,6 +78,8 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
     if (file) {
       handleFileSelect(file)
     }
+    // Reset the input so the same file can be selected again if needed
+    e.target.value = ''
   }
 
   const handleRemovePhoto = () => {
@@ -70,9 +88,12 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
       URL.revokeObjectURL(preview)
       setPreview(null)
     }
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    // Reset file inputs
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = ''
+    }
+    if (photoLibraryInputRef.current) {
+      photoLibraryInputRef.current.value = ''
     }
   }
 
@@ -172,47 +193,69 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
             </p>
 
             <Card className="p-4">
-              <div className="flex items-center gap-4">
-                <div className="w-24 h-24 rounded-lg bg-secondary flex items-center justify-center overflow-hidden shrink-0">
-                  {preview ? (
+              {preview ? (
+                <div className="space-y-3">
+                  <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-secondary">
                     <img
                       src={preview}
                       alt="Character photo preview"
                       className="w-full h-full object-cover"
                     />
-                  ) : (
-                    <Camera className="w-8 h-8 text-muted-foreground" />
-                  )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{photo?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {photo ? formatFileSize(photo.size) : ''}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="ghost" onClick={handleRemovePhoto}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-
-                <div className="flex-1">
-                  <p className="font-medium text-sm">Photo</p>
-                  <p className="text-xs text-muted-foreground">
-                    {photo 
-                      ? `${photo.name} (${formatFileSize(photo.size)})`
-                      : "No photo yet"}
-                  </p>
+              ) : (
+                <div className="space-y-3">
+                  <div className="w-full aspect-square rounded-lg bg-secondary flex items-center justify-center">
+                    <Camera className="w-12 h-12 text-muted-foreground" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={handleFileInputChange}
+                    />
+                    <input
+                      ref={photoLibraryInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileInputChange}
+                    />
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={handleCameraClick}
+                      className="w-full"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Camera
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={handlePhotoLibraryClick}
+                      className="w-full"
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Photo Library
+                    </Button>
+                  </div>
                 </div>
-
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileInputChange}
-                />
-
-                {photo ? (
-                  <Button size="sm" variant="ghost" onClick={handleRemovePhoto}>
-                    <X className="w-4 h-4" />
-                  </Button>
-                ) : (
-                  <Button size="sm" variant="outline" onClick={handlePhotoUpload}>
-                    <Upload className="w-3 h-3 mr-1" />
-                    Upload
-                  </Button>
-                )}
-              </div>
+              )}
             </Card>
           </div>
 
