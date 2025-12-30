@@ -54,9 +54,16 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     throw new Error('Missing character or template data')
   }
 
-  const userId = storybook.user_id
-  const scenes = template.script_data.scenes as SceneTemplate[]
-  const totalScenes = scenes.length
+    const userId = storybook.user_id
+    const scenes = template.script_data.scenes as SceneTemplate[]
+    const totalScenes = scenes.length
+    
+    console.log(`\n=== STORYBOOK GENERATION START ===`)
+    console.log(`Storybook ID: ${storybookId}`)
+    console.log(`Character: ${character.name}`)
+    console.log(`Template: ${template.title}`)
+    console.log(`Total scenes expected: ${totalScenes}`)
+    console.log(`Scene numbers:`, scenes.map(s => s.scene_number).sort((a, b) => a - b))
 
   try {
     // Check for existing character variations, generate if needed
@@ -346,32 +353,64 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     }
 
     // Verify all scenes exist in database before marking as complete
+    // Add a small delay to ensure all database writes have completed
     console.log(`\n=== VERIFYING ALL SCENES ARE COMPLETE ===`)
-    const { data: finalStorybook, error: verifyError } = await supabaseAdmin
-      .from('storybooks')
-      .select('scenes')
-      .eq('id', storybookId)
-      .single()
-
-    if (verifyError) {
-      console.error(`❌ Error verifying scenes:`, verifyError)
-      throw new Error(`Failed to verify scenes: ${verifyError.message}`)
-    }
-
-    const finalScenes = Array.isArray(finalStorybook?.scenes) ? finalStorybook.scenes : []
-    const completedScenes = finalScenes.filter((s: any) => s.image_url).length
+    console.log(`Waiting 2 seconds for all database writes to complete...`)
+    await new Promise(resolve => setTimeout(resolve, 2000))
     
-    console.log(`Found ${completedScenes}/${totalScenes} completed scenes in database`)
-    console.log(`Scene numbers with images:`, finalScenes.filter((s: any) => s.image_url).map((s: any) => s.scene_number).sort((a, b) => a - b))
+    // Retry verification up to 3 times with exponential backoff
+    let finalScenes: any[] = []
+    let completedScenes = 0
+    let verifyAttempt = 0
+    const maxVerifyAttempts = 3
+    
+    while (verifyAttempt < maxVerifyAttempts) {
+      verifyAttempt++
+      console.log(`Verification attempt ${verifyAttempt}/${maxVerifyAttempts}...`)
+      
+      const { data: finalStorybook, error: verifyError } = await supabaseAdmin
+        .from('storybooks')
+        .select('scenes')
+        .eq('id', storybookId)
+        .single()
+
+      if (verifyError) {
+        console.error(`❌ Error verifying scenes (attempt ${verifyAttempt}):`, verifyError)
+        if (verifyAttempt === maxVerifyAttempts) {
+          throw new Error(`Failed to verify scenes after ${maxVerifyAttempts} attempts: ${verifyError.message}`)
+        }
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, verifyAttempt) * 1000))
+        continue
+      }
+
+      finalScenes = Array.isArray(finalStorybook?.scenes) ? finalStorybook.scenes : []
+      completedScenes = finalScenes.filter((s: any) => s.image_url).length
+      
+      console.log(`Found ${completedScenes}/${totalScenes} completed scenes in database`)
+      console.log(`Scene numbers with images:`, finalScenes.filter((s: any) => s.image_url).map((s: any) => s.scene_number).sort((a, b) => a - b))
+
+      if (completedScenes >= totalScenes) {
+        console.log(`✅ All scenes verified complete on attempt ${verifyAttempt}`)
+        break
+      }
+      
+      if (verifyAttempt < maxVerifyAttempts) {
+        const missingScenes = scenes
+          .map(s => s.scene_number)
+          .filter(num => !finalScenes.find((s: any) => s.scene_number === num && s.image_url))
+        console.log(`⚠️ Only ${completedScenes}/${totalScenes} scenes found. Missing: ${missingScenes.join(', ')}. Retrying...`)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, verifyAttempt) * 1000))
+      }
+    }
 
     if (completedScenes < totalScenes) {
       const missingScenes = scenes
         .map(s => s.scene_number)
         .filter(num => !finalScenes.find((s: any) => s.scene_number === num && s.image_url))
       
-      console.error(`⚠️ Warning: Only ${completedScenes}/${totalScenes} scenes completed. Missing scenes: ${missingScenes.join(', ')}`)
+      console.error(`⚠️ Warning: Only ${completedScenes}/${totalScenes} scenes completed after ${maxVerifyAttempts} verification attempts. Missing scenes: ${missingScenes.join(', ')}`)
       
-      await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from('storybooks')
         .update({
           status: 'failed',
@@ -379,6 +418,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           updated_at: new Date().toISOString(),
         })
         .eq('id', storybookId)
+
+      if (updateError) {
+        console.error(`❌ Failed to update storybook status to failed:`, updateError)
+      }
 
       throw new Error(`Only ${completedScenes}/${totalScenes} scenes generated. Missing: ${missingScenes.join(', ')}`)
     }
@@ -436,18 +479,41 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   } catch (error: any) {
     // Ensure status is updated even if an unexpected error occurs
     console.error(`❌ Unexpected error during storybook generation:`, error)
+    console.error(`Error stack:`, error.stack)
     
-    try {
-      await supabaseAdmin
-        .from('storybooks')
-        .update({
-          status: 'failed',
-          error_message: `Unexpected error: ${error.message || 'Unknown error'}`,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', storybookId)
-    } catch (updateErr: any) {
-      console.error(`❌ Failed to update storybook status after error:`, updateErr)
+    // Try to update status to failed with retries
+    let statusUpdateSuccess = false
+    for (let retry = 0; retry < 3; retry++) {
+      try {
+        const { error: updateError } = await supabaseAdmin
+          .from('storybooks')
+          .update({
+            status: 'failed',
+            error_message: `Error: ${error.message || 'Unknown error'}`.substring(0, 500), // Limit error message length
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', storybookId)
+        
+        if (!updateError) {
+          statusUpdateSuccess = true
+          console.log(`✅ Successfully updated storybook status to 'failed'`)
+          break
+        } else {
+          console.error(`❌ Failed to update storybook status (attempt ${retry + 1}/3):`, updateError)
+          if (retry < 2) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)))
+          }
+        }
+      } catch (updateErr: any) {
+        console.error(`❌ Exception updating storybook status (attempt ${retry + 1}/3):`, updateErr)
+        if (retry < 2) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)))
+        }
+      }
+    }
+    
+    if (!statusUpdateSuccess) {
+      console.error(`❌ CRITICAL: Failed to update storybook status after 3 attempts. Storybook ${storybookId} may be stuck in 'generating' status.`)
     }
     
     throw error // Re-throw to let caller know it failed
