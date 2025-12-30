@@ -21,7 +21,11 @@ interface SceneTemplate {
 }
 
 export async function generateStorybook(storybookId: string): Promise<void> {
+  const startTime = Date.now()
+  console.log(`[TIMING] Storybook generation started at ${new Date().toISOString()}`)
+  
   // Get storybook with related data
+  const fetchStart = Date.now()
   const { data: storybook, error: sbError } = await supabaseAdmin
     .from('storybooks')
     .select(`
@@ -31,6 +35,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     `)
     .eq('id', storybookId)
     .single()
+  console.log(`[TIMING] Fetched storybook data: ${Date.now() - fetchStart}ms`)
 
   if (sbError || !storybook) {
     throw new Error(`Storybook not found: ${storybookId}`)
@@ -42,10 +47,12 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   }
 
   // Update status to generating
+  const statusUpdateStart = Date.now()
   await supabaseAdmin
     .from('storybooks')
     .update({ status: 'generating' })
     .eq('id', storybookId)
+  console.log(`[TIMING] Updated status to generating: ${Date.now() - statusUpdateStart}ms`)
 
   const character = storybook.character
   const template = storybook.template
@@ -70,24 +77,32 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     console.log(`\n=== CHECKING CHARACTER VARIATIONS ===`)
     console.log(`Character ID: ${character.id}`)
     console.log(`Template ID: ${template.id}`)
+    const variationCheckStart = Date.now()
     let variations = await getCharacterVariations(character.id, template.id)
+    console.log(`[TIMING] Checked for existing variations: ${Date.now() - variationCheckStart}ms`)
   
     if (!variations) {
       console.log(`No existing variations found. Generating character variations...`)
       try {
         // Set progress to 0% - "Starting character creation"
+        const progressUpdateStart = Date.now()
         await supabaseAdmin
           .from('storybooks')
           .update({ progress: 0, updated_at: new Date().toISOString() })
           .eq('id', storybookId)
+        console.log(`[TIMING] Updated progress to 0%: ${Date.now() - progressUpdateStart}ms`)
 
+        const variationGenStart = Date.now()
+        console.log(`[TIMING] Starting character variation generation at ${new Date().toISOString()}`)
         variations = await generateCharacterVariations(
           character.id,
           template.id,
           character.front_photo_url,
           userId,
-          storybookId // Pass storybookId to update progress
+          storybookId, // Pass storybookId to update progress
+          true // Skip existence check since we already checked above
         )
+        console.log(`[TIMING] Character variation generation completed: ${Date.now() - variationGenStart}ms`)
         console.log(`✅ Character variations generated successfully`)
       } catch (error: any) {
         console.error(`❌ Failed to generate character variations:`, error)

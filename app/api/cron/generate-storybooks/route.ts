@@ -15,6 +15,9 @@ import { generateStorybook } from '@/lib/services/storybook-generator'
  * }
  */
 export async function POST(request: NextRequest) {
+  const cronStartTime = Date.now()
+  console.log(`[TIMING] Cron job started at ${new Date().toISOString()}`)
+  
   try {
     // Verify cron secret (optional but recommended)
     const authHeader = request.headers.get('authorization')
@@ -23,12 +26,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Find pending or generating storybooks
+    const queryStart = Date.now()
     const { data: pendingStorybooks, error } = await supabaseAdmin
       .from('storybooks')
       .select('id, status')
       .in('status', ['pending', 'generating'])
       .order('created_at', { ascending: true })
       .limit(1) // Process one at a time
+    console.log(`[TIMING] Queried for pending storybooks: ${Date.now() - queryStart}ms`)
 
     if (error) {
       console.error('Error fetching pending storybooks:', error)
@@ -42,6 +47,7 @@ export async function POST(request: NextRequest) {
     const storybook = pendingStorybooks[0]
 
     // Update generation job status
+    const jobUpdateStart = Date.now()
     await supabaseAdmin
       .from('generation_jobs')
       .update({
@@ -50,10 +56,14 @@ export async function POST(request: NextRequest) {
       })
       .eq('storybook_id', storybook.id)
       .eq('status', 'queued')
+    console.log(`[TIMING] Updated generation job status: ${Date.now() - jobUpdateStart}ms`)
 
     try {
       // Generate storybook
+      const genStart = Date.now()
+      console.log(`[TIMING] Calling generateStorybook at ${new Date().toISOString()}`)
       await generateStorybook(storybook.id)
+      console.log(`[TIMING] generateStorybook completed: ${Date.now() - genStart}ms`)
       return NextResponse.json({
         message: `Successfully processed storybook ${storybook.id}`,
       })

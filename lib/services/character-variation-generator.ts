@@ -62,13 +62,16 @@ export async function generateCharacterVariations(
   templateId: number,
   basePhotoUrl: string,
   userId: string,
-  storybookId?: string // Optional: for progress tracking
+  storybookId?: string, // Optional: for progress tracking
+  skipExistenceCheck: boolean = false // Skip redundant existence check if already done
 ): Promise<CharacterVariations> {
-  // Check if variations already exist
-  const existing = await getCharacterVariations(characterId, templateId)
-  if (existing) {
-    console.log(`Character variations already exist for character ${characterId} and template ${templateId}`)
-    return existing
+  // Check if variations already exist (unless caller already checked)
+  if (!skipExistenceCheck) {
+    const existing = await getCharacterVariations(characterId, templateId)
+    if (existing) {
+      console.log(`Character variations already exist for character ${characterId} and template ${templateId}`)
+      return existing
+    }
   }
 
   console.log(`Generating character variations for character ${characterId} and template ${templateId}`)
@@ -85,8 +88,14 @@ export async function generateCharacterVariations(
     return `${userId}/${characterId}/front.jpg`
   }
 
+  const pathExtractionStart = Date.now()
   const basePhotoPath = getPhotoPath(basePhotoUrl)
+  console.log(`[TIMING] Extracted photo path: ${Date.now() - pathExtractionStart}ms`)
+  
+  const signedUrlStart = Date.now()
+  console.log(`[TIMING] Getting signed URL at ${new Date().toISOString()}`)
   const signedBasePhotoUrl = await getSignedUrl('character-photos', basePhotoPath, 3600)
+  console.log(`[TIMING] Got signed URL: ${Date.now() - signedUrlStart}ms`)
 
   // Generate three variations with prompts for different views
   // Front variation: Use uploaded photo, dress for zoo
@@ -114,10 +123,14 @@ export async function generateCharacterVariations(
   let frontUrl: string
   
   if (storybookId) {
+    const importStart = Date.now()
     const { supabaseAdmin } = await import('@/lib/supabase/server')
     const { createPrediction, pollPrediction } = await import('./image-generation')
+    console.log(`[TIMING] Imported modules: ${Date.now() - importStart}ms`)
     
     // Create prediction and update progress to 33% when prediction is created
+    const predictionCreateStart = Date.now()
+    console.log(`[TIMING] Creating first Replicate prediction at ${new Date().toISOString()}`)
     const predictionId = await createPrediction(
       process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
       {
@@ -128,13 +141,19 @@ export async function generateCharacterVariations(
       }
     )
     
+    console.log(`[TIMING] Created prediction ${predictionId}: ${Date.now() - predictionCreateStart}ms`)
+    
+    const progressUpdateStart = Date.now()
     await supabaseAdmin
       .from('storybooks')
       .update({ progress: 33, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
+    console.log(`[TIMING] Updated progress to 33%: ${Date.now() - progressUpdateStart}ms`)
     
     // Now poll for result
+    const pollStart = Date.now()
     frontUrl = await pollPrediction(predictionId)
+    console.log(`[TIMING] Polled prediction result: ${Date.now() - pollStart}ms`)
     console.log('✅ Front variation generated:', frontUrl)
   } else {
     // No storybookId, use regular function
