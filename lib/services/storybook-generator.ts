@@ -496,6 +496,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     // Set progress to 200 (which displays as 100% in scene generation phase)
     // The UI subtracts 100 from progress >= 100 to get scene progress (0-100%)
     // So 200 - 100 = 100% completion
+    // Database constraint allows 0-200 (migration 014)
     console.log(`✅ All ${totalScenes} scenes verified in database. Marking storybook as completed.`)
     
     const { error: updateError } = await supabaseAdmin

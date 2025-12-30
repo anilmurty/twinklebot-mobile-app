@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS storybooks (
   template_id INTEGER NOT NULL REFERENCES story_templates(id),
   title TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'generating', 'completed', 'failed')),
-  progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 200), -- 0-95: character generation, 100-200: scene generation (UI subtracts 100)
   scenes JSONB,
   error_message TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
