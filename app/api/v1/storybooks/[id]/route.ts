@@ -42,8 +42,11 @@ export async function GET(
       const { getSignedUrl } = await import('@/lib/supabase/storage')
       const { supabaseAdmin } = await import('@/lib/supabase/server')
       
+      // Sort scenes by scene_number to ensure correct order
+      const sortedScenes = [...storybook.scenes].sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
+      
       const scenesWithSignedUrls = await Promise.all(
-        storybook.scenes.map(async (scene: any) => {
+        sortedScenes.map(async (scene: any) => {
           if (scene.image_url) {
             try {
               // Extract path from URL

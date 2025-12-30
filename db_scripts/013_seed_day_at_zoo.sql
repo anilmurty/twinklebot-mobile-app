@@ -28,8 +28,8 @@ BEGIN
         "script_text": "[Name] stands wide-eyed at the colorful zoo gates, clutching a paper map and wearing a bright animal-themed sun hat. What a day it is going to be!",
         "base_photo": "entrance.jpeg",
         "child_photo": "front",
-        "insertion_prompt": "add the child to the zoo photo, clutching an open paper map with an expression of amazement and curiosity for what''s ahead. make height proportionate to surroundings. keep everything else the same and make it look natural",
-        "aspect_ratio": "match_input_image"
+        "insertion_prompt": "put the child in the zoo photo, clutching an open paper map with an expression of amazement and curiosity for what''s ahead. make height proportionate to surroundings. keep everything else the same and make it look natural",
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 2,
@@ -38,7 +38,7 @@ BEGIN
         "base_photo": "monkeys.jpeg",
         "child_photo": "right",
         "insertion_prompt": "put the child in the photo, excited and animated. keep everything else the same and make it look natural",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 3,
@@ -47,7 +47,7 @@ BEGIN
         "base_photo": "giraffe.jpeg",
         "child_photo": "left",
         "insertion_prompt": "put the child in the image, securely behind the raised fence, feeding the giraffe lettuce, expression of excitement and amazement. keep everything else the same and make it natural",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 4,
@@ -55,8 +55,8 @@ BEGIN
         "script_text": "Inside the aquarium, [Name] presses their nose against the glass as a giant sea turtle glides silently overhead.",
         "base_photo": "aquarium.jpeg",
         "child_photo": "left",
-        "insertion_prompt": "Add the child into the photo. they should be standing under the giant turtle, firmly on the ground, hands on the glass and face and neck bent upward to admire the turtle. keep everything else the same and make it natural",
-        "aspect_ratio": "match_input_image"
+        "insertion_prompt": "Add the child into the photo. they should be standing under the giant turtle and looking up at it awestruck. keep everything else the same and make it natural",
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 5,
@@ -65,7 +65,7 @@ BEGIN
         "base_photo": "lunch.jpeg",
         "child_photo": "right",
         "insertion_prompt": "put the child in the photo, sitting and sipping a juice box as if they''re posing for a photo. keep everything else the same and make it look natural",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 6,
@@ -73,8 +73,8 @@ BEGIN
         "script_text": "[Name] watches with delight as a group of penguins waddle across the ice and dive into the chilly blue water.",
         "base_photo": "penguins.jpeg",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, facing the glass and hands on it and nose pressing against it. keep everything else the same and make it look natural",
-        "aspect_ratio": "match_input_image"
+        "insertion_prompt": "put the child in the photo, facing the glass and viewing the penguins. keep everything else the same and make it look natural",
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 7,
@@ -83,7 +83,7 @@ BEGIN
         "base_photo": "goats.jpeg",
         "child_photo": "left",
         "insertion_prompt": "put the child in the photo, on their knees and gently petting the goat with their right hand while feeding the goat grains with their left hand. expression of quiet observation. keep everything else the same and make it look natural",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 8,
@@ -92,7 +92,7 @@ BEGIN
         "base_photo": "butterflies.jpeg",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, standing on the higher ground with their arm extended and their eyes gazing at he blue butterfly and their face turned towards it. The child''s facial expression that is hoping that the blue butterfly sits on it. keep everything else the same and make it natural",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 9,
@@ -101,7 +101,7 @@ BEGIN
         "base_photo": "gift-shop.jpeg",
         "child_photo": "left",
         "insertion_prompt": "put the child in the photo, standing to the right of the penguin stand and examining the big penguin by pressing it with their hands",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       },
       {
         "scene_number": 10,
@@ -110,7 +110,7 @@ BEGIN
         "base_photo": "entrance.jpeg",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand",
-        "aspect_ratio": "match_input_image"
+        "aspect_ratio": "9:16"
       }
     ]
   }'::jsonb;

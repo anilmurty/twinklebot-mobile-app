@@ -228,7 +228,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         basePhotoPath,
         characterVariationUrl,
         sceneTemplate.insertion_prompt,
-        sceneTemplate.aspect_ratio || 'match_input_image'
+        sceneTemplate.aspect_ratio || '9:16'
       )
       
       console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)
@@ -324,6 +324,9 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         } else {
           updatedScenes.push(sceneData)
         }
+
+        // Sort scenes by scene_number to ensure correct order
+        updatedScenes.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
 
         // Update database with new scene
         const { error: updateError } = await supabaseAdmin
@@ -492,6 +495,9 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     
     console.log(`✅ All ${totalScenes} scenes verified complete`)
 
+    // Sort scenes by scene_number one final time before marking as completed
+    finalScenes.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
+
     // All scenes generated successfully - mark as completed
     // Set progress to 200 (which displays as 100% in scene generation phase)
     // The UI subtracts 100 from progress >= 100 to get scene progress (0-100%)
@@ -504,6 +510,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       .update({
         status: 'completed',
         progress: 200, // Scene generation complete (displays as 100%)
+        scenes: finalScenes, // Ensure scenes are sorted before final save
         completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
