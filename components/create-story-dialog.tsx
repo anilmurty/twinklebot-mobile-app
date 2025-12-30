@@ -7,60 +7,60 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { charactersApi, storybooksApi } from "@/lib/api-client"
+import { storybooksApi, templatesApi } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 
-interface Character {
-  id: string
-  name: string
-  front_photo_url: string
+interface Template {
+  id: number
+  title: string
+  description: string
+  scene_count: number
+  thumbnail_url?: string
+  script_data?: any
 }
 
-interface GenerateStoryDialogProps {
+interface CreateStoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  story: {
-    id: number
-    title: string
-    description: string
-    script_data?: any[]
-  }
+  characterId: string
+  characterName: string
+  characterPhotoUrl?: string
 }
 
-export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
+export function CreateStoryDialog({ open, onOpenChange, characterId, characterName, characterPhotoUrl }: CreateStoryDialogProps) {
   const router = useRouter()
-  const [characters, setCharacters] = useState<Character[]>([])
-  const [selectedCharacter, setSelectedCharacter] = useState<string>("")
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (open) {
-      fetchCharacters()
+      fetchTemplates()
     }
   }, [open])
 
-  const fetchCharacters = async () => {
+  const fetchTemplates = async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await charactersApi.list()
-      setCharacters(data.characters || [])
-      if (data.characters && data.characters.length > 0) {
-        setSelectedCharacter(data.characters[0].id)
+      const data = await templatesApi.list()
+      setTemplates(data.templates || [])
+      if (data.templates && data.templates.length > 0) {
+        setSelectedTemplate(data.templates[0].id)
       }
     } catch (err: any) {
-      console.error('Failed to fetch characters:', err)
-      setError(err.message || 'Failed to load characters')
+      console.error('Failed to fetch templates:', err)
+      setError(err.message || 'Failed to load story templates')
     } finally {
       setLoading(false)
     }
   }
 
   const handleGenerate = async () => {
-    if (!selectedCharacter) {
-      setError('Please select a character')
+    if (!selectedTemplate) {
+      setError('Please select a story template')
       return
     }
 
@@ -68,7 +68,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setIsSubmitting(true)
       setError(null)
 
-      const result = await storybooksApi.create(selectedCharacter, story.id)
+      const result = await storybooksApi.create(characterId, selectedTemplate)
       
       onOpenChange(false)
       // Navigate to storybooks tab without full page reload
@@ -81,7 +81,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     }
   }
 
-  const sceneCount = story.script_data?.length || 0
+  const selectedTemplateData = templates.find(t => t.id === selectedTemplate)
+  const sceneCount = selectedTemplateData?.script_data?.scenes?.length || selectedTemplateData?.scene_count || 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -89,14 +90,35 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
-            Generate Story
+            Create Story
           </DialogTitle>
           <DialogDescription>
-            Create a personalized version of <strong>{story.title}</strong>
+            Create a personalized story with <strong>{characterName}</strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
+          {/* Selected Character Display */}
+          <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            {characterPhotoUrl ? (
+              <img
+                src={characterPhotoUrl}
+                alt={characterName}
+                className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-secondary border-2 border-primary/20 flex items-center justify-center">
+                <span className="text-lg font-bold text-muted-foreground">
+                  {characterName.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div>
+              <p className="font-medium">{characterName}</p>
+              <p className="text-xs text-muted-foreground">Selected character</p>
+            </div>
+          </div>
+
           {error && (
             <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
               <p className="text-sm text-destructive">{error}</p>
@@ -104,30 +126,30 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
           )}
 
           <div className="space-y-3">
-            <Label>Select Character</Label>
+            <Label>Select Story Template</Label>
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
               </div>
-            ) : characters.length === 0 ? (
+            ) : templates.length === 0 ? (
               <Card className="p-4 text-center">
                 <p className="text-sm text-muted-foreground">
-                  No characters available. Please create a character first.
+                  No story templates available.
                 </p>
               </Card>
             ) : (
-              <RadioGroup value={selectedCharacter} onValueChange={setSelectedCharacter}>
+              <RadioGroup value={selectedTemplate?.toString() || ""} onValueChange={(value) => setSelectedTemplate(parseInt(value))}>
                 <div className="space-y-2">
-                  {characters.map((character) => (
-                    <Card key={character.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
+                  {templates.map((template) => (
+                    <Card key={template.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
                       <label className="flex items-center gap-3 cursor-pointer w-full">
-                        <RadioGroupItem value={character.id} id={`char-${character.id}`} />
-                        <img
-                          src={character.front_photo_url || "/placeholder.svg"}
-                          alt={character.name}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                        />
-                        <span className="font-medium">{character.name}</span>
+                        <RadioGroupItem value={template.id.toString()} id={`template-${template.id}`} />
+                        <div className="flex-1">
+                          <div className="font-medium">{template.title}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {template.scene_count || template.script_data?.scenes?.length || 0} scenes
+                          </div>
+                        </div>
                       </label>
                     </Card>
                   ))}
@@ -160,7 +182,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
             </Button>
             <Button
               className="flex-1 bg-primary hover:bg-primary/90"
-              disabled={!selectedCharacter || isSubmitting || characters.length === 0}
+              disabled={!selectedTemplate || isSubmitting || templates.length === 0}
               onClick={handleGenerate}
             >
               {isSubmitting ? (
@@ -181,3 +203,4 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     </Dialog>
   )
 }
+

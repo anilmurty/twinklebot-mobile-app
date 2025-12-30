@@ -186,10 +186,10 @@ export async function generateImageWithNanoBanana(
 }
 
 /**
- * Generate image using base photo + character variation + insertion prompt
- * This is the new approach for improved image quality and consistency
+ * Create a prediction for base photo + character variation + insertion prompt
+ * Returns the prediction ID (does not wait for completion)
  */
-export async function generateImageWithBasePhotoAndCharacter(
+export async function createBasePhotoAndCharacterPrediction(
   basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
@@ -303,6 +303,26 @@ export async function generateImageWithBasePhotoAndCharacter(
     output_format: 'jpg',
   })
 
+  return predictionId
+}
+
+/**
+ * Generate image using base photo + character variation + insertion prompt
+ * This is the new approach for improved image quality and consistency
+ * This function creates a prediction and polls for the result
+ */
+export async function generateImageWithBasePhotoAndCharacter(
+  basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
+  characterVariationUrl: string, // URL to character variation (front/left/right)
+  insertionPrompt: string,
+  aspectRatio: string = 'match_input_image'
+): Promise<string> {
+  const predictionId = await createBasePhotoAndCharacterPrediction(
+    basePhotoPath,
+    characterVariationUrl,
+    insertionPrompt,
+    aspectRatio
+  )
   return pollPrediction(predictionId)
 }
 

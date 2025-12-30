@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
+import { CreateStoryDialog } from "@/components/create-story-dialog"
 import { charactersApi } from "@/lib/api-client"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 
@@ -24,6 +25,7 @@ export function CharactersTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
+  const [createStoryForCharacter, setCreateStoryForCharacter] = useState<{ id: string; name: string; photoUrl?: string } | null>(null)
 
   const fetchCharacters = async () => {
     try {
@@ -159,6 +161,19 @@ export function CharactersTab() {
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setCreateStoryForCharacter({ 
+                        id: character.id, 
+                        name: character.name,
+                        photoUrl: character.front_photo_url
+                      })}
+                      className="w-full"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Create Story with {character.name}
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -166,26 +181,20 @@ export function CharactersTab() {
           </div>
         )}
 
-        {characters.length > 0 && (
-          <Card className="p-4 bg-accent/50 border-accent">
-            <div className="flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-primary mt-1 shrink-0" />
-              <div className="space-y-1">
-                <h4 className="font-semibold text-sm">Ready to create a story?</h4>
-                <p className="text-xs text-muted-foreground">
-                  Visit the <strong>Story Library</strong> tab to select a story template and generate your personalized
-                  storybook!
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
       </div>
 
       <CreateCharacterDialog 
         open={showCreateDialog} 
         onOpenChange={setShowCreateDialog}
         onCharacterCreated={handleCharacterCreated}
+      />
+
+      <CreateStoryDialog
+        open={!!createStoryForCharacter}
+        onOpenChange={(open) => !open && setCreateStoryForCharacter(null)}
+        characterId={createStoryForCharacter?.id || ""}
+        characterName={createStoryForCharacter?.name || ""}
+        characterPhotoUrl={createStoryForCharacter?.photoUrl}
       />
 
       <ConfirmDialog

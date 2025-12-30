@@ -97,7 +97,7 @@ BEGIN
       {
         "scene_number": 9,
         "headline": "The Gift Shop",
-        "script_text": "Towards end the day, [Name] carefully chooses a soft plush elephant to remember their favorite animal from the trip.",
+        "script_text": "At the gift shop [NAME] carefully chooses a soft plush penguin to remember their favorite animal from the trip.",
         "base_photo": "gift-shop.jpeg",
         "child_photo": "left",
         "insertion_prompt": "put the child in the photo, standing to the right of the penguin stand and examining the big penguin by pressing it with their hands",

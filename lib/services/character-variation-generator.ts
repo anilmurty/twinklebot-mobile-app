@@ -111,68 +111,140 @@ export async function generateCharacterVariations(
 
   // Generate front variation first (uses uploaded photo)
   console.log('Generating front variation (step 1/3)...')
+  let frontUrl: string
+  
   if (storybookId) {
     const { supabaseAdmin } = await import('@/lib/supabase/server')
+    const { createPrediction, pollPrediction } = await import('./image-generation')
+    
+    // Create prediction and update progress to 33% when prediction is created
+    const predictionId = await createPrediction(
+      process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
+      {
+        prompt: frontPrompt,
+        image_input: [signedBasePhotoUrl],
+        aspect_ratio: 'match_input_image',
+        output_format: 'jpg',
+      }
+    )
+    
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 10, updated_at: new Date().toISOString() })
+      .update({ progress: 33, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
+    
+    // Now poll for result
+    frontUrl = await pollPrediction(predictionId)
+    console.log('✅ Front variation generated:', frontUrl)
+  } else {
+    // No storybookId, use regular function
+    const { generateImageWithNanoBanana } = await import('./image-generation')
+    frontUrl = await generateImageWithNanoBanana(
+      frontPrompt,
+      [signedBasePhotoUrl],
+      'match_input_image'
+    ).then(url => {
+      console.log('✅ Front variation generated:', url)
+      return url
+    }).catch(err => {
+      console.error('❌ Front variation generation failed:', err)
+      throw new Error(`Front variation generation failed: ${err.message}`)
+    })
   }
-  
-  const frontUrl = await generateImageWithNanoBanana(
-    frontPrompt,
-    [signedBasePhotoUrl],
-    'match_input_image'
-  ).then(url => {
-    console.log('✅ Front variation generated:', url)
-    return url
-  }).catch(err => {
-    console.error('❌ Front variation generation failed:', err)
-    throw new Error(`Front variation generation failed: ${err.message}`)
-  })
 
   // Generate left and right variations in parallel (both use front variation as input)
   console.log('Generating left and right variations (step 2/3)...')
+  let leftUrl: string
+  let rightUrl: string
+  
   if (storybookId) {
     const { supabaseAdmin } = await import('@/lib/supabase/server')
+    const { createPrediction, pollPrediction } = await import('./image-generation')
+    
+    // Create both predictions first, then update progress
+    const [leftPredictionId, rightPredictionId] = await Promise.all([
+      createPrediction(
+        process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
+        {
+          prompt: leftPrompt,
+          image_input: [frontUrl],
+          aspect_ratio: 'match_input_image',
+          output_format: 'jpg',
+        }
+      ),
+      createPrediction(
+        process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
+        {
+          prompt: rightPrompt,
+          image_input: [frontUrl],
+          aspect_ratio: 'match_input_image',
+          output_format: 'jpg',
+        }
+      ),
+    ])
+    
+    // Update progress to 66% when predictions are created
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 20, updated_at: new Date().toISOString() })
+      .update({ progress: 66, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
-  }
-  
-  const [leftUrl, rightUrl] = await Promise.all([
-    generateImageWithNanoBanana(
-      leftPrompt,
-      [frontUrl], // Use front variation as input
-      'match_input_image'
-    ).then(url => {
-      console.log('✅ Left variation generated:', url)
-      return url
-    }).catch(err => {
-      console.error('❌ Left variation generation failed:', err)
-      throw new Error(`Left variation generation failed: ${err.message}`)
-    }),
-    generateImageWithNanoBanana(
-      rightPrompt,
-      [frontUrl], // Use front variation as input
-      'match_input_image'
-    ).then(url => {
-      console.log('✅ Right variation generated:', url)
-      return url
-    }).catch(err => {
-      console.error('❌ Right variation generation failed:', err)
-      throw new Error(`Right variation generation failed: ${err.message}`)
-    }),
-  ])
-  
-  // Update progress to 30% after all variations generated
-  if (storybookId) {
-    const { supabaseAdmin } = await import('@/lib/supabase/server')
+    
+    // Poll for both results
+    const [leftResult, rightResult] = await Promise.all([
+      pollPrediction(leftPredictionId).then(url => {
+        console.log('✅ Left variation generated:', url)
+        return url
+      }).catch(err => {
+        console.error('❌ Left variation generation failed:', err)
+        throw new Error(`Left variation generation failed: ${err.message}`)
+      }),
+      pollPrediction(rightPredictionId).then(url => {
+        console.log('✅ Right variation generated:', url)
+        return url
+      }).catch(err => {
+        console.error('❌ Right variation generation failed:', err)
+        throw new Error(`Right variation generation failed: ${err.message}`)
+      }),
+    ])
+    
+    leftUrl = leftResult
+    rightUrl = rightResult
+    
+    // Update progress to 95% after all variations generated
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 30, updated_at: new Date().toISOString() })
+      .update({ progress: 95, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
+  } else {
+    // No storybookId, use regular function
+    const { generateImageWithNanoBanana } = await import('./image-generation')
+    const [leftResult, rightResult] = await Promise.all([
+      generateImageWithNanoBanana(
+        leftPrompt,
+        [frontUrl], // Use front variation as input
+        'match_input_image'
+      ).then(url => {
+        console.log('✅ Left variation generated:', url)
+        return url
+      }).catch(err => {
+        console.error('❌ Left variation generation failed:', err)
+        throw new Error(`Left variation generation failed: ${err.message}`)
+      }),
+      generateImageWithNanoBanana(
+        rightPrompt,
+        [frontUrl], // Use front variation as input
+        'match_input_image'
+      ).then(url => {
+        console.log('✅ Right variation generated:', url)
+        return url
+      }).catch(err => {
+        console.error('❌ Right variation generation failed:', err)
+        throw new Error(`Right variation generation failed: ${err.message}`)
+      }),
+    ])
+    
+    leftUrl = leftResult
+    rightUrl = rightResult
   }
 
   // Download and upload each variation to Supabase Storage

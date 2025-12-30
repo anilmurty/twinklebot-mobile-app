@@ -67,11 +67,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   if (!variations) {
     console.log(`No existing variations found. Generating character variations...`)
     try {
-      // Update progress for character variation generation (0-30%)
-      // Front variation: 10%, Left: 20%, Right: 30%
+      // Set progress to 0% - "Starting character creation"
       await supabaseAdmin
         .from('storybooks')
-        .update({ progress: 5, updated_at: new Date().toISOString() })
+        .update({ progress: 0, updated_at: new Date().toISOString() })
         .eq('id', storybookId)
 
       variations = await generateCharacterVariations(
@@ -99,10 +98,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     console.log(`  Front: ${variations.front_variation_url}`)
     console.log(`  Left: ${variations.left_variation_url}`)
     console.log(`  Right: ${variations.right_variation_url}`)
-    // Character variations already exist, set progress to 30%
+    // Character variations already exist, set progress to 95% (character generation complete)
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 30, updated_at: new Date().toISOString() })
+      .update({ progress: 95, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
   }
   console.log('=====================================\n')
@@ -110,10 +109,14 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   // Initialize scenes array if not exists
   let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
 
-  // Process each scene
-  for (let i = 0; i < totalScenes; i++) {
-    const sceneTemplate = scenes[i]
+  // Set progress to 0% for "Starting storybook generation"
+  await supabaseAdmin
+    .from('storybooks')
+    .update({ progress: 100, updated_at: new Date().toISOString() }) // 100 = starting scene generation
+    .eq('id', storybookId)
 
+  // Helper function to generate a single scene
+  const generateScene = async (sceneTemplate: SceneTemplate, attempt: number = 1): Promise<void> => {
     // Check if already generated
     const existingScene = generatedScenes.find(
       (s: any) => s.scene_number === sceneTemplate.scene_number
@@ -121,196 +124,210 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
     if (existingScene?.image_url) {
       console.log(`Scene ${sceneTemplate.scene_number} already generated, skipping`)
-      continue
+      return
     }
 
-    // Retry logic: 3 attempts
-    let sceneGenerated = false
-    let lastError: Error | null = null
+    try {
+      console.log(`Generating scene ${sceneTemplate.scene_number} (attempt ${attempt}/3)`)
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        console.log(
-          `Generating scene ${sceneTemplate.scene_number} (attempt ${attempt}/3)`
-        )
-
-        // Validate required fields
-        if (!sceneTemplate.base_photo || sceneTemplate.base_photo.trim() === '') {
-          throw new Error(`Scene ${sceneTemplate.scene_number} missing base_photo field`)
-        }
-        if (!sceneTemplate.child_photo || !['front', 'left', 'right'].includes(sceneTemplate.child_photo)) {
-          throw new Error(`Scene ${sceneTemplate.scene_number} missing or invalid child_photo field`)
-        }
-        if (!sceneTemplate.insertion_prompt || sceneTemplate.insertion_prompt.trim() === '') {
-          throw new Error(`Scene ${sceneTemplate.scene_number} missing insertion_prompt field`)
-        }
-
-        // Get the appropriate character variation URL
-        let characterVariationUrl: string
-        switch (sceneTemplate.child_photo) {
-          case 'front':
-            characterVariationUrl = variations.front_variation_url
-            break
-          case 'left':
-            characterVariationUrl = variations.left_variation_url
-            break
-          case 'right':
-            characterVariationUrl = variations.right_variation_url
-            break
-          default:
-            throw new Error(`Invalid child_photo value: ${sceneTemplate.child_photo}`)
-        }
-
-        if (!characterVariationUrl) {
-          throw new Error(`Character variation URL not found for ${sceneTemplate.child_photo} view`)
-        }
-
-        // Convert character variation URL to signed URL for Replicate access
-        // The character-variations bucket is private, so we need signed URLs
-        const { getSignedUrl } = await import('@/lib/supabase/storage')
-        const extractStoragePath = (url: string): string | null => {
-          // URL format: https://xxx.supabase.co/storage/v1/object/public/character-variations/path
-          // or: https://xxx.supabase.co/storage/v1/object/sign/character-variations/path
-          const match = url.match(/character-variations\/(.+)$/)
-          if (match) {
-            return match[1]
-          }
-          return null
-        }
-
-        const variationStoragePath = extractStoragePath(characterVariationUrl)
-        if (!variationStoragePath) {
-          throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
-        }
-
-        // Create signed URL (valid for 1 hour) for Replicate to access
-        characterVariationUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
-        console.log(`Created signed URL for character variation (expires in 1 hour)`)
-
-        // Construct base photo path (from Supabase Storage: story-template-assets/day-at-the-zoo/)
-        const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
-
-        console.log(`\n=== SCENE ${sceneTemplate.scene_number} GENERATION ===`)
-        console.log(`Character: ${character.name}`)
-        console.log(`Base photo path: ${basePhotoPath}`)
-        console.log(`Character variation type: ${sceneTemplate.child_photo}`)
-        console.log(`Character variation URL: ${characterVariationUrl}`)
-        console.log(`\n--- INSERTION PROMPT ---`)
-        console.log(sceneTemplate.insertion_prompt)
-        console.log(`\n--- END INSERTION PROMPT ---`)
-        console.log(`Aspect ratio: ${sceneTemplate.aspect_ratio || 'match_input_image'}`)
-        console.log('=====================================\n')
-
-        // Generate image using base photo + character variation + insertion prompt
-        const generatedImageUrl = await generateImageWithBasePhotoAndCharacter(
-          basePhotoPath,
-          characterVariationUrl,
-          sceneTemplate.insertion_prompt,
-          sceneTemplate.aspect_ratio || 'match_input_image'
-        )
-        
-        console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
-
-        // Download image from Replicate
-        const imageResponse = await fetch(generatedImageUrl)
-        if (!imageResponse.ok) {
-          throw new Error(`Failed to download image: ${imageResponse.status}`)
-        }
-
-        const imageBuffer = await imageResponse.arrayBuffer()
-
-        // Upload to Supabase Storage
-        const storedImageUrl = await uploadToStorage(
-          'storybook-scenes',
-          `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
-          imageBuffer,
-          'image/jpeg'
-        )
-
-            // Create scene data
-            // Replace [Name] and [NAME] placeholders with character name (title case: first letter uppercase, rest lowercase)
-            const titleCaseName = character.name.charAt(0).toUpperCase() + character.name.slice(1).toLowerCase()
-            const scriptText = sceneTemplate.script_text
-              .replace(/\[Name\]/g, titleCaseName)
-              .replace(/\[NAME\]/g, titleCaseName)
-              .replace(/{character_name}/g, titleCaseName)
-
-            const sceneData = {
-              scene_number: sceneTemplate.scene_number,
-              headline: sceneTemplate.headline,
-              image_url: storedImageUrl,
-              text: scriptText,
-              generated_at: new Date().toISOString(),
-            }
-
-        // Update storybook scenes array
-        const updatedScenes = [...generatedScenes]
-        const existingIndex = updatedScenes.findIndex(
-          (s: any) => s.scene_number === sceneTemplate.scene_number
-        )
-
-        if (existingIndex >= 0) {
-          updatedScenes[existingIndex] = sceneData
-        } else {
-          updatedScenes.push(sceneData)
-        }
-
-        generatedScenes = updatedScenes
-
-        // Update storybook in database
-        // Progress: 30% (character variations) + 70% for scenes
-        // Each scene is 70% / totalScenes
-        const sceneProgress = Math.round(30 + ((i + 1) / totalScenes) * 70)
-        await supabaseAdmin
-          .from('storybooks')
-          .update({
-            scenes: generatedScenes,
-            progress: sceneProgress,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', storybookId)
-
-        sceneGenerated = true
-        break // Success, exit retry loop
-      } catch (error: any) {
-        lastError = error
-        console.error(
-          `Scene ${sceneTemplate.scene_number} attempt ${attempt} failed:`,
-          error.message
-        )
-
-        // Wait before retry (exponential backoff)
-        if (attempt < 3) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, Math.pow(2, attempt) * 1000)
-          )
-        }
+      // Validate required fields
+      if (!sceneTemplate.base_photo || sceneTemplate.base_photo.trim() === '') {
+        throw new Error(`Scene ${sceneTemplate.scene_number} missing base_photo field`)
       }
-    }
+      if (!sceneTemplate.child_photo || !['front', 'left', 'right'].includes(sceneTemplate.child_photo)) {
+        throw new Error(`Scene ${sceneTemplate.scene_number} missing or invalid child_photo field`)
+      }
+      if (!sceneTemplate.insertion_prompt || sceneTemplate.insertion_prompt.trim() === '') {
+        throw new Error(`Scene ${sceneTemplate.scene_number} missing insertion_prompt field`)
+      }
 
-    if (!sceneGenerated) {
-      // All retries failed
+      // Get the appropriate character variation URL
+      let characterVariationUrl: string
+      switch (sceneTemplate.child_photo) {
+        case 'front':
+          characterVariationUrl = variations.front_variation_url
+          break
+        case 'left':
+          characterVariationUrl = variations.left_variation_url
+          break
+        case 'right':
+          characterVariationUrl = variations.right_variation_url
+          break
+        default:
+          throw new Error(`Invalid child_photo value: ${sceneTemplate.child_photo}`)
+      }
+
+      if (!characterVariationUrl) {
+        throw new Error(`Character variation URL not found for ${sceneTemplate.child_photo} view`)
+      }
+
+      // Convert character variation URL to signed URL for Replicate access
+      const { getSignedUrl } = await import('@/lib/supabase/storage')
+      const extractStoragePath = (url: string): string | null => {
+        const match = url.match(/character-variations\/(.+)$/)
+        if (match) {
+          return match[1]
+        }
+        return null
+      }
+
+      const variationStoragePath = extractStoragePath(characterVariationUrl)
+      if (!variationStoragePath) {
+        throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
+      }
+
+      // Create signed URL (valid for 1 hour) for Replicate to access
+      characterVariationUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
+
+      // Construct base photo path
+      const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
+
+      console.log(`\n=== SCENE ${sceneTemplate.scene_number} GENERATION ===`)
+      console.log(`Character: ${character.name}`)
+      console.log(`Base photo path: ${basePhotoPath}`)
+      console.log(`Character variation type: ${sceneTemplate.child_photo}`)
+      console.log(`\n--- INSERTION PROMPT ---`)
+      console.log(sceneTemplate.insertion_prompt)
+      console.log(`\n--- END INSERTION PROMPT ---`)
+      console.log('=====================================\n')
+
+      // Create prediction
+      const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
+      const predictionId = await createBasePhotoAndCharacterPrediction(
+        basePhotoPath,
+        characterVariationUrl,
+        sceneTemplate.insertion_prompt,
+        sceneTemplate.aspect_ratio || 'match_input_image'
+      )
+      
+      console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)
+
+      // Update progress when prediction is created
+      const sceneProgress = Math.round(((sceneTemplate.scene_number) / totalScenes) * 100)
+      await supabaseAdmin
+        .from('storybooks')
+        .update({ progress: 100 + sceneProgress, updated_at: new Date().toISOString() })
+        .eq('id', storybookId)
+
+      // Poll for the result
+      const generatedImageUrl = await pollPrediction(predictionId)
+      console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
+
+      // Download image from Replicate
+      const imageResponse = await fetch(generatedImageUrl)
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to download image: ${imageResponse.status}`)
+      }
+
+      const imageBuffer = await imageResponse.arrayBuffer()
+
+      // Upload to Supabase Storage
+      const { uploadToStorage } = await import('@/lib/supabase/storage')
+      const storedImageUrl = await uploadToStorage(
+        'storybook-scenes',
+        `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
+        imageBuffer,
+        'image/jpeg'
+      )
+
+      // Create scene data
+      const titleCaseName = character.name.charAt(0).toUpperCase() + character.name.slice(1).toLowerCase()
+      const scriptText = sceneTemplate.script_text
+        .replace(/\[Name\]/g, titleCaseName)
+        .replace(/\[NAME\]/g, titleCaseName)
+        .replace(/{character_name}/g, titleCaseName)
+
+      const sceneData = {
+        scene_number: sceneTemplate.scene_number,
+        headline: sceneTemplate.headline,
+        image_url: storedImageUrl,
+        text: scriptText,
+        generated_at: new Date().toISOString(),
+      }
+
+      // Update storybook scenes array atomically
+      const { data: currentStorybook } = await supabaseAdmin
+        .from('storybooks')
+        .select('scenes')
+        .eq('id', storybookId)
+        .single()
+
+      const currentScenes = Array.isArray(currentStorybook?.scenes) ? currentStorybook.scenes : []
+      const updatedScenes = [...currentScenes]
+      const existingIndex = updatedScenes.findIndex(
+        (s: any) => s.scene_number === sceneTemplate.scene_number
+      )
+
+      if (existingIndex >= 0) {
+        updatedScenes[existingIndex] = sceneData
+      } else {
+        updatedScenes.push(sceneData)
+      }
+
+      // Update database with new scene
       await supabaseAdmin
         .from('storybooks')
         .update({
-          status: 'failed',
-          error_message: `Failed to generate scene ${sceneTemplate.scene_number} after 3 attempts: ${lastError?.message}`,
+          scenes: updatedScenes,
           updated_at: new Date().toISOString(),
         })
         .eq('id', storybookId)
 
-      throw new Error(
-        `Failed to generate scene ${sceneTemplate.scene_number}: ${lastError?.message}`
-      )
+      // Update local state
+      generatedScenes = updatedScenes
+
+      console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully`)
+    } catch (error: any) {
+      console.error(`Scene ${sceneTemplate.scene_number} attempt ${attempt} failed:`, error.message)
+      
+      // Retry logic: up to 3 attempts
+      if (attempt < 3) {
+        // Exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000))
+        return generateScene(sceneTemplate, attempt + 1)
+      } else {
+        // All retries failed
+        throw new Error(`Failed to generate scene ${sceneTemplate.scene_number} after 3 attempts: ${error.message}`)
+      }
     }
   }
 
+  // Generate all scenes in parallel
+  console.log(`\n=== STARTING PARALLEL SCENE GENERATION ===`)
+  console.log(`Generating ${totalScenes} scenes concurrently...`)
+  
+  const scenePromises = scenes.map(sceneTemplate => generateScene(sceneTemplate))
+  const results = await Promise.allSettled(scenePromises)
+  
+  // Check for failures
+  const failures = results
+    .map((result, index) => ({ result, sceneNumber: scenes[index].scene_number }))
+    .filter(({ result }) => result.status === 'rejected')
+
+  if (failures.length > 0) {
+    const errorMessages = failures.map(({ result, sceneNumber }) => 
+      `Scene ${sceneNumber}: ${result.status === 'rejected' ? result.reason?.message || 'Unknown error' : ''}`
+    ).join('\n')
+    
+    await supabaseAdmin
+      .from('storybooks')
+      .update({
+        status: 'failed',
+        error_message: `Failed to generate ${failures.length} scene(s):\n${errorMessages}`,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', storybookId)
+
+    throw new Error(`Failed to generate ${failures.length} scene(s)`)
+  }
+
   // All scenes generated successfully
+  const finalProgress = 100 + 100 // 200 = all scenes complete (displays as 100%)
   await supabaseAdmin
     .from('storybooks')
     .update({
       status: 'completed',
-      progress: 100,
+      progress: finalProgress,
       completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
@@ -325,6 +342,5 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     })
     .eq('storybook_id', storybookId)
 
-  console.log(`Storybook ${storybookId} generation completed`)
+  console.log(`✅ Storybook ${storybookId} generation completed - all ${totalScenes} scenes generated successfully`)
 }
-

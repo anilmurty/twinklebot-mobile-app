@@ -281,19 +281,39 @@ export function StorybooksTab() {
                       ) : (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
-                            {progress < 30 ? (
-                              <span className="text-muted-foreground">
-                                Generating character images {progress <= 10 ? '1' : progress <= 20 ? '2' : '3'}...
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">Generating scenes...</span>
-                            )}
-                            <span className="font-medium">{progress}%</span>
+                            <span className="text-muted-foreground">
+                              {progress < 100 ? (
+                                // Character generation phase (0-95%)
+                                progress === 0 ? (
+                                  'Starting character creation...'
+                                ) : progress <= 33 ? (
+                                  'Generating character 1...'
+                                ) : progress <= 66 ? (
+                                  'Generating character 2...'
+                                ) : (
+                                  'Generating character 3...'
+                                )
+                              ) : (
+                                // Scene generation phase (100+)
+                                (() => {
+                                  const sceneProgress = progress - 100 // Subtract 100 to get actual scene progress
+                                  if (sceneProgress === 0) {
+                                    return 'Starting storybook generation...'
+                                  }
+                                  const totalScenes = storybook.scenes?.length || 10
+                                  const sceneNumber = Math.ceil((sceneProgress / 100) * totalScenes)
+                                  return `Scene ${sceneNumber} of ${totalScenes}...`
+                                })()
+                              )}
+                            </span>
+                            <span className="font-medium">
+                              {progress < 100 ? progress : progress - 100}%
+                            </span>
                           </div>
                           <div className="w-full bg-secondary rounded-full h-2">
                             <div
                               className="bg-primary h-2 rounded-full transition-all"
-                              style={{ width: `${Math.max(progress, 5)}%` }} // Show at least 5% for visual feedback
+                              style={{ width: `${Math.max(progress < 100 ? progress : progress - 100, 0)}%` }}
                             />
                           </div>
                         </div>

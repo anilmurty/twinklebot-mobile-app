@@ -57,23 +57,37 @@ export async function GET(request: NextRequest) {
           character_name: sb.character?.name || '',
         }
 
-        // Generate thumbnail from first scene if completed
-        if (sb.status === 'completed' && sb.scenes && Array.isArray(sb.scenes) && sb.scenes.length > 0) {
-          const firstScene = sb.scenes[0]
-          if (firstScene.image_url) {
-            try {
-              const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
-              if (urlMatch) {
-                const signedUrl = await getSignedUrl('storybook-scenes', urlMatch[1], 3600)
-                result.thumbnail_url = signedUrl
-                result.first_scene_image = signedUrl
+        // Generate thumbnail from first scene if available (even during generation)
+        if (sb.scenes && Array.isArray(sb.scenes) && sb.scenes.length > 0) {
+          // Find first scene with an image_url (scenes may not be in order)
+          const scenesWithImages = sb.scenes.filter((s: any) => s.image_url)
+          if (scenesWithImages.length > 0) {
+            // Sort by scene_number to get the actual first scene
+            scenesWithImages.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
+            const firstScene = scenesWithImages[0]
+            if (firstScene.image_url) {
+              try {
+                const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
+                if (urlMatch) {
+                  const signedUrl = await getSignedUrl('storybook-scenes', urlMatch[1], 3600)
+                  result.thumbnail_url = signedUrl
+                  result.first_scene_image = signedUrl
+                }
+              } catch (err) {
+                console.error(`Failed to generate thumbnail for storybook ${sb.id}:`, err)
+                // Fall back to template thumbnail on error
+                result.thumbnail_url = sb.template?.thumbnail_url || null
               }
-            } catch (err) {
-              console.error(`Failed to generate thumbnail for storybook ${sb.id}:`, err)
+            } else {
+              // Use template thumbnail if no scene image available yet
+              result.thumbnail_url = sb.template?.thumbnail_url || null
             }
+          } else {
+            // No scenes with images yet, use template thumbnail
+            result.thumbnail_url = sb.template?.thumbnail_url || null
           }
         } else {
-          // Use template thumbnail for pending/generating storybooks
+          // Use template thumbnail for pending/generating storybooks with no scenes yet
           result.thumbnail_url = sb.template?.thumbnail_url || null
         }
 
