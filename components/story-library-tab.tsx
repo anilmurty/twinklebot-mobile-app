@@ -89,7 +89,7 @@ export function StoryLibraryTab() {
             <p className="text-destructive">{error}</p>
           </Card>
         ) : (
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
             {templates.map((template) => {
               const coverLabel = getCoverLabel(template.title)
               const category = getCategory(template.title)
@@ -97,8 +97,8 @@ export function StoryLibraryTab() {
               const thumbnail = template.thumbnail_url
 
               return (
-                <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row">
+                <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
+                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row w-full">
                     <div className="relative shrink-0">
                       {thumbnail && !failedThumbnails.has(template.id) ? (
                         <img
@@ -128,9 +128,9 @@ export function StoryLibraryTab() {
                       </Badge>
                     </div>
 
-                    <div className="flex-1 space-y-2 md:space-y-3">
-                      <div>
-                        <h3 className="font-bold text-lg md:text-xl lg:text-2xl">{template.title}</h3>
+                    <div className="flex-1 space-y-2 md:space-y-3 min-w-0 overflow-hidden">
+                      <div className="overflow-hidden">
+                        <h3 className="font-bold text-lg md:text-xl lg:text-2xl truncate">{template.title}</h3>
                         <p className="text-sm md:text-base text-muted-foreground line-clamp-2">
                           {template.description?.replace(/\{character_name\}/g, 'your child') || 'A personalized adventure story'}
                         </p>

@@ -202,7 +202,7 @@ export function StorybooksTab() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
             {storybooks.map((storybook) => {
               const sceneCount = storybook.scenes?.length || 0
               const progress = storybook.progress || 0
@@ -213,7 +213,7 @@ export function StorybooksTab() {
 
               return (
                 <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row">
+                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row w-full">
                     <div className="relative shrink-0">
                       {thumbnailUrl ? (
                         <>
@@ -242,11 +242,11 @@ export function StorybooksTab() {
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-2 md:space-y-3 min-w-0">
+                    <div className="flex-1 space-y-2 md:space-y-3 min-w-0 overflow-hidden">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-lg md:text-xl lg:text-2xl break-words">{storybook.title}</h3>
-                          <p className="text-sm md:text-base text-muted-foreground">Starring: {storybook.character_name}</p>
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          <h3 className="font-semibold text-lg md:text-xl lg:text-2xl truncate">{storybook.title}</h3>
+                          <p className="text-sm md:text-base text-muted-foreground truncate">Starring: {storybook.character_name}</p>
                         </div>
                         <Button
                           size="sm"

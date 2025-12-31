@@ -121,8 +121,8 @@ export function CharactersTab() {
         ) : (
           <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {characters.map((character) => (
-              <Card key={character.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="flex gap-4 md:gap-6 p-4 md:p-6">
+              <Card key={character.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
+                <div className="flex gap-4 md:gap-6 p-4 md:p-6 w-full">
                   <div className="relative shrink-0">
                     {character.front_photo_url ? (
                       <img
@@ -144,11 +144,11 @@ export function CharactersTab() {
                     )}
                   </div>
 
-                  <div className="flex-1 space-y-2 md:space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-bold text-xl md:text-2xl lg:text-3xl">{character.name}</h3>
-                        <p className="text-sm md:text-base text-muted-foreground">
+                  <div className="flex-1 space-y-2 md:space-y-3 min-w-0 overflow-hidden">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <h3 className="font-bold text-xl md:text-2xl lg:text-3xl truncate">{character.name}</h3>
+                        <p className="text-sm md:text-base text-muted-foreground truncate">
                           Created {new Date(character.created_at).toLocaleDateString()}
                         </p>
                       </div>
@@ -156,7 +156,7 @@ export function CharactersTab() {
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteClick(character.id, character.name)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -169,10 +169,11 @@ export function CharactersTab() {
                         name: character.name,
                         photoUrl: character.front_photo_url
                       })}
-                      className="w-full"
+                      className="w-full truncate"
+                      title={`Create Story with ${character.name}`}
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Create Story with {character.name}
+                      <Sparkles className="w-4 h-4 mr-2 shrink-0" />
+                      <span className="truncate">Create Story with {character.name}</span>
                     </Button>
                   </div>
                 </div>
