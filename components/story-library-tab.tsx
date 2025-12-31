@@ -61,7 +61,15 @@ export function StoryLibraryTab() {
   }
 
   const getSceneCount = (template: Template) => {
-    return template.script_data?.length || 0
+    // script_data is a JSONB object with a scenes array inside it
+    if (template.script_data && typeof template.script_data === 'object' && 'scenes' in template.script_data) {
+      return Array.isArray(template.script_data.scenes) ? template.script_data.scenes.length : 0
+    }
+    // Fallback: check if script_data is directly an array (legacy format)
+    if (Array.isArray(template.script_data)) {
+      return template.script_data.length
+    }
+    return 0
   }
 
   return (
@@ -90,7 +98,7 @@ export function StoryLibraryTab() {
 
               return (
                 <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 md:gap-6 p-4 md:p-6">
+                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row">
                     <div className="relative shrink-0">
                       {thumbnail && !failedThumbnails.has(template.id) ? (
                         <img
@@ -123,7 +131,9 @@ export function StoryLibraryTab() {
                     <div className="flex-1 space-y-2 md:space-y-3">
                       <div>
                         <h3 className="font-bold text-lg md:text-xl lg:text-2xl">{template.title}</h3>
-                        <p className="text-sm md:text-base text-muted-foreground line-clamp-2">{template.description}</p>
+                        <p className="text-sm md:text-base text-muted-foreground line-clamp-2">
+                          {template.description?.replace(/\{character_name\}/g, 'your child') || 'A personalized adventure story'}
+                        </p>
                       </div>
 
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">

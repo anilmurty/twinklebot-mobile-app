@@ -213,7 +213,7 @@ export function StorybooksTab() {
 
               return (
                 <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 md:gap-6 p-4 md:p-6">
+                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row">
                     <div className="relative shrink-0">
                       {thumbnailUrl ? (
                         <>
@@ -242,17 +242,17 @@ export function StorybooksTab() {
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-2 md:space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <h3 className="font-semibold text-lg md:text-xl lg:text-2xl">{storybook.title}</h3>
+                    <div className="flex-1 space-y-2 md:space-y-3 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-lg md:text-xl lg:text-2xl break-words">{storybook.title}</h3>
                           <p className="text-sm md:text-base text-muted-foreground">Starring: {storybook.character_name}</p>
                         </div>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDeleteClick(storybook.id, storybook.title)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -265,14 +265,14 @@ export function StorybooksTab() {
                       </div>
 
                       {isCompleted ? (
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="bg-accent text-accent-foreground">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="secondary" className="bg-accent text-accent-foreground shrink-0">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Ready
                           </Badge>
                           <Button 
                             size="sm" 
-                            className="ml-auto"
+                            className="ml-auto shrink-0"
                             onClick={() => handleReadStorybook(storybook.id)}
                           >
                             Read Now
