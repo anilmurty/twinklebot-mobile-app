@@ -2,14 +2,9 @@
  * API client helper functions
  */
 
-const API_BASE = '/api/v1'
+import { isDesignMode } from '@/lib/designMode'
 
-// ✅ DESIGN_MODE: Check if we're in design mode
-function isDesignMode(): boolean {
-  return typeof window !== 'undefined' && 
-    (window.location.hostname.includes('v0.dev') || 
-     process.env.NEXT_PUBLIC_DESIGN_MODE === '1')
-}
+const API_BASE = '/api/v1'
 
 async function getAuthToken(): Promise<string | null> {
   // ✅ DESIGN_MODE: Return null token in design mode

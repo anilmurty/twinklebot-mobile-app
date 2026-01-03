@@ -7,6 +7,7 @@ import { LandingPage } from "@/components/landing-page"
 import { useAuth } from "@/lib/auth-context"
 import { useSearchParams } from "next/navigation"
 import { useIsMobile } from "@/lib/utils/device-detection"
+import { isDesignMode } from "@/lib/designMode"
 
 function HomeContent() {
   const { user, loading } = useAuth()
@@ -14,10 +15,8 @@ function HomeContent() {
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "profile">("storybooks")
 
-  // ✅ DESIGN_MODE: Check if we're in design mode (v0.dev or DESIGN_MODE env var)
-  const isDesignMode = typeof window !== 'undefined' && 
-    (window.location.hostname.includes('v0.dev') || 
-     process.env.NEXT_PUBLIC_DESIGN_MODE === '1')
+  // ✅ DESIGN_MODE: Use centralized design mode check
+  const designMode = isDesignMode()
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -28,7 +27,7 @@ function HomeContent() {
 
   // ✅ DESIGN_MODE: In design mode, always show app UI (bypass auth check)
   // This allows v0.dev to preview the app without requiring authentication
-  if (isDesignMode) {
+  if (designMode) {
     // Render mobile or desktop layout based on device detection
     if (isMobile) {
       return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />

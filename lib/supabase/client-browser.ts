@@ -1,45 +1,26 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { isDesignMode } from '@/lib/designMode'
 
-// Check if we're in design mode (v0.dev or DESIGN_MODE env var)
-const isDesignMode = () => {
-  if (typeof window !== 'undefined') {
-    return window.location.hostname.includes('v0.dev')
-  }
-  return process.env.DESIGN_MODE === "1"
-}
-
-const getSupabaseUrl = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!url) {
-    // In design mode, return a dummy URL to prevent crashes
-    if (isDesignMode()) {
-      return 'https://placeholder.supabase.co'
-    }
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL environment variable. ' +
-      'Please add it to your .env.local file. ' +
-      'Get your Supabase URL from https://app.supabase.com'
-    )
-  }
-  return url
-}
-
-const getSupabaseAnonKey = () => {
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!key) {
-    // In design mode, return a dummy key to prevent crashes
-    if (isDesignMode()) {
-      return 'placeholder-anon-key'
-    }
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_ANON_KEY environment variable. ' +
-      'Please add it to your .env.local file. ' +
-      'Get your Supabase Anon Key from https://app.supabase.com'
-    )
-  }
-  return key
-}
-
+/**
+ * Create Supabase browser client
+ * Returns null in design mode to prevent crashes when env vars are missing
+ */
 export function createClient() {
-  return createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey())
+  // Never construct Supabase client in design mode
+  if (isDesignMode()) {
+    return null as any
+  }
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!url || !key) {
+    throw new Error(
+      'Missing Supabase env vars (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY). ' +
+      'Please add them to your .env.local file. ' +
+      'Get your Supabase credentials from https://app.supabase.com'
+    )
+  }
+
+  return createBrowserClient(url, key)
 }

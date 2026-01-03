@@ -1,13 +1,18 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isDesignMode } from '@/lib/designMode'
 
 export async function middleware(request: NextRequest) {
-  // ✅ DESIGN_MODE: Bypass auth when DESIGN_MODE=1 or when accessed via v0.dev
+  // ✅ DESIGN_MODE: Bypass auth when in design mode or when env vars are missing
   // This allows v0.dev to preview the app without requiring Supabase/auth setup
-  const isDesignMode = process.env.DESIGN_MODE === "1" || 
-                       request.headers.get('host')?.includes('v0.dev')
-  
-  if (isDesignMode) {
+  if (isDesignMode()) {
+    return NextResponse.next()
+  }
+
+  // Extra safety: if env vars are missing, skip Supabase (shouldn't happen if isDesignMode works)
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) {
     return NextResponse.next()
   }
 
@@ -16,8 +21,8 @@ export async function middleware(request: NextRequest) {
   })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    key,
     {
       cookies: {
         getAll() {

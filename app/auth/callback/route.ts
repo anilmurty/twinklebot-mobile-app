@@ -1,7 +1,15 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextRequest, NextResponse } from 'next/server'
+import { isDesignMode } from '@/lib/designMode'
 
 export async function GET(request: NextRequest) {
+  // Auth callback shouldn't be called in design mode, but handle gracefully
+  if (isDesignMode()) {
+    const requestUrl = new URL(request.url)
+    const next = requestUrl.searchParams.get('next') || '/'
+    return NextResponse.redirect(new URL(next, requestUrl.origin))
+  }
+
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') || '/'
@@ -25,9 +33,17 @@ export async function GET(request: NextRequest) {
   let supabaseResponse = NextResponse.redirect(redirectUrl)
 
   if (code) {
+    // Only access env vars when actually needed (not at module load time)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.redirect(new URL(`/?error=auth_failed&message=${encodeURIComponent('Missing Supabase configuration')}`, requestUrl.origin))
+    }
+
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           getAll() {

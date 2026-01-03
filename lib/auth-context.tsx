@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client-browser'
+import { isDesignMode } from '@/lib/designMode'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -20,30 +21,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   
-  // ✅ DESIGN_MODE: Check if we're in design mode (v0.dev or DESIGN_MODE env var)
-  const isDesignMode = typeof window !== 'undefined' && 
-    (window.location.hostname.includes('v0.dev') || 
-     process.env.NEXT_PUBLIC_DESIGN_MODE === '1')
+  // ✅ DESIGN_MODE: Use centralized design mode check
+  const designMode = isDesignMode()
   
   // Create client inside component to ensure fresh cookie access
   const supabase = useMemo(() => {
+    // In design mode, createClient returns null, so handle that
+    if (designMode) {
+      return null as any
+    }
+    
     try {
       return createClient()
     } catch (error) {
-      // In design mode, return null if client creation fails
-      if (isDesignMode) {
+      // If client creation fails and we're in design mode, return null
+      if (isDesignMode()) {
         console.warn('Design mode: Supabase client creation skipped')
         return null as any
       }
       throw error
     }
-  }, [isDesignMode])
+  }, [designMode])
 
   useEffect(() => {
     let mounted = true
 
     // ✅ DESIGN_MODE: Skip auth in design mode
-    if (isDesignMode) {
+    if (designMode) {
       // Provide a mock user so the app renders
       setUser({
         id: 'design-mode-user-id',
@@ -103,11 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mounted = false
       subscription?.unsubscribe()
     }
-  }, [supabase, isDesignMode])
+  }, [supabase, designMode])
 
   const signInWithGoogle = async () => {
     // ✅ DESIGN_MODE: Skip auth in design mode
-    if (isDesignMode) {
+    if (designMode) {
       console.warn('Design mode: signInWithGoogle skipped')
       return
     }
@@ -125,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     // ✅ DESIGN_MODE: Skip auth in design mode
-    if (isDesignMode) {
+    if (designMode) {
       console.warn('Design mode: signInWithEmail skipped')
       return
     }
@@ -138,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = async (email: string, password: string) => {
     // ✅ DESIGN_MODE: Skip auth in design mode
-    if (isDesignMode) {
+    if (designMode) {
       console.warn('Design mode: signUpWithEmail skipped')
       return
     }
@@ -151,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     // ✅ DESIGN_MODE: Just clear local state in design mode
-    if (isDesignMode) {
+    if (designMode) {
       setUser(null)
       return
     }
@@ -174,7 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getToken = async (): Promise<string | null> => {
     // ✅ DESIGN_MODE: Return null token in design mode
-    if (isDesignMode) {
+    if (designMode) {
       return null
     }
     try {
