@@ -143,10 +143,11 @@ SET custom_stories_per_month = stories_per_month + 10;
 
 ## Important Notes
 
-1. **Effective Limit**: The system uses `custom_stories_per_month` if set, otherwise `stories_per_month`
+1. **Effective Limit**: The system uses `custom_stories_per_month` if set, otherwise `stories_per_month` (default is 1)
 2. **Monthly Reset**: The `stories_generated_this_month` counter resets monthly (via cron job)
 3. **Permanent Override**: Custom limits persist until manually changed or set to NULL
 4. **No Expiration**: There's no built-in expiration - you'll need to manually remove overrides when campaigns end
+5. **Deletion Does NOT Reset Counter**: Once a user creates a story (counted against their limit), deleting it does NOT allow them to create more stories. The counter only increments on creation and resets monthly. This prevents users from bypassing limits by creating/deleting stories.
 
 ## Best Practices
 

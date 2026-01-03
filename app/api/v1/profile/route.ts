@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
         .eq('user_id', user.data.user?.id),
     ])
 
-    // Calculate effective limit (custom override or plan limit)
-    const effectiveLimit = profile?.custom_stories_per_month ?? profile?.stories_per_month ?? 3
+    // Calculate effective limit (custom override or plan limit, default is 1)
+    const effectiveLimit = profile?.custom_stories_per_month ?? profile?.stories_per_month ?? 1
 
     return NextResponse.json({
       ...profile,

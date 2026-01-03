@@ -197,6 +197,12 @@ export async function DELETE(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // IMPORTANT: Do NOT decrement stories_generated_this_month counter on delete
+    // Once a user has created a story (counted against their monthly limit), 
+    // deleting it does not allow them to create more stories.
+    // This prevents the workaround of creating/deleting stories to bypass limits.
+    // The counter only resets monthly via cron job.
+
     // Check if any other storybooks exist for this character-template combination
     const { data: remainingStorybooks } = await supabase
       .from('storybooks')

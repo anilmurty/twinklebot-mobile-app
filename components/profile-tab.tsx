@@ -61,7 +61,7 @@ export function ProfileTab() {
                    profile?.subscription_plan === 'premium' ? 'Premium Plan' : 
                    'Free Plan'
   
-  const effectiveLimit = profile?.effective_stories_per_month || profile?.stories_per_month || 3
+  const effectiveLimit = profile?.effective_stories_per_month || profile?.stories_per_month || 1
   const remaining = profile?.remaining_stories_this_month || 0
   return (
     <div className="min-h-full bg-gradient-to-b from-muted/20 to-background">

@@ -202,12 +202,17 @@ export async function POST(request: NextRequest) {
       .eq('id', userId)
       .single()
 
-    // Use custom limit if set, otherwise use plan limit
-    const effectiveLimit = profile?.custom_stories_per_month ?? profile?.stories_per_month ?? 3
+    // Use custom limit if set, otherwise use plan limit (default is 1)
+    const effectiveLimit = profile?.custom_stories_per_month ?? profile?.stories_per_month ?? 1
 
     if (profile && profile.stories_generated_this_month >= effectiveLimit) {
+      // Provide helpful error message based on limit
+      const limitMessage = effectiveLimit === 1 
+        ? 'You have already created your story for this month. Deleting stories does not allow you to create more.'
+        : `Monthly story limit reached (${effectiveLimit} stories). Deleting stories does not allow you to create more.`
+      
       return NextResponse.json(
-        { error: 'Monthly story limit reached. Please upgrade your plan.' },
+        { error: limitMessage },
         { status: 403 }
       )
     }
