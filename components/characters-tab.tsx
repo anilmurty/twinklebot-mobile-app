@@ -125,51 +125,53 @@ export function CharactersTab() {
             <p className="text-sm text-muted-foreground">Create your first character to start generating storybooks!</p>
           </Card>
         ) : (
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {characters.map((character) => (
-              <Card key={character.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
-                <div className="flex gap-4 md:gap-6 p-4 md:p-6 w-full">
-                  <div className="relative shrink-0">
+              <Card key={character.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <div className="flex flex-col items-center p-6 space-y-4">
+                  <div className="relative">
                     {character.front_photo_url ? (
                       <img
                         src={character.front_photo_url || "/placeholder.svg"}
                         alt={character.name}
-                        className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 object-cover rounded-full border-4 border-primary/20"
+                        className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-full border-4 border-primary/20"
                         onError={(e) => {
-                          // Fallback to placeholder if image fails to load
                           const target = e.target as HTMLImageElement
                           target.src = "/placeholder.svg"
                         }}
                       />
                     ) : (
-                      <div className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-secondary border-4 border-primary/20 flex items-center justify-center">
-                        <span className="text-lg md:text-xl lg:text-2xl font-bold text-muted-foreground">
+                      <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-secondary border-4 border-primary/20 flex items-center justify-center">
+                        <span className="text-2xl font-bold text-muted-foreground">
                           {character.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex-1 space-y-2 md:space-y-3 min-w-0 overflow-hidden">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1 overflow-hidden">
-                        <h3 className="font-bold text-xl md:text-2xl lg:text-3xl truncate">{character.name}</h3>
-                        <p className="text-sm md:text-base text-muted-foreground truncate">
-                          Created {new Date(character.created_at).toLocaleDateString()}
-                        </p>
+                  <div className="flex-1 w-full space-y-3 text-center">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center gap-2">
+                        <h3 className="font-bold text-2xl md:text-3xl break-words">{character.name}</h3>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteClick(character.id, character.name)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteClick(character.id, character.name)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <p className="text-sm md:text-base text-muted-foreground">
+                        Created{" "}
+                        {new Date(character.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
                     </div>
                     <Button
-                      size="sm"
-                      variant="outline"
                       onClick={() =>
                         setCreateStoryForCharacter({
                           id: character.id,
@@ -177,11 +179,11 @@ export function CharactersTab() {
                           photoUrl: character.front_photo_url,
                         })
                       }
-                      className="w-full truncate"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                       title={`Create Story with ${character.name}`}
                     >
-                      <Sparkles className="w-4 h-4 mr-2 shrink-0" />
-                      <span className="truncate">Create Story with {character.name}</span>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Create Story
                     </Button>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus } from "lucide-rea
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { storybooksApi, charactersApi } from "@/lib/api-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -34,12 +34,15 @@ export function StorybooksTab() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
 
-  const fetchStorybooks = async () => {
+  const isFetchingRef = useRef(false)
+
+  const fetchStorybooks = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) return
+
     try {
+      isFetchingRef.current = true
       // Don't set loading to true on subsequent fetches to avoid UI flicker
-      if (storybooks.length === 0) {
-        setLoading(true)
-      }
       setError(null)
       const data = await storybooksApi.list()
       setStorybooks(data.storybooks || [])
@@ -48,8 +51,9 @@ export function StorybooksTab() {
       setError(err.message || "Failed to load storybooks")
     } finally {
       setLoading(false)
+      isFetchingRef.current = false
     }
-  }
+  }, []) // Empty deps - this function is stable
 
   const fetchCharacters = async () => {
     try {
@@ -66,46 +70,40 @@ export function StorybooksTab() {
   useEffect(() => {
     fetchStorybooks()
     fetchCharacters()
-  }, [])
+  }, [fetchStorybooks])
 
   // Poll for updates every 3 seconds if there are generating storybooks
   useEffect(() => {
     const interval = setInterval(() => {
-      setStorybooks((currentStorybooks) => {
-        const hasGenerating = currentStorybooks.some((sb) => sb.status === "generating" || sb.status === "pending")
+      // Check if any storybooks are generating
+      const hasGenerating = storybooks.some((sb) => sb.status === "generating" || sb.status === "pending")
 
-        if (hasGenerating) {
-          fetchStorybooks()
-        }
-
-        return currentStorybooks // Return unchanged
-      })
+      if (hasGenerating && !isFetchingRef.current) {
+        fetchStorybooks()
+      }
     }, 3000)
 
     return () => clearInterval(interval)
-  }, []) // Empty dependency array prevents infinite loop
+  }, [storybooks, fetchStorybooks]) // Add dependencies for proper polling
 
   // Refresh when tab becomes active (in case user navigated from story creation)
   useEffect(() => {
     const tab = searchParams.get("tab")
     if (tab === "storybooks") {
-      // Refresh immediately when navigating to this tab
       fetchStorybooks()
     }
-  }, [searchParams])
+  }, [searchParams, fetchStorybooks])
 
   const handleCreateCharacter = () => {
-    // Navigate to characters tab with create parameter
     router.push("/?tab=characters&create=true")
   }
 
   const handleCreateStorybook = () => {
-    // Navigate to Story Library tab
     router.push("/?tab=library")
   }
 
   const handleCharacterCreated = () => {
-    fetchCharacters() // Refresh characters list
+    fetchCharacters()
   }
 
   const formatDate = (dateString: string) => {
@@ -136,7 +134,7 @@ export function StorybooksTab() {
 
     try {
       await storybooksApi.delete(deleteConfirm.id)
-      await fetchStorybooks() // Refresh list
+      await fetchStorybooks()
     } catch (err: any) {
       alert(`Failed to delete storybook: ${err.message}`)
     } finally {
@@ -151,6 +149,7 @@ export function StorybooksTab() {
     if (title.includes("Alphabet Adventure 3")) return { text: "S-Z", color: "text-orange-600" }
     return null
   }
+
   return (
     <div className="min-h-full bg-gradient-to-b from-primary/5 to-background">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
