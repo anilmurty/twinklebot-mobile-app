@@ -25,7 +25,11 @@ export function CharactersTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
-  const [createStoryForCharacter, setCreateStoryForCharacter] = useState<{ id: string; name: string; photoUrl?: string } | null>(null)
+  const [createStoryForCharacter, setCreateStoryForCharacter] = useState<{
+    id: string
+    name: string
+    photoUrl?: string
+  } | null>(null)
 
   const fetchCharacters = async () => {
     try {
@@ -34,24 +38,28 @@ export function CharactersTab() {
       const data = await charactersApi.list()
       setCharacters(data.characters || [])
     } catch (err: any) {
-      console.error('Failed to fetch characters:', err)
-      setError(err.message || 'Failed to load characters')
+      console.error("Failed to fetch characters:", err)
+      setError(err.message || "Failed to load characters")
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    // Fetch characters only on mount
     fetchCharacters()
-    
-    // Check if we should open create dialog from URL param
-    const shouldCreate = searchParams.get('create') === 'true'
+  }, [])
+
+  useEffect(() => {
+    // Handle create dialog from URL parameter separately
+    const shouldCreate = searchParams.get("create") === "true"
     if (shouldCreate) {
       setShowCreateDialog(true)
-      // Remove the create param from URL
+      // Use window.history.replaceState to avoid triggering navigation
       const params = new URLSearchParams(searchParams.toString())
-      params.delete('create')
-      router.replace(`/?tab=characters${params.toString() ? '&' + params.toString() : ''}`)
+      params.delete("create")
+      const newUrl = `/?tab=characters${params.toString() ? "&" + params.toString() : ""}`
+      window.history.replaceState({}, "", newUrl)
     }
   }, [searchParams])
 
@@ -61,7 +69,7 @@ export function CharactersTab() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirm) return
-    
+
     try {
       await charactersApi.delete(deleteConfirm.id)
       await fetchCharacters() // Refresh list
@@ -75,11 +83,11 @@ export function CharactersTab() {
   const handleCharacterCreated = async () => {
     const wasFirstCharacter = characters.length === 0
     await fetchCharacters() // Refresh list after creation
-    
+
     // If this was the first character, navigate to story library
     if (wasFirstCharacter) {
       setTimeout(() => {
-        router.push('/?tab=library')
+        router.push("/?tab=library")
       }, 500)
     }
   }
@@ -114,9 +122,7 @@ export function CharactersTab() {
         ) : characters.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="text-muted-foreground mb-4">No characters yet</p>
-            <p className="text-sm text-muted-foreground">
-              Create your first character to start generating storybooks!
-            </p>
+            <p className="text-sm text-muted-foreground">Create your first character to start generating storybooks!</p>
           </Card>
         ) : (
           <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -126,7 +132,7 @@ export function CharactersTab() {
                   <div className="relative shrink-0">
                     {character.front_photo_url ? (
                       <img
-                        src={character.front_photo_url}
+                        src={character.front_photo_url || "/placeholder.svg"}
                         alt={character.name}
                         className="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 object-cover rounded-full border-4 border-primary/20"
                         onError={(e) => {
@@ -164,11 +170,13 @@ export function CharactersTab() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => setCreateStoryForCharacter({ 
-                        id: character.id, 
-                        name: character.name,
-                        photoUrl: character.front_photo_url
-                      })}
+                      onClick={() =>
+                        setCreateStoryForCharacter({
+                          id: character.id,
+                          name: character.name,
+                          photoUrl: character.front_photo_url,
+                        })
+                      }
                       className="w-full truncate"
                       title={`Create Story with ${character.name}`}
                     >
@@ -181,11 +189,10 @@ export function CharactersTab() {
             ))}
           </div>
         )}
-
       </div>
 
-      <CreateCharacterDialog 
-        open={showCreateDialog} 
+      <CreateCharacterDialog
+        open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onCharacterCreated={handleCharacterCreated}
       />

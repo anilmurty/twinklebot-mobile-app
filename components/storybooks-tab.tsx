@@ -20,6 +20,7 @@ interface Storybook {
   created_at: string
   scenes?: any[]
   progress?: number
+  total_scenes?: number
 }
 
 export function StorybooksTab() {
@@ -43,8 +44,8 @@ export function StorybooksTab() {
       const data = await storybooksApi.list()
       setStorybooks(data.storybooks || [])
     } catch (err: any) {
-      console.error('Failed to fetch storybooks:', err)
-      setError(err.message || 'Failed to load storybooks')
+      console.error("Failed to fetch storybooks:", err)
+      setError(err.message || "Failed to load storybooks")
     } finally {
       setLoading(false)
     }
@@ -56,7 +57,7 @@ export function StorybooksTab() {
       const data = await charactersApi.list()
       setCharacters(data.characters || [])
     } catch (err: any) {
-      console.error('Failed to fetch characters:', err)
+      console.error("Failed to fetch characters:", err)
     } finally {
       setCharactersLoading(false)
     }
@@ -69,24 +70,25 @@ export function StorybooksTab() {
 
   // Poll for updates every 3 seconds if there are generating storybooks
   useEffect(() => {
-    const hasGenerating = storybooks.some(sb => sb.status === 'generating' || sb.status === 'pending')
-    
-    if (!hasGenerating) {
-      return // Don't poll if nothing is generating
-    }
-
-    // Start polling immediately
     const interval = setInterval(() => {
-      fetchStorybooks()
-    }, 3000) // Poll every 3 seconds
+      setStorybooks((currentStorybooks) => {
+        const hasGenerating = currentStorybooks.some((sb) => sb.status === "generating" || sb.status === "pending")
+
+        if (hasGenerating) {
+          fetchStorybooks()
+        }
+
+        return currentStorybooks // Return unchanged
+      })
+    }, 3000)
 
     return () => clearInterval(interval)
-  }, [storybooks]) // Re-run when storybooks change
+  }, []) // Empty dependency array prevents infinite loop
 
   // Refresh when tab becomes active (in case user navigated from story creation)
   useEffect(() => {
-    const tab = searchParams.get('tab')
-    if (tab === 'storybooks') {
+    const tab = searchParams.get("tab")
+    if (tab === "storybooks") {
       // Refresh immediately when navigating to this tab
       fetchStorybooks()
     }
@@ -94,12 +96,12 @@ export function StorybooksTab() {
 
   const handleCreateCharacter = () => {
     // Navigate to characters tab with create parameter
-    router.push('/?tab=characters&create=true')
+    router.push("/?tab=characters&create=true")
   }
 
   const handleCreateStorybook = () => {
     // Navigate to Story Library tab
-    router.push('/?tab=library')
+    router.push("/?tab=library")
   }
 
   const handleCharacterCreated = () => {
@@ -114,10 +116,10 @@ export function StorybooksTab() {
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`
-    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`
-    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? "minute" : "minutes"} ago`
+    if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`
+    if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? "day" : "days"} ago`
     return date.toLocaleDateString()
   }
 
@@ -131,7 +133,7 @@ export function StorybooksTab() {
 
   const handleDeleteConfirm = async () => {
     if (!deleteConfirm) return
-    
+
     try {
       await storybooksApi.delete(deleteConfirm.id)
       await fetchStorybooks() // Refresh list
@@ -143,10 +145,10 @@ export function StorybooksTab() {
   }
 
   const getThumbnailOverlay = (title: string) => {
-    if (title.includes('Counting')) return { text: '1-10', color: 'text-blue-600' }
-    if (title.includes('Alphabet Adventure 1')) return { text: 'A-I', color: 'text-green-600' }
-    if (title.includes('Alphabet Adventure 2')) return { text: 'J-R', color: 'text-purple-600' }
-    if (title.includes('Alphabet Adventure 3')) return { text: 'S-Z', color: 'text-orange-600' }
+    if (title.includes("Counting")) return { text: "1-10", color: "text-blue-600" }
+    if (title.includes("Alphabet Adventure 1")) return { text: "A-I", color: "text-green-600" }
+    if (title.includes("Alphabet Adventure 2")) return { text: "J-R", color: "text-purple-600" }
+    if (title.includes("Alphabet Adventure 3")) return { text: "S-Z", color: "text-orange-600" }
     return null
   }
   return (
@@ -206,33 +208,35 @@ export function StorybooksTab() {
             {storybooks.map((storybook) => {
               const sceneCount = storybook.scenes?.length || 0
               const progress = storybook.progress || 0
-              const isGenerating = storybook.status === 'generating' || storybook.status === 'pending'
-              const isCompleted = storybook.status === 'completed'
+              const isGenerating = storybook.status === "generating" || storybook.status === "pending"
+              const isCompleted = storybook.status === "completed"
               const thumbnailUrl = storybook.thumbnail_url || storybook.first_scene_image
               const overlay = getThumbnailOverlay(storybook.title)
 
               return (
                 <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4 md:gap-6 p-4 md:p-6 flex-col md:flex-row w-full">
-                    <div className="relative shrink-0">
+                  <div className="flex flex-col p-4 md:p-6 w-full">
+                    <div className="relative mx-auto mb-4">
                       {thumbnailUrl ? (
                         <>
                           <img
-                            src={thumbnailUrl}
+                            src={thumbnailUrl || "/placeholder.svg"}
                             alt={storybook.title}
-                            className="w-24 h-32 md:w-32 md:h-44 lg:w-40 lg:h-56 object-cover rounded-lg"
+                            className="w-full aspect-[3/4] max-w-[200px] object-cover rounded-lg"
                           />
                           {overlay && (
                             <div className="absolute inset-0 flex items-end justify-center pointer-events-none pb-2">
-                              <span className={`text-3xl font-black ${overlay.color} drop-shadow-[0_2px_4px_rgba(255,255,255,0.9)]`}>
+                              <span
+                                className={`text-3xl font-black ${overlay.color} drop-shadow-[0_2px_4px_rgba(255,255,255,0.9)]`}
+                              >
                                 {overlay.text}
                               </span>
                             </div>
                           )}
                         </>
                       ) : (
-                        <div className="w-24 h-32 md:w-32 md:h-44 lg:w-40 lg:h-56 bg-secondary rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-8 h-8 md:w-10 md:h-10 text-muted-foreground" />
+                        <div className="w-full aspect-[3/4] max-w-[200px] bg-secondary rounded-lg flex items-center justify-center">
+                          <BookOpen className="w-10 h-10 text-muted-foreground" />
                         </div>
                       )}
                       {isGenerating && (
@@ -242,11 +246,15 @@ export function StorybooksTab() {
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-2 md:space-y-3 min-w-0 overflow-hidden">
+                    <div className="flex-1 space-y-3 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1 overflow-hidden">
-                          <h3 className="font-semibold text-lg md:text-xl lg:text-2xl truncate">{storybook.title}</h3>
-                          <p className="text-sm md:text-base text-muted-foreground truncate">Starring: {storybook.character_name}</p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-lg md:text-xl break-words line-clamp-2">
+                            {storybook.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground break-words line-clamp-1">
+                            Starring: {storybook.character_name}
+                          </p>
                         </div>
                         <Button
                           size="sm"
@@ -270,8 +278,8 @@ export function StorybooksTab() {
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Ready
                           </Badge>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             className="ml-auto shrink-0"
                             onClick={() => handleReadStorybook(storybook.id)}
                           >
@@ -281,33 +289,26 @@ export function StorybooksTab() {
                       ) : (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              {progress < 100 ? (
-                                // Character generation phase (10-100%)
-                                progress <= 10 ? (
-                                  'Starting character creation...'
-                                ) : progress <= 40 ? (
-                                  'Generating character 1...'
-                                ) : progress <= 70 ? (
-                                  'Generating character 2...'
-                                ) : (
-                                  'Generating character 3...'
-                                )
-                              ) : (
-                                // Scene generation phase (110+)
-                                (() => {
-                                  const sceneProgress = progress - 100 // Subtract 100 to get actual scene progress (10-100%)
-                                  if (sceneProgress <= 10) {
-                                    return 'Starting storybook generation...'
-                                  }
-                                  const totalScenes = storybook.total_scenes || storybook.scenes?.length || 10
-                                  // Calculate scene number: sceneProgress ranges from 10-100, map to scene 1-10
-                                  const sceneNumber = Math.ceil(((sceneProgress - 10) / 90) * totalScenes)
-                                  return `Scene ${sceneNumber} of ${totalScenes}...`
-                                })()
-                              )}
+                            <span className="text-muted-foreground break-words line-clamp-2 flex-1">
+                              {progress < 100
+                                ? progress <= 10
+                                  ? "Starting character creation..."
+                                  : progress <= 40
+                                    ? "Generating character 1..."
+                                    : progress <= 70
+                                      ? "Generating character 2..."
+                                      : "Generating character 3..."
+                                : (() => {
+                                    const sceneProgress = progress - 100
+                                    if (sceneProgress <= 10) {
+                                      return "Starting storybook generation..."
+                                    }
+                                    const totalScenes = storybook.total_scenes || storybook.scenes?.length || 10
+                                    const sceneNumber = Math.ceil(((sceneProgress - 10) / 90) * totalScenes)
+                                    return `Scene ${sceneNumber} of ${totalScenes}...`
+                                  })()}
                             </span>
-                            <span className="font-medium">
+                            <span className="font-medium ml-2 shrink-0">
                               {progress < 100 ? progress : progress - 100}%
                             </span>
                           </div>
@@ -328,8 +329,8 @@ export function StorybooksTab() {
         )}
       </div>
 
-      <CreateCharacterDialog 
-        open={showCreateDialog} 
+      <CreateCharacterDialog
+        open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         onCharacterCreated={handleCharacterCreated}
       />

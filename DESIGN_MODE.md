@@ -24,10 +24,10 @@ Design Mode is automatically detected in two ways:
 
 Add to your `.env.local` file:
 
-```bash
+\`\`\`bash
 DESIGN_MODE=1
 NEXT_PUBLIC_DESIGN_MODE=1
-```
+\`\`\`
 
 **Important**:
 - `DESIGN_MODE=1` is used by server-side code (middleware)
@@ -68,7 +68,7 @@ When you paste your app URL into v0.dev, Design Mode is automatically enabled ba
 
 ### Middleware Bypass
 
-```typescript
+\`\`\`typescript
 // middleware.ts
 const isDesignMode = process.env.DESIGN_MODE === "1" || 
                      request.headers.get('host')?.includes('v0.dev')
@@ -76,11 +76,11 @@ const isDesignMode = process.env.DESIGN_MODE === "1" ||
 if (isDesignMode) {
   return NextResponse.next() // Skip all auth
 }
-```
+\`\`\`
 
 ### Auth Provider Mock User
 
-```typescript
+\`\`\`typescript
 // lib/auth-context.tsx
 if (isDesignMode) {
   setUser({
@@ -91,17 +91,17 @@ if (isDesignMode) {
   setLoading(false)
   return
 }
-```
+\`\`\`
 
 ### Page Rendering
 
-```typescript
+\`\`\`typescript
 // app/page.tsx
 if (isDesignMode) {
   // Always show app UI, bypass auth check
   return <MobileLayout /> or <DesktopLayout />
 }
-```
+\`\`\`
 
 ## Usage in v0.dev
 
@@ -171,7 +171,7 @@ if (isDesignMode) {
 
 For components that fetch data, create a data layer that returns mock data in design mode:
 
-```typescript
+\`\`\`typescript
 // lib/data/storybooks.ts
 export async function getStorybooks(userId?: string) {
   if (isDesignMode()) {
@@ -187,7 +187,7 @@ export async function getStorybooks(userId?: string) {
   const supabase = createSupabaseServerClient()
   // ... fetch real data
 }
-```
+\`\`\`
 
 ## Files Modified
 
@@ -211,4 +211,3 @@ Design Mode only activates when:
 - Hostname includes `v0.dev`
 
 So removing the env var is sufficient to restore normal behavior.
-

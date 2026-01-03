@@ -32,4 +32,3 @@ export function isDesignMode(): boolean {
 
   return false;
 }
-

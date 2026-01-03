@@ -15,4 +15,3 @@ WHERE stories_per_month = 3
 
 -- Add comment explaining the default
 COMMENT ON COLUMN profiles.stories_per_month IS 'Default monthly story limit. Default is 1 story per month. Can be overridden with custom_stories_per_month.';
-
