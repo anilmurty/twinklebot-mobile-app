@@ -2,21 +2,21 @@
 -- Description: Seed "Day at the Zoo" story template with all 10 scenes
 -- Created: 2024-01-01
 
--- Get nano-banana model ID (assumes it exists from migration 002)
+-- Get nano-banana-pro model ID (assumes it exists from migration 017)
 DO $$
 DECLARE
-  nano_banana_model_id INTEGER;
+  nano_banana_pro_model_id INTEGER;
   existing_template_id INTEGER;
   template_data JSONB;
 BEGIN
-  -- Get the nano-banana model ID
-  SELECT id INTO nano_banana_model_id
+  -- Get the nano-banana-pro model ID
+  SELECT id INTO nano_banana_pro_model_id
   FROM generation_models
-  WHERE name = 'nano-banana' AND is_active = true
+  WHERE name = 'nano-banana-pro' AND is_active = true
   LIMIT 1;
 
-  IF nano_banana_model_id IS NULL THEN
-    RAISE EXCEPTION 'nano-banana model not found. Please run migration 002_seed_nano_banana_model.sql first.';
+  IF nano_banana_pro_model_id IS NULL THEN
+    RAISE EXCEPTION 'nano-banana-pro model not found. Please run migration 017_add_nano_banana_pro_model.sql first.';
   END IF;
 
   -- Prepare template data
@@ -26,7 +26,7 @@ BEGIN
         "scene_number": 1,
         "headline": "The Grand Entrance",
         "script_text": "[Name] stands wide-eyed at the colorful zoo gates, clutching a paper map and wearing a bright animal-themed sun hat. What a day it is going to be!",
-        "base_photo": "entrance.jpeg",
+        "base_photo": "entrance.png",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, clutching an open paper map with an expression of amazement and curiosity for what''s ahead. make height proportionate to surroundings and the child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
@@ -34,8 +34,8 @@ BEGIN
       {
         "scene_number": 2,
         "headline": "Monkey Business",
-        "script_text": "Time for some monkey business. [Name] laughs and mimics the playful swinging motions of a family of chimpanzees.",
-        "base_photo": "monkeys.jpeg",
+        "script_text": "Time for some monkey business. [NAME] laughs and mimics the playful swinging motions of a family of chimpanzees.",
+        "base_photo": "monkeys.png",
         "child_photo": "right",
         "insertion_prompt": "put the child in the photo, excited and animated. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
@@ -44,7 +44,7 @@ BEGIN
         "scene_number": 3,
         "headline": "Feeding A Giraffe",
         "script_text": "Standing on a high wooden platform, [Name] giggles as a giraffe stretches out its long, purple tongue to take a piece of lettuce.",
-        "base_photo": "giraffe.jpeg",
+        "base_photo": "giraffe.png",
         "child_photo": "left",
         "insertion_prompt": "put the child in the photo, standing on the platform and behind the fence, feeding the giraffe lettuce, expression of excitement and amazement. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it natural",
         "aspect_ratio": "9:16"
@@ -53,16 +53,16 @@ BEGIN
         "scene_number": 4,
         "headline": "The Underwater Tunnel",
         "script_text": "Inside the aquarium, [NAME] watched in amazement as a sea turtle glides silently overhead.",
-        "base_photo": "aquarium.jpeg",
-        "child_photo": "left",
-        "insertion_prompt": "put the child into the photo. they should be standing under the giant turtle and looking up at it awestruck. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it natural",
+        "base_photo": "aquarium.png",
+        "child_photo": "right",
+        "insertion_prompt": "put the child in the photo looking at the turtle and in amazement. make it look natural as if the photo was taken with the child in it. keep everything else the same and make it natural",
         "aspect_ratio": "9:16"
       },
       {
         "scene_number": 5,
         "headline": "Lunch at the Plaza",
         "script_text": "[Name] sits at a picnic table, enjoying a juice box and a sandwich shaped like a bear while watching a peacock strut by.",
-        "base_photo": "lunch.jpeg",
+        "base_photo": "lunch.png",
         "child_photo": "right",
         "insertion_prompt": "put the child in the photo, sitting and sipping a juice box as if they''re posing for a photo. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
@@ -71,16 +71,16 @@ BEGIN
         "scene_number": 6,
         "headline": "Penguin Parade",
         "script_text": "[Name] watches with delight as a group of penguins waddle across the ice and dive into the chilly blue water.",
-        "base_photo": "penguins.jpeg",
+        "base_photo": "penguins.png",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, facing the glass and viewing the penguins. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo sitting on the bench facing outward, sitting next to the backpack and holding teddy bear shaped sandwich. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
         "scene_number": 7,
         "headline": "The Petting Zoo",
         "script_text": "[Name] gently brushes the soft coat of a friendly pygmy goat while learning how to hold a handful of grain.",
-        "base_photo": "goats.jpeg",
+        "base_photo": "goats.png",
         "child_photo": "left",
         "insertion_prompt": "put the child in the photo, on their knees and gently petting the goat with their right hand while feeding the goat grains with their left hand. expression of quiet observation. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
@@ -89,25 +89,25 @@ BEGIN
         "scene_number": 8,
         "headline": "The Butterfly Garden",
         "script_text": "In a quiet, tropical greenhouse, [NAME] stands perfectly still, as butterflies flutter around. What a magical place!",
-        "base_photo": "butterflies.jpeg",
+        "base_photo": "butterflies.png",
         "child_photo": "front",
-        "insertion_prompt": "put the child in the photo, standing firmly on the ground and amazed by all the butterflies around. The child''s facial expression that is hoping that the blue butterfly sits on it. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, standing firmly on the ground and amazed by all the butterflies around. make it look natural as if the photo was taken with the child in it",
         "aspect_ratio": "9:16"
       },
       {
         "scene_number": 9,
         "headline": "The Gift Shop",
-        "script_text": "At the gift shop [NAME] carefully chooses a soft plush penguin to remember their favorite animal from the trip.",
-        "base_photo": "gift-shop.jpeg",
+        "script_text": "Towards end the day, [NAME] carefully chooses a soft plush penguin to remember their favorite animal from the trip.",
+        "base_photo": "gift-shop.png",
         "child_photo": "left",
-        "insertion_prompt": "put the child in the photo, standing to the right of the penguin stand and clutching a penguin with both hands. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "add the child, hugging a penguin stuffed toy like the ones on the shelf affectionately with touching it with their face. keep evetyhing else the same make it look natunal as if the photo was taken with the child in it",
         "aspect_ratio": "9:16"
       },
       {
         "scene_number": 10,
-        "headline": "What a day!",
-        "script_text": "After a long but fun day, it''s time to go home What will [Name] explore next?",
-        "base_photo": "entrance.jpeg",
+        "headline": "What a day",
+        "script_text": "After a long but fun day, it''s time to go home What will [NAME] explore next?",
+        "base_photo": "exit.png",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
@@ -131,7 +131,7 @@ BEGIN
       scene_count = 10,
       cover_label = 'Day at the Zoo',
       thumbnail_url = '/day-at-the-zoo/cover.png',
-      generation_model_id = nano_banana_model_id,
+      generation_model_id = nano_banana_pro_model_id,
       fixed_prompt_parts = '{}'::jsonb,
       script_data = template_data,
       is_active = true
@@ -159,7 +159,7 @@ BEGIN
       10,
       'Day at the Zoo',
       '/day-at-the-zoo/cover.png',
-      nano_banana_model_id,
+      nano_banana_pro_model_id,
       '{}'::jsonb,
       template_data,
       true

@@ -102,48 +102,90 @@ export async function pollPrediction(
   throw new Error('Prediction timeout')
 }
 
-export async function generateImageWithNanoBanana(
-  prompt: string,
-  characterPhotos: string[],
-  aspectRatio: string = 'match_input_image'
-): Promise<string> {
-  // Get model version ID (or use provided version)
-  let modelVersion = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
-  
+/**
+ * Get model identifier from template's generation_model_id
+ * Falls back to env var or default if template model not found
+ */
+async function getModelIdentifier(templateId?: number): Promise<string> {
+  // If template ID provided, try to get model from template
+  if (templateId) {
+    try {
+      const { supabaseAdmin } = await import('@/lib/supabase/server')
+      const { data: template } = await supabaseAdmin
+        .from('story_templates')
+        .select(`
+          generation_model_id,
+          generation_models:generation_models!story_templates_generation_model_id_fkey(model_identifier)
+        `)
+        .eq('id', templateId)
+        .single()
+
+      if (template?.generation_models) {
+        const modelData = Array.isArray(template.generation_models) 
+          ? template.generation_models[0] 
+          : template.generation_models
+        const modelIdentifier = (modelData as any)?.model_identifier
+        if (modelIdentifier) {
+          console.log(`✅ Using model from template: ${modelIdentifier}`)
+          return modelIdentifier
+        }
+      }
+    } catch (error: any) {
+      console.warn(`⚠️  Could not get model from template ${templateId}, falling back to env/default:`, error.message)
+    }
+  }
+
+  // Fallback to env var or default
+  return process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
+}
+
+/**
+ * Resolve model identifier to actual model name/version for Replicate API
+ */
+async function resolveModelVersion(modelIdentifier: string): Promise<string> {
   // Version IDs are typically long alphanumeric strings (e.g., "abc123def456...")
-  // Model names contain slashes (e.g., "google/nano-banana")
+  // Model names contain slashes (e.g., "google/nano-banana", "google/nano-banana-pro")
   // If it looks like a model name (contains slash), try to fetch version
-  if (modelVersion.includes('/')) {
+  if (modelIdentifier.includes('/')) {
     const { getModelVersion } = await import('./replicate-helper')
     try {
-      const fetchedVersion = await getModelVersion('google/nano-banana')
+      const fetchedVersion = await getModelVersion(modelIdentifier)
       // Check if we got the special marker indicating model doesn't expose versions
       if (fetchedVersion === 'MODEL_NAME_REQUIRED') {
         console.log('ℹ️  Model does not expose versions via API, using model name directly')
-        modelVersion = 'google/nano-banana' // Use model name directly
+        return modelIdentifier // Use model name directly
       } else {
         console.log('✅ Using model version ID:', fetchedVersion)
-        modelVersion = fetchedVersion
+        return fetchedVersion
       }
     } catch (error: any) {
-      throw new Error(`Failed to get model version. Please set NANOBANANA_MODEL_VERSION in .env.local. ${error.message}`)
+      console.warn(`⚠️  Could not fetch version for ${modelIdentifier}, using model name directly:`, error.message)
+      return modelIdentifier // Fallback to model name
     }
   } else {
     // Check if it looks like a valid version ID (long alphanumeric, no slashes)
     // Version IDs are typically 30+ characters and contain only alphanumeric characters
     // Prediction IDs are shorter (like the one user had: 1bwy6kt8r9rm80crx16t6161tm)
-    if (modelVersion.length < 30 || !/^[a-z0-9]+$/i.test(modelVersion)) {
-      console.error(`❌ Error: "${modelVersion}" appears to be a prediction ID, not a model version ID.`)
-      console.error('   Prediction IDs are shorter and come from completed predictions.')
-      console.error('   Version IDs are longer (30+ chars) and come from the model\'s API examples.')
-      console.error('')
+    if (modelIdentifier.length < 30 || !/^[a-z0-9]+$/i.test(modelIdentifier)) {
+      console.error(`❌ Error: "${modelIdentifier}" appears to be a prediction ID, not a model version ID.`)
       console.error('📝 Solution: For models without exposed versions, use the model name:')
-      console.error('   Set NANOBANANA_MODEL_VERSION=google/nano-banana in .env.local')
-      console.error('   Or remove NANOBANANA_MODEL_VERSION to use the default')
-      throw new Error(`Invalid version ID format: "${modelVersion}". Use model name "google/nano-banana" instead.`)
+      console.error(`   Set NANOBANANA_MODEL_VERSION=${modelIdentifier.includes('/') ? modelIdentifier : 'google/nano-banana-pro'} in .env.local`)
+      throw new Error(`Invalid version ID format: "${modelIdentifier}". Use model name instead.`)
     }
-    console.log('✅ Using provided model version ID:', modelVersion)
+    console.log('✅ Using provided model version ID:', modelIdentifier)
+    return modelIdentifier
   }
+}
+
+export async function generateImageWithNanoBanana(
+  prompt: string,
+  characterPhotos: string[],
+  aspectRatio: string = 'match_input_image',
+  templateId?: number // Optional: get model from template
+): Promise<string> {
+  // Get model identifier (from template or env/default)
+  const modelIdentifier = await getModelIdentifier(templateId)
+  const modelVersion = await resolveModelVersion(modelIdentifier)
   
   // Validate inputs
   if (!prompt || prompt.trim().length === 0) {
@@ -193,39 +235,12 @@ export async function createBasePhotoAndCharacterPrediction(
   basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
-  aspectRatio: string = 'match_input_image'
+  aspectRatio: string = 'match_input_image',
+  templateId?: number // Optional: get model from template
 ): Promise<string> {
-  // Get model version ID (or use provided version)
-  let modelVersion = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
-  
-  // Version IDs are typically long alphanumeric strings (e.g., "abc123def456...")
-  // Model names contain slashes (e.g., "google/nano-banana")
-  // If it looks like a model name (contains slash), try to fetch version
-  if (modelVersion.includes('/')) {
-    const { getModelVersion } = await import('./replicate-helper')
-    try {
-      const fetchedVersion = await getModelVersion('google/nano-banana')
-      // Check if we got the special marker indicating model doesn't expose versions
-      if (fetchedVersion === 'MODEL_NAME_REQUIRED') {
-        console.log('ℹ️  Model does not expose versions via API, using model name directly')
-        modelVersion = 'google/nano-banana' // Use model name directly
-      } else {
-        console.log('✅ Using model version ID:', fetchedVersion)
-        modelVersion = fetchedVersion
-      }
-    } catch (error: any) {
-      throw new Error(`Failed to get model version. Please set NANOBANANA_MODEL_VERSION in .env.local. ${error.message}`)
-    }
-  } else {
-    // Check if it looks like a valid version ID (long alphanumeric, no slashes)
-    if (modelVersion.length < 30 || !/^[a-z0-9]+$/i.test(modelVersion)) {
-      console.error(`❌ Error: "${modelVersion}" appears to be a prediction ID, not a model version ID.`)
-      console.error('📝 Solution: For models without exposed versions, use the model name:')
-      console.error('   Set NANOBANANA_MODEL_VERSION=google/nano-banana in .env.local')
-      throw new Error(`Invalid version ID format: "${modelVersion}". Use model name "google/nano-banana" instead.`)
-    }
-    console.log('✅ Using provided model version ID:', modelVersion)
-  }
+  // Get model identifier (from template or env/default)
+  const modelIdentifier = await getModelIdentifier(templateId)
+  const modelVersion = await resolveModelVersion(modelIdentifier)
   
   // Validate inputs
   if (!basePhotoPath || basePhotoPath.trim().length === 0) {
@@ -258,6 +273,7 @@ export async function createBasePhotoAndCharacterPrediction(
   const basePhotoUrl = getStorageUrl('story-template-assets', storagePath)
 
   console.log('\n=== SCENE IMAGE GENERATION ===')
+  console.log(`Model identifier: ${modelIdentifier}`)
   console.log(`Model version: ${modelVersion}`)
   console.log(`Base photo URL: ${basePhotoUrl}`)
   console.log(`Character variation URL: ${characterVariationUrl}`)
@@ -315,13 +331,15 @@ export async function generateImageWithBasePhotoAndCharacter(
   basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
-  aspectRatio: string = 'match_input_image'
+  aspectRatio: string = 'match_input_image',
+  templateId?: number // Optional: get model from template
 ): Promise<string> {
   const predictionId = await createBasePhotoAndCharacterPrediction(
     basePhotoPath,
     characterVariationUrl,
     insertionPrompt,
-    aspectRatio
+    aspectRatio,
+    templateId
   )
   return pollPrediction(predictionId)
 }

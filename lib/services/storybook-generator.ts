@@ -243,7 +243,8 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         basePhotoPath,
         characterVariationUrl,
         sceneTemplate.insertion_prompt,
-        sceneTemplate.aspect_ratio || '9:16'
+        sceneTemplate.aspect_ratio || '9:16',
+        template.id // Pass template ID to get model from template
       )
       
       console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)

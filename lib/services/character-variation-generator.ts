@@ -138,6 +138,51 @@ export async function generateCharacterVariations(
   console.log(rightPrompt)
   console.log('=====================================\n')
 
+  // Get model identifier from template
+  let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
+  try {
+    const { data: template } = await supabaseAdmin
+      .from('story_templates')
+      .select(`
+        generation_model_id,
+        generation_models:generation_models!story_templates_generation_model_id_fkey(model_identifier)
+      `)
+      .eq('id', templateId)
+      .single()
+
+    if (template?.generation_models) {
+      const modelData = Array.isArray(template.generation_models) 
+        ? template.generation_models[0] 
+        : template.generation_models
+      const templateModelId = (modelData as any)?.model_identifier
+      if (templateModelId) {
+        modelIdentifier = templateModelId
+        console.log(`✅ Using model from template: ${modelIdentifier}`)
+      }
+    }
+  } catch (error: any) {
+    console.warn(`⚠️  Could not get model from template ${templateId}, using default:`, error.message)
+  }
+  
+  console.log(`Using model identifier: ${modelIdentifier}`)
+
+  // Resolve model version (handle version ID lookup if needed)
+  let modelVersion = modelIdentifier
+  if (modelIdentifier.includes('/')) {
+    try {
+      const { getModelVersion } = await import('./replicate-helper')
+      const fetchedVersion = await getModelVersion(modelIdentifier)
+      if (fetchedVersion === 'MODEL_NAME_REQUIRED') {
+        modelVersion = modelIdentifier // Use model name directly
+      } else {
+        modelVersion = fetchedVersion
+      }
+    } catch (error: any) {
+      console.warn(`⚠️  Could not fetch version for ${modelIdentifier}, using model name directly:`, error.message)
+      modelVersion = modelIdentifier
+    }
+  }
+
   // Generate front variation first (uses uploaded photo)
   console.log('Generating front variation (step 1/3)...')
   let frontUrl: string
@@ -152,7 +197,7 @@ export async function generateCharacterVariations(
     const predictionCreateStart = Date.now()
     console.log(`[TIMING] Creating first Replicate prediction at ${new Date().toISOString()}`)
     const predictionId = await createPrediction(
-      process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
+      modelVersion,
       {
         prompt: frontPrompt,
         image_input: [signedBasePhotoUrl],
@@ -181,7 +226,8 @@ export async function generateCharacterVariations(
     frontUrl = await generateImageWithNanoBanana(
       frontPrompt,
       [signedBasePhotoUrl],
-      'match_input_image'
+      'match_input_image',
+      templateId // Pass template ID to get model from template
     ).then(url => {
       console.log('✅ Front variation generated:', url)
       return url
@@ -203,7 +249,7 @@ export async function generateCharacterVariations(
     // Create both predictions first, then update progress
     const [leftPredictionId, rightPredictionId] = await Promise.all([
       createPrediction(
-        process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
+        modelVersion,
         {
           prompt: leftPrompt,
           image_input: [frontUrl],
@@ -212,7 +258,7 @@ export async function generateCharacterVariations(
         }
       ),
       createPrediction(
-        process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana',
+        modelVersion,
         {
           prompt: rightPrompt,
           image_input: [frontUrl],
@@ -261,7 +307,8 @@ export async function generateCharacterVariations(
       generateImageWithNanoBanana(
         leftPrompt,
         [frontUrl], // Use front variation as input
-        'match_input_image'
+        'match_input_image',
+        templateId // Pass template ID to get model from template
       ).then(url => {
         console.log('✅ Left variation generated:', url)
         return url
@@ -272,7 +319,8 @@ export async function generateCharacterVariations(
       generateImageWithNanoBanana(
         rightPrompt,
         [frontUrl], // Use front variation as input
-        'match_input_image'
+        'match_input_image',
+        templateId // Pass template ID to get model from template
       ).then(url => {
         console.log('✅ Right variation generated:', url)
         return url
