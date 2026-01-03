@@ -50,3 +50,4 @@ export function isMobileDevice(userAgent: string | null): boolean {
   return mobileRegex.test(userAgent)
 }
 
+
