@@ -11,7 +11,6 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Twinklebot - Personalized Storybooks for Kids",
   description: "Create magical AI-generated storybooks where your child is the hero",
-  generator: "v0.app",
   icons: {
     icon: [
       {
@@ -28,6 +27,25 @@ export const metadata: Metadata = {
       },
     ],
     apple: "/apple-icon.png",
+  },
+  openGraph: {
+    title: "Twinklebot - Personalized Storybooks for Kids",
+    description: "Create magical AI-generated storybooks where your child is the hero",
+    type: "website",
+    images: [
+      {
+        url: "/apple-icon.png",
+        width: 180,
+        height: 180,
+        alt: "Twinklebot Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Twinklebot - Personalized Storybooks for Kids",
+    description: "Create magical AI-generated storybooks where your child is the hero",
+    images: ["/apple-icon.png"],
   },
   themeColor: "#8B5CF6",
   viewport: {

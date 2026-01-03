@@ -2,6 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  // ✅ DESIGN_MODE: Bypass auth when DESIGN_MODE=1 or when accessed via v0.dev
+  // This allows v0.dev to preview the app without requiring Supabase/auth setup
+  const isDesignMode = process.env.DESIGN_MODE === "1" || 
+                       request.headers.get('host')?.includes('v0.dev')
+  
+  if (isDesignMode) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })

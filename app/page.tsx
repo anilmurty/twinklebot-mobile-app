@@ -14,12 +14,28 @@ function HomeContent() {
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "profile">("storybooks")
 
+  // ✅ DESIGN_MODE: Check if we're in design mode (v0.dev or DESIGN_MODE env var)
+  const isDesignMode = typeof window !== 'undefined' && 
+    (window.location.hostname.includes('v0.dev') || 
+     process.env.NEXT_PUBLIC_DESIGN_MODE === '1')
+
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab && ['storybooks', 'characters', 'library', 'profile'].includes(tab)) {
       setActiveTab(tab as typeof activeTab)
     }
   }, [searchParams])
+
+  // ✅ DESIGN_MODE: In design mode, always show app UI (bypass auth check)
+  // This allows v0.dev to preview the app without requiring authentication
+  if (isDesignMode) {
+    // Render mobile or desktop layout based on device detection
+    if (isMobile) {
+      return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
+    } else {
+      return <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
+    }
+  }
 
   if (loading) {
     return (
