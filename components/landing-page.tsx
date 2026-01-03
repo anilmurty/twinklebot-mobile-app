@@ -2,10 +2,6 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { BookOpen, Sparkles, Users, Library, Mail } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 
 export function LandingPage() {
@@ -53,143 +49,90 @@ export function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background Image */}
+    <div className="relative min-h-screen flex flex-col">
+      {/* Full-screen background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: "url(/login-background.png)",
-          backgroundPosition: "center 35%",
+          backgroundImage: "url(/zoo-entrance-background.jpeg)",
         }}
       />
 
-      {/* Hero Section */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-start pt-12 px-6 text-center">
-        <div className="flex items-center gap-2 mb-8">
-          <Sparkles className="w-10 h-10 text-primary" />
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground">Twinklebot</h1>
-        </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/50" />
 
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8 text-balance">
-          Transform your child into the hero of their own personalized storybook
-        </p>
+      {/* Content overlay */}
+      <div className="relative z-10 flex flex-col h-screen">
+        {/* Spacer to push buttons to bottom */}
+        <div className="flex-1" />
 
-        {/* Sign In Section */}
-        <Card className="w-full max-w-md p-6 space-y-4 bg-white/95 backdrop-blur-md shadow-xl rounded-3xl">
+        {/* Sign in buttons at bottom 10% */}
+        <div className="px-6 pb-8 space-y-3">
           {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
-              <p className="text-sm text-destructive text-center">{error}</p>
+            <div className="mb-4 p-3 bg-red-500/90 backdrop-blur-sm rounded-2xl">
+              <p className="text-sm text-white text-center">{error}</p>
             </div>
           )}
 
-          {!showEmailForm ? (
-            <div className="space-y-3">
-              <Button
-                onClick={handleSignInWithGoogle}
-                disabled={isLoading}
-                size="lg"
-                className="w-full rounded-full h-14 text-base font-medium"
-              >
-                {isLoading ? "Signing in..." : "Sign in with Google"}
-              </Button>
-              <Button
-                onClick={() => setShowEmailForm(true)}
-                variant="outline"
-                size="lg"
-                disabled={isLoading}
-                className="w-full rounded-full h-14 text-base font-medium bg-white hover:bg-gray-50"
-              >
-                <Mail className="mr-2 h-5 w-5" />
-                Sign in with Email
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                  className="rounded-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="rounded-full"
-                />
-              </div>
-              <Button
-                onClick={handleEmailAuth}
-                disabled={isLoading || !email || !password}
-                size="lg"
-                className="w-full rounded-full h-14 text-base font-medium"
-              >
-                {isLoading ? "Please wait..." : isSignUp ? "Sign Up" : "Sign In"}
-              </Button>
-              <div className="flex items-center justify-between text-sm">
-                <button
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  className="text-primary hover:underline"
-                  disabled={isLoading}
-                >
-                  {isSignUp ? "Already have an account?" : "Create an account"}
-                </button>
-                <button
-                  onClick={() => setShowEmailForm(false)}
-                  className="text-muted-foreground hover:underline"
-                  disabled={isLoading}
-                >
-                  Back
-                </button>
-              </div>
-            </div>
-          )}
-        </Card>
+          <Button
+            onClick={handleSignInWithGoogle}
+            disabled={isLoading}
+            size="lg"
+            className="w-full rounded-full h-14 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900 border-none shadow-lg"
+          >
+            {isLoading ? "Signing in..." : "Login with Google"}
+          </Button>
 
-        {/* How It Works Section */}
-        <div className="w-full max-w-md mt-6 space-y-2">
-          <Card className="p-3 flex items-center gap-3 bg-white/70 backdrop-blur-sm border-white/40">
-            <div className="w-10 h-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-primary" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-sm">Create Characters</h3>
-              <p className="text-xs text-muted-foreground">Upload your child's photo</p>
-            </div>
-          </Card>
-
-          <Card className="p-3 flex items-center gap-3 bg-white/70 backdrop-blur-sm border-white/40">
-            <div className="w-10 h-10 shrink-0 rounded-full bg-secondary/10 flex items-center justify-center">
-              <Library className="w-5 h-5 text-secondary" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-sm">Choose a Story</h3>
-              <p className="text-xs text-muted-foreground">Pick from educational templates</p>
-            </div>
-          </Card>
-
-          <Card className="p-3 flex items-center gap-3 bg-white/70 backdrop-blur-sm border-white/40">
-            <div className="w-10 h-10 shrink-0 rounded-full bg-accent/10 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-accent" />
-            </div>
-            <div className="text-left">
-              <h3 className="font-semibold text-sm">Generate & Enjoy</h3>
-              <p className="text-xs text-muted-foreground">AI creates your unique storybook</p>
-            </div>
-          </Card>
+          <Button
+            onClick={() => setShowEmailForm(true)}
+            variant="outline"
+            size="lg"
+            disabled={isLoading}
+            className="w-full rounded-full h-14 text-base font-medium bg-transparent border-2 border-white text-white hover:bg-white/10 shadow-lg"
+          >
+            Login with Email
+          </Button>
         </div>
       </div>
+
+      {showEmailForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold">{isSignUp ? "Create Account" : "Sign In"}</h2>
+              <button onClick={() => setShowEmailForm(false)} className="text-gray-500 hover:text-gray-700">
+                ✕
+              </button>
+            </div>
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+
+            <Button onClick={handleEmailAuth} disabled={isLoading} className="w-full rounded-full h-12">
+              {isLoading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
+            </Button>
+
+            <button
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="w-full text-center text-sm text-primary hover:underline"
+            >
+              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
