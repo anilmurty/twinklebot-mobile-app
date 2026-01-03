@@ -10,7 +10,7 @@ This document describes the complete database schema for Twinklebot. The databas
 
 User profiles linked to Supabase Auth users.
 
-```sql
+\`\`\`sql
 CREATE TABLE profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
@@ -23,7 +23,7 @@ CREATE TABLE profiles (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-```
+\`\`\`
 
 **Columns:**
 - `id`: UUID, primary key, references `auth.users(id)`
@@ -47,7 +47,7 @@ CREATE TABLE profiles (
 
 Child characters created by users for storybook generation.
 
-```sql
+\`\`\`sql
 CREATE TABLE characters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -59,7 +59,7 @@ CREATE TABLE characters (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, name)
 );
-```
+\`\`\`
 
 **Columns:**
 - `id`: UUID, primary key
@@ -85,7 +85,7 @@ CREATE TABLE characters (
 
 Image generation model configurations for flexible model switching.
 
-```sql
+\`\`\`sql
 CREATE TABLE generation_models (
   id SERIAL PRIMARY KEY,
   name TEXT UNIQUE NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE generation_models (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
-```
+\`\`\`
 
 **Columns:**
 - `id`: Serial integer, primary key
@@ -111,7 +111,7 @@ CREATE TABLE generation_models (
 - `updated_at`: Timestamp when model config was last updated
 
 **prompt_structure Example (nano-banana):**
-```json
+\`\`\`json
 {
   "parts_order": ["subject", "action", "detail", "style"],
   "separator": "\n\n",
@@ -121,10 +121,10 @@ CREATE TABLE generation_models (
   "fixed_parts": ["subject", "style"],
   "variable_parts": ["action", "detail"]
 }
-```
+\`\`\`
 
 **api_config Example (nano-banana via Replicate):**
-```json
+\`\`\`json
 {
   "endpoint": "https://api.replicate.com/v1/predictions",
   "auth_header": "Authorization",
@@ -140,7 +140,7 @@ CREATE TABLE generation_models (
     "max_attempts": 60
   }
 }
-```
+\`\`\`
 
 **Indexes:**
 - Primary key on `id`
@@ -153,7 +153,7 @@ CREATE TABLE generation_models (
 
 Pre-defined story templates with scripts and prompts.
 
-```sql
+\`\`\`sql
 CREATE TABLE story_templates (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
@@ -169,7 +169,7 @@ CREATE TABLE story_templates (
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-```
+\`\`\`
 
 **Columns:**
 - `id`: Serial integer, primary key
@@ -187,15 +187,15 @@ CREATE TABLE story_templates (
 - `created_at`: Timestamp when template was created
 
 **fixed_prompt_parts Structure (nano-banana example):**
-```json
+\`\`\`json
 {
   "subject": "A vibrant 3D cartoon version of {character_name} from the reference images. The child must have the same hair color, hair style, facial features, skin color and joyful expression as seen in the photos. It is very important to get these accurate.",
   "style": "Whimsical storybook aesthetic, 3D animation style (like Pixar), soft lighting. Ensure the child's face is clearly visible and the hero of the image. The bottom 20% of the image should be simple background to allow for a text overlay."
 }
-```
+\`\`\`
 
 **script_data Structure:**
-```json
+\`\`\`json
 {
   "scenes": [
     {
@@ -216,7 +216,7 @@ CREATE TABLE story_templates (
     }
   ]
 }
-```
+\`\`\`
 
 **Indexes:**
 - Primary key on `id`
@@ -229,7 +229,7 @@ CREATE TABLE story_templates (
 
 Generated storybooks with scenes.
 
-```sql
+\`\`\`sql
 CREATE TABLE storybooks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -244,7 +244,7 @@ CREATE TABLE storybooks (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   completed_at TIMESTAMPTZ
 );
-```
+\`\`\`
 
 **Columns:**
 - `id`: UUID, primary key
@@ -265,7 +265,7 @@ CREATE TABLE storybooks (
 - `completed_at`: Timestamp when generation completed
 
 **scenes Structure:**
-```json
+\`\`\`json
 [
   {
     "scene_number": 1,
@@ -275,7 +275,7 @@ CREATE TABLE storybooks (
     "generated_at": "2024-01-01T12:00:00Z"
   }
 ]
-```
+\`\`\`
 
 **Indexes:**
 - Primary key on `id`
@@ -290,7 +290,7 @@ CREATE TABLE storybooks (
 
 Background job tracking for storybook generation.
 
-```sql
+\`\`\`sql
 CREATE TABLE generation_jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   storybook_id UUID NOT NULL REFERENCES storybooks(id) ON DELETE CASCADE,
@@ -303,7 +303,7 @@ CREATE TABLE generation_jobs (
   started_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ
 );
-```
+\`\`\`
 
 **Columns:**
 - `id`: UUID, primary key
@@ -322,12 +322,12 @@ CREATE TABLE generation_jobs (
 - `completed_at`: Timestamp when job completed
 
 **replicate_prediction_ids Structure:**
-```json
+\`\`\`json
 {
   "1": "prediction-id-1",
   "2": "prediction-id-2"
 }
-```
+\`\`\`
 
 **Indexes:**
 - Primary key on `id`
@@ -340,7 +340,7 @@ CREATE TABLE generation_jobs (
 
 ### profiles
 
-```sql
+\`\`\`sql
 -- Users can read their own profile
 CREATE POLICY "Users can view own profile"
   ON profiles FOR SELECT
@@ -350,11 +350,11 @@ CREATE POLICY "Users can view own profile"
 CREATE POLICY "Users can update own profile"
   ON profiles FOR UPDATE
   USING (auth.uid() = id);
-```
+\`\`\`
 
 ### characters
 
-```sql
+\`\`\`sql
 -- Users can read their own characters
 CREATE POLICY "Users can view own characters"
   ON characters FOR SELECT
@@ -374,11 +374,11 @@ CREATE POLICY "Users can update own characters"
 CREATE POLICY "Users can delete own characters"
   ON characters FOR DELETE
   USING (auth.uid() = user_id);
-```
+\`\`\`
 
 ### storybooks
 
-```sql
+\`\`\`sql
 -- Users can read their own storybooks
 CREATE POLICY "Users can view own storybooks"
   ON storybooks FOR SELECT
@@ -398,20 +398,20 @@ CREATE POLICY "Users can update own storybooks"
 CREATE POLICY "Users can delete own storybooks"
   ON storybooks FOR DELETE
   USING (auth.uid() = user_id);
-```
+\`\`\`
 
 ### story_templates
 
-```sql
+\`\`\`sql
 -- Everyone can read active story templates
 CREATE POLICY "Anyone can view active story templates"
   ON story_templates FOR SELECT
   USING (is_active = true);
-```
+\`\`\`
 
 ### generation_jobs
 
-```sql
+\`\`\`sql
 -- Users can read jobs for their own storybooks
 CREATE POLICY "Users can view own generation jobs"
   ON generation_jobs FOR SELECT
@@ -422,7 +422,7 @@ CREATE POLICY "Users can view own generation jobs"
       AND storybooks.user_id = auth.uid()
     )
   );
-```
+\`\`\`
 
 ---
 
@@ -433,11 +433,11 @@ CREATE POLICY "Users can view own generation jobs"
 Private bucket for storing character photos.
 
 **Path Structure:**
-```
+\`\`\`
 {user_id}/{character_id}/front.jpg
 {user_id}/{character_id}/left.jpg
 {user_id}/{character_id}/right.jpg
-```
+\`\`\`
 
 **Policies:**
 - Users can upload to their own folder
@@ -449,11 +449,11 @@ Private bucket for storing character photos.
 Private bucket for storing generated storybook scene images.
 
 **Path Structure:**
-```
+\`\`\`
 {storybook_id}/scene-1.jpg
 {storybook_id}/scene-2.jpg
 ...
-```
+\`\`\`
 
 **Policies:**
 - System can upload scenes (service role)
@@ -465,9 +465,9 @@ Private bucket for storing generated storybook scene images.
 Public bucket for story template thumbnails.
 
 **Path Structure:**
-```
+\`\`\`
 thumbnails/{descriptive-filename}.jpg
-```
+\`\`\`
 
 **Example filenames:**
 - `thumbnails/counting-adventure-1-10.jpg`
@@ -485,7 +485,7 @@ thumbnails/{descriptive-filename}.jpg
 
 ### Update updated_at timestamp
 
-```sql
+\`\`\`sql
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -508,11 +508,11 @@ CREATE TRIGGER update_storybooks_updated_at
   BEFORE UPDATE ON storybooks
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
-```
+\`\`\`
 
 ### Reset monthly story counter
 
-```sql
+\`\`\`sql
 CREATE OR REPLACE FUNCTION reset_monthly_story_counter()
 RETURNS void AS $$
 BEGIN
@@ -523,7 +523,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Run via cron job on 1st of each month
-```
+\`\`\`
 
 ---
 
@@ -554,4 +554,3 @@ Example naming:
 - `001_initial_schema.sql`
 - `002_add_monthly_counter_reset.sql`
 - `003_add_storybook_tags.sql`
-

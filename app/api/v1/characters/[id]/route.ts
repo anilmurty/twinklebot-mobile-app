@@ -233,4 +233,3 @@ export async function DELETE(
     )
   }
 }
-

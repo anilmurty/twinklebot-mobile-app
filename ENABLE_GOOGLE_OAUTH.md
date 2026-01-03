@@ -54,4 +54,3 @@ If you don't want to set up Google OAuth right now, you can use email/password a
 - For production, make sure to add your production domain to the authorized redirect URIs in Google Cloud Console
 - Email verification is optional but recommended for production
 - You can enable multiple providers (Google, Facebook, etc.) simultaneously
-

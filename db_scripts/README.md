@@ -25,14 +25,14 @@ Each migration script should include:
 4. Run script
 
 ### Via Supabase CLI
-```bash
+\`\`\`bash
 supabase db push
-```
+\`\`\`
 
 ### Via psql
-```bash
+\`\`\`bash
 psql -h your-db-host -U postgres -d postgres -f 001_initial_schema.sql
-```
+\`\`\`
 
 ## Migration Checklist
 
@@ -55,4 +55,3 @@ Before creating a new migration:
 - `006_add_limit_override.sql` - Add custom_stories_per_month column for per-user limit overrides (for early users, coupons, etc.)
 - `007_add_alphabet_is_for_line.sql` - Add "A is for APPLE" format line to all alphabet scenes
 - `008_remove_cover_image_url.sql` - Remove cover_image_url column from story_templates (only thumbnail_url is used)
-

@@ -7,4 +7,3 @@ ALTER TABLE story_templates
 DROP COLUMN IF EXISTS cover_image_url;
 
 COMMENT ON TABLE story_templates IS 'Story templates for generating personalized storybooks. Each template has a thumbnail_url for list view display.';
-

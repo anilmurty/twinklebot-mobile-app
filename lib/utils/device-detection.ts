@@ -49,5 +49,3 @@ export function isMobileDevice(userAgent: string | null): boolean {
   const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
   return mobileRegex.test(userAgent)
 }
-
-

@@ -203,4 +203,3 @@ export function CreateStoryDialog({ open, onOpenChange, characterId, characterNa
     </Dialog>
   )
 }
-

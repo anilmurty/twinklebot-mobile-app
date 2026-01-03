@@ -39,4 +39,3 @@ BEGIN
   SELECT COUNT(*) INTO template_count FROM story_templates;
   RAISE NOTICE 'Remaining templates: %', template_count;
 END $$;
-

@@ -47,4 +47,3 @@ SET
   prompt_structure = EXCLUDED.prompt_structure,
   api_config = EXCLUDED.api_config,
   updated_at = NOW();
-

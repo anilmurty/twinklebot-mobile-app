@@ -44,4 +44,3 @@ These policies are typically set up automatically, but you can verify them in:
 After creating the buckets, you can verify they exist by:
 1. Going to **Storage** → You should see all three buckets listed
 2. Or check via API: The app will throw clear error messages if buckets are missing
-

@@ -167,4 +167,3 @@ BEGIN
     RAISE NOTICE 'Inserted new "Day at the Zoo" story template';
   END IF;
 END $$;
-

@@ -343,4 +343,3 @@ export async function generateImageWithBasePhotoAndCharacter(
   )
   return pollPrediction(predictionId)
 }
-

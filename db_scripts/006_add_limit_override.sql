@@ -16,4 +16,3 @@ COMMENT ON COLUMN profiles.custom_stories_per_month IS 'Custom monthly story lim
 
 -- Example: Remove override (revert to plan default)
 -- UPDATE profiles SET custom_stories_per_month = NULL WHERE email = 'user@example.com';
-

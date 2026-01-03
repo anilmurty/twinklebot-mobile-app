@@ -346,4 +346,3 @@ COMMENT ON COLUMN character_variations.right_variation_url IS 'URL to right-faci
 COMMENT ON COLUMN storybooks.scenes IS 'JSONB array of generated scenes with image_url, text, and metadata';
 COMMENT ON COLUMN storybooks.status IS 'Generation status: pending, generating, completed, or failed';
 COMMENT ON COLUMN generation_jobs.replicate_prediction_ids IS 'JSONB mapping scene numbers to Replicate prediction IDs';
-

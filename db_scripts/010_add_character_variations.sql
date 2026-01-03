@@ -61,4 +61,3 @@ COMMENT ON TABLE character_variations IS 'Generated character variations (front/
 COMMENT ON COLUMN character_variations.front_variation_url IS 'URL to front-facing character variation image';
 COMMENT ON COLUMN character_variations.left_variation_url IS 'URL to left-facing character variation image';
 COMMENT ON COLUMN character_variations.right_variation_url IS 'URL to right-facing character variation image';
-

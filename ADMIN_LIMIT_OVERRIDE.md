@@ -18,38 +18,38 @@ The system automatically uses the custom limit if set, otherwise falls back to t
 2. Run one of these queries:
 
 #### Give a user a specific limit (e.g., 100 stories/month)
-```sql
+\`\`\`sql
 UPDATE profiles 
 SET custom_stories_per_month = 100 
 WHERE email = 'user@example.com';
-```
+\`\`\`
 
 #### Give a user unlimited stories (set to very high number)
-```sql
+\`\`\`sql
 UPDATE profiles 
 SET custom_stories_per_month = 999999 
 WHERE email = 'vip@example.com';
-```
+\`\`\`
 
 #### Give a user 50 stories/month (for early adopter coupon)
-```sql
+\`\`\`sql
 UPDATE profiles 
 SET custom_stories_per_month = 50 
 WHERE email = 'earlyuser@example.com';
-```
+\`\`\`
 
 #### Remove override (revert to plan default)
-```sql
+\`\`\`sql
 UPDATE profiles 
 SET custom_stories_per_month = NULL 
 WHERE email = 'user@example.com';
-```
+\`\`\`
 
 ### Via Supabase Admin API
 
 You can also update via the Supabase Admin client in your code:
 
-```typescript
+\`\`\`typescript
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 // Set custom limit
@@ -63,12 +63,12 @@ await supabaseAdmin
   .from('profiles')
   .update({ custom_stories_per_month: null })
   .eq('email', 'user@example.com')
-```
+\`\`\`
 
 ## Checking Current Limits
 
 ### View all users with custom limits
-```sql
+\`\`\`sql
 SELECT 
   email, 
   subscription_plan,
@@ -83,10 +83,10 @@ SELECT
 FROM profiles
 WHERE custom_stories_per_month IS NOT NULL
 ORDER BY email;
-```
+\`\`\`
 
 ### View a specific user's limit
-```sql
+\`\`\`sql
 SELECT 
   email,
   subscription_plan,
@@ -105,41 +105,41 @@ SELECT
   END - stories_generated_this_month) AS remaining_this_month
 FROM profiles
 WHERE email = 'user@example.com';
-```
+\`\`\`
 
 ## Use Cases
 
 ### Early Users / Beta Testers
-```sql
+\`\`\`sql
 -- Give early users 50 stories/month
 UPDATE profiles 
 SET custom_stories_per_month = 50 
 WHERE created_at < '2024-01-01';
-```
+\`\`\`
 
 ### Coupon Holders
-```sql
+\`\`\`sql
 -- Give specific users 100 stories/month (one-time coupon)
 UPDATE profiles 
 SET custom_stories_per_month = 100 
 WHERE email IN ('user1@example.com', 'user2@example.com');
-```
+\`\`\`
 
 ### VIP Users
-```sql
+\`\`\`sql
 -- Give VIP users unlimited stories
 UPDATE profiles 
 SET custom_stories_per_month = 999999 
 WHERE subscription_plan = 'premium' 
   AND email IN ('vip1@example.com', 'vip2@example.com');
-```
+\`\`\`
 
 ### Promotional Campaigns
-```sql
+\`\`\`sql
 -- Give all users 10 extra stories this month
 UPDATE profiles 
 SET custom_stories_per_month = stories_per_month + 10;
-```
+\`\`\`
 
 ## Important Notes
 
@@ -154,4 +154,3 @@ SET custom_stories_per_month = stories_per_month + 10;
 2. **Review Regularly**: Periodically review custom limits and remove expired promotions
 3. **Use High Numbers for "Unlimited"**: Use 999999 instead of -1 for unlimited stories
 4. **Test First**: Test limit changes on a test user before applying to production users
-

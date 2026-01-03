@@ -22,4 +22,3 @@ WHERE title = 'Alphabet Adventure 3';
 
 -- Verify the URLs were updated
 SELECT id, title, thumbnail_url FROM story_templates ORDER BY id;
-

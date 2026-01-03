@@ -113,4 +113,3 @@ export const profileApi = {
       body: JSON.stringify(data),
     }),
 }
-

@@ -11,7 +11,7 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
 
 ## Project Structure
 
-```
+\`\`\`
 ├── app/                    # Next.js App Router
 │   ├── api/               # API routes
 │   │   ├── v1/           # REST API endpoints
@@ -27,7 +27,7 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
 ├── public/              # Static assets
 └── tech-spec.md         # Technical specification
 
-```
+\`\`\`
 
 ## Quick Start
 
@@ -41,12 +41,12 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
 ### Setup
 
 1. **Clone and install**:
-   ```bash
+   \`\`\`bash
    pnpm install
-   ```
+   \`\`\`
 
 2. **Environment variables** (`.env.local`):
-   ```env
+   \`\`\`env
    # Supabase (NEXT_PUBLIC_ prefix required for client-side access)
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
@@ -58,17 +58,17 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
 
    # Vercel Cron (production)
    CRON_SECRET=your_random_secret
-   ```
+   \`\`\`
 
 3. **Database setup**:
-   ```bash
+   \`\`\`bash
    # Run migrations in order:
    # 1. db_scripts/001_initial_schema.sql
    # 2. db_scripts/002_seed_nano_banana_model.sql
    # 3. db_scripts/003_seed_story_templates.sql
    # 4. db_scripts/004_update_template_storage_urls.sql
    # 5. db_scripts/005_create_profile_on_auth_trigger.sql
-   ```
+   \`\`\`
 
 4. **Storage setup**:
    - Create Supabase Storage buckets:
@@ -79,9 +79,9 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
    - Update URLs in database (see `db_scripts/004_update_template_storage_urls.sql`)
 
 5. **Run development server**:
-   ```bash
+   \`\`\`bash
    pnpm dev
-   ```
+   \`\`\`
 
 ## API Endpoints
 
@@ -121,7 +121,7 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
 4. Paste token and test endpoints
 
 ### Manual API Testing
-```bash
+\`\`\`bash
 # Get token first
 curl -X POST https://your-project.supabase.co/auth/v1/token?grant_type=password \
   -H "apikey: YOUR_ANON_KEY" \
@@ -130,7 +130,7 @@ curl -X POST https://your-project.supabase.co/auth/v1/token?grant_type=password 
 # Use token in requests
 curl http://localhost:3000/api/v1/story-templates \
   -H "Authorization: Bearer YOUR_TOKEN"
-```
+\`\`\`
 
 ## Storybook Generation Flow
 
@@ -188,10 +188,10 @@ Key tables:
    - Private bucket photos use signed URLs (auto-generated)
 
 3. **Check Database**:
-   ```sql
+   \`\`\`sql
    SELECT status, error_message FROM storybooks WHERE id = '...';
    SELECT * FROM generation_jobs WHERE storybook_id = '...';
-   ```
+   \`\`\`
 
 ### Authentication Issues
 

@@ -86,4 +86,3 @@ export async function getModelVersion(modelName: string): Promise<string> {
     throw new Error(`Failed to fetch model version for ${modelName}. Please set NANOBANANA_MODEL_VERSION in .env.local with a valid version ID. Error: ${error.message}`)
   }
 }
-

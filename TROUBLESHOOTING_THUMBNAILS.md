@@ -16,9 +16,9 @@
 
 3. ✅ **Database URLs Updated?**
    - Check: Run this query in Supabase SQL Editor:
-     ```sql
+     \`\`\`sql
      SELECT id, title, thumbnail_url FROM story_templates ORDER BY id;
-     ```
+     \`\`\`
    - URLs should look like: `https://xxx.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/...`
    - If you see paths like `/counting-numbers-colorful-illustration.jpg`, the database needs updating
 
@@ -48,7 +48,7 @@
 
 Run this SQL script in Supabase SQL Editor:
 
-```sql
+\`\`\`sql
 -- Replace YOUR_PROJECT_REF with your actual Supabase project reference
 -- Find it in: Dashboard → Settings → API → Project URL
 
@@ -70,7 +70,7 @@ WHERE title = 'Alphabet Adventure 3';
 
 -- Verify URLs were updated
 SELECT id, title, thumbnail_url FROM story_templates ORDER BY id;
-```
+\`\`\`
 
 **Important:** Replace `YOUR_PROJECT_REF` with your actual project reference (e.g., `cxwiutrjgftozbfpnpvv`)
 
@@ -78,13 +78,13 @@ SELECT id, title, thumbnail_url FROM story_templates ORDER BY id;
 
 If your files are `.png` instead of `.jpg`, update the SQL script accordingly:
 
-```sql
+\`\`\`sql
 -- If files are PNG, use .png extension:
 UPDATE story_templates
 SET thumbnail_url = 'https://YOUR_PROJECT_REF.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/counting-adventure-1-10.png'
 WHERE title = 'Counting Adventure';
 -- ... etc
-```
+\`\`\`
 
 ### Step 5: Test the URLs Directly
 
@@ -112,9 +112,9 @@ If you get a 403 (Forbidden):
 
 Test the API endpoint directly:
 
-```bash
+\`\`\`bash
 curl http://localhost:3000/api/v1/story-templates
-```
+\`\`\`
 
 Or visit: `http://localhost:3000/api/v1/story-templates`
 
@@ -146,4 +146,3 @@ Check the `thumbnail_url` values in the response. They should be full Supabase U
 2. Verify environment variables are set correctly
 3. Try accessing a thumbnail URL directly in browser
 4. Check if CORS is blocking requests (unlikely for public buckets)
-

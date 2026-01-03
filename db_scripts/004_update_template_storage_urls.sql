@@ -56,4 +56,3 @@ BEGIN
   RAISE NOTICE 'Updated storage URLs for all story templates';
   RAISE NOTICE 'Make sure to replace YOUR_PROJECT_REF with your actual Supabase project reference';
 END $$;
-

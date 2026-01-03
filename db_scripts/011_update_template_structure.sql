@@ -19,4 +19,3 @@
 
 -- Update comment to reflect new structure
 COMMENT ON COLUMN story_templates.script_data IS 'JSONB containing scene-specific scripts with base_photo, child_photo (front/left/right), and insertion_prompt for each scene';
-

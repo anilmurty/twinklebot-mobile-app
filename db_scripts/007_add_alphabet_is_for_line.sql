@@ -211,4 +211,3 @@ SET script_data = jsonb_set(
   '"Z is for ZEBRA.\n{character_name} saw a striped ZEBRA at the zoo."'
 )
 WHERE title = 'Alphabet Adventure 3';
-

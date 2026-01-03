@@ -29,4 +29,3 @@ export function createServerClient(authHeader: string | null) {
     },
   })
 }
-

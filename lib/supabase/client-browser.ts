@@ -27,4 +27,3 @@ const getSupabaseAnonKey = () => {
 export function createClient() {
   return createBrowserClient(getSupabaseUrl(), getSupabaseAnonKey())
 }
-

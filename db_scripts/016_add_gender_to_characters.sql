@@ -14,4 +14,3 @@ WHERE gender IS NULL;
 -- Make gender required (NOT NULL)
 ALTER TABLE characters 
   ALTER COLUMN gender SET NOT NULL;
-

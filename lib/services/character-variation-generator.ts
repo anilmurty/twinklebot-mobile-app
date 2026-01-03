@@ -468,4 +468,3 @@ export async function deleteCharacterVariations(
 
   console.log(`Deleted character variations for character ${characterId} and template ${templateId}`)
 }
-

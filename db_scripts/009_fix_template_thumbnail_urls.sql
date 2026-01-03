@@ -39,4 +39,3 @@ BEGIN
   
   RAISE NOTICE 'Updated thumbnail URLs for all story templates';
 END $$;
-

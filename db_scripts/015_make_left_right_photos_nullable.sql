@@ -41,4 +41,3 @@ BEGIN
     WHERE right_photo_url = '';
   END IF;
 END $$;
-

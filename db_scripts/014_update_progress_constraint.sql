@@ -9,4 +9,3 @@ ALTER TABLE storybooks DROP CONSTRAINT IF EXISTS storybooks_progress_check;
 -- 0-95: Character generation phase
 -- 100-200: Scene generation phase (UI subtracts 100 to display 0-100%)
 ALTER TABLE storybooks ADD CONSTRAINT storybooks_progress_check CHECK (progress >= 0 AND progress <= 200);
-

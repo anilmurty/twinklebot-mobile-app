@@ -15,9 +15,9 @@ This usually happens due to Supabase configuration, not code. The code uses `win
 2. Navigate to **Settings** → **API**
 3. Find **Site URL** field
 4. Update it to your production domain:
-   ```
+   \`\`\`
    https://your-production-domain.com
-   ```
+   \`\`\`
    **NOT** `http://localhost:3000`
 
 5. Click **Save**
@@ -26,13 +26,13 @@ This usually happens due to Supabase configuration, not code. The code uses `win
 
 1. Go to **Supabase Dashboard** → **Authentication** → **URL Configuration**
 2. Under **Redirect URLs**, add your production callback URL:
-   ```
+   \`\`\`
    https://your-production-domain.com/auth/callback
-   ```
+   \`\`\`
 3. You can keep localhost for development:
-   ```
+   \`\`\`
    http://localhost:3000/auth/callback
-   ```
+   \`\`\`
 4. Click **Save**
 
 ### 3. Update Google OAuth Redirect URIs (if using Google OAuth)
@@ -41,23 +41,23 @@ This usually happens due to Supabase configuration, not code. The code uses `win
 2. Navigate to **APIs & Services** → **Credentials**
 3. Click on your OAuth 2.0 Client ID
 4. Under **Authorized redirect URIs**, add:
-   ```
+   \`\`\`
    https://your-production-domain.com/auth/callback
-   ```
+   \`\`\`
 5. Also ensure Supabase callback is there:
-   ```
+   \`\`\`
    https://cxwiutrjgftozbfpnpvv.supabase.co/auth/v1/callback
-   ```
+   \`\`\`
 6. Click **Save**
 
 ### 4. Verify Environment Variables
 
 Make sure your production environment has:
 
-```env
+\`\`\`env
 NEXT_PUBLIC_SUPABASE_URL=https://cxwiutrjgftozbfpnpvv.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
+\`\`\`
 
 **Important:** These should be the same values in both development and production (they're public keys).
 
@@ -96,4 +96,3 @@ After making changes:
 3. Verify the callback URL matches exactly (including https/http)
 4. Ensure no trailing slashes in URLs
 5. Try incognito/private browsing mode to rule out cache issues
-

@@ -87,4 +87,3 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
     </div>
   )
 }
-

@@ -14,9 +14,9 @@ This happens because Supabase uses its **Site URL** configuration to determine w
 2. Navigate to **Settings** → **API**
 3. Find **Site URL** field
 4. Update it to your **custom domain**:
-   ```
+   \`\`\`
    https://your-custom-domain.com
-   ```
+   \`\`\`
    **NOT** `https://your-app.vercel.app`
 5. Click **Save**
 
@@ -24,10 +24,10 @@ This happens because Supabase uses its **Site URL** configuration to determine w
 
 1. Go to **Supabase Dashboard** → **Authentication** → **URL Configuration**
 2. Under **Redirect URLs**, ensure both are listed:
-   ```
+   \`\`\`
    https://your-custom-domain.com/auth/callback
    https://your-app.vercel.app/auth/callback
-   ```
+   \`\`\`
    (Keep vercel.app for fallback/debugging)
 3. Click **Save**
 
@@ -37,14 +37,14 @@ This happens because Supabase uses its **Site URL** configuration to determine w
 2. Navigate to **APIs & Services** → **Credentials**
 3. Click on your OAuth 2.0 Client ID
 4. Under **Authorized redirect URIs**, ensure both are listed:
-   ```
+   \`\`\`
    https://your-custom-domain.com/auth/callback
    https://your-app.vercel.app/auth/callback
-   ```
+   \`\`\`
 5. Also ensure Supabase callback is there:
-   ```
+   \`\`\`
    https://your-project-id.supabase.co/auth/v1/callback
-   ```
+   \`\`\`
 6. Click **Save**
 
 ### Step 4: Set Environment Variable (Optional but Recommended)
@@ -100,4 +100,3 @@ The code has been updated to:
 - The code changes help, but Supabase configuration is the primary fix
 - You can keep both domains in Redirect URLs for flexibility
 - Changes may take a few minutes to propagate
-

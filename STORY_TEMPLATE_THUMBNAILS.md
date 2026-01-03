@@ -47,14 +47,14 @@ The database currently has placeholder paths (like `/counting-numbers-colorful-i
 2. Create a new bucket called `story-template-assets`
 3. Set it as **Public** (so images can be accessed without authentication)
 4. Create the following folder structure:
-   ```
+   \`\`\`
    story-template-assets/
    └── thumbnails/
        ├── counting-adventure-1-10.jpg (Counting Adventure)
        ├── alphabet-adventure-1-a-i.jpg (Alphabet Adventure 1)
        ├── alphabet-adventure-2-j-r.jpg (Alphabet Adventure 2)
        └── alphabet-adventure-3-s-z.jpg (Alphabet Adventure 3)
-   ```
+   \`\`\`
 
 ### 2. Upload Thumbnail Images
 
@@ -70,21 +70,21 @@ For each template, you need to create and upload:
 ### 3. Get Public URLs
 
 After uploading, get the public URLs from Supabase Storage. They should look like:
-```
+\`\`\`
 https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/counting-adventure-1-10.jpg
 https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/alphabet-adventure-1-a-i.jpg
 https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/alphabet-adventure-2-j-r.jpg
 https://{project_ref}.supabase.co/storage/v1/object/public/story-template-assets/thumbnails/alphabet-adventure-3-s-z.jpg
-```
+\`\`\`
 
 ### 4. Update Database URLs
 
 Run the migration script `db_scripts/004_update_template_storage_urls.sql` after updating it with your actual Supabase project reference:
 
-```sql
+\`\`\`sql
 -- Update the project reference in the script
 supabase_storage_base_url := 'https://YOUR_PROJECT_REF.supabase.co/storage/v1/object/public/story-template-assets';
-```
+\`\`\`
 
 Then run the migration in your Supabase SQL Editor.
 
@@ -118,4 +118,3 @@ The frontend will show a placeholder icon if thumbnails are missing.
 ### Database has placeholder paths?
 - Run migration `004_update_template_storage_urls.sql` after uploading images
 - Make sure to update the project reference in the script
-

@@ -85,42 +85,42 @@ Handled by Supabase Auth:
 - `GET /auth/v1/user`
 
 ### Characters API
-```
+\`\`\`
 GET    /api/v1/characters
 POST   /api/v1/characters
 GET    /api/v1/characters/:id
 PATCH  /api/v1/characters/:id
 DELETE /api/v1/characters/:id
-```
+\`\`\`
 
 ### Generation Models API
-```
+\`\`\`
 GET /api/v1/generation-models
 GET /api/v1/generation-models/:id
-```
+\`\`\`
 
 ### Story Templates API
-```
+\`\`\`
 GET /api/v1/story-templates
 GET /api/v1/story-templates/:id
-```
+\`\`\`
 
 ### Storybooks API
-```
+\`\`\`
 GET    /api/v1/storybooks
 POST   /api/v1/storybooks
 GET    /api/v1/storybooks/:id
 DELETE /api/v1/storybooks/:id
 GET    /api/v1/storybooks/:id/status
-```
+\`\`\`
 
 ### Profile API
-```
+\`\`\`
 GET  /api/v1/profile
 PATCH /api/v1/profile
 POST /api/v1/profile/subscription/upgrade
 POST /api/v1/profile/subscription/downgrade
-```
+\`\`\`
 
 ## Story Templates
 
@@ -276,7 +276,7 @@ To switch to a different model (e.g., Flux):
 
 ### Supabase Storage Buckets
 
-```
+\`\`\`
 character-photos/
   └── {user_id}/
       └── {character_id}/
@@ -289,7 +289,7 @@ storybook-scenes/
       ├── scene-1.jpg
       ├── scene-2.jpg
       └── ...
-```
+\`\`\`
 
 ### Storage Policies
 - Character photos: Private, user-scoped
@@ -362,7 +362,7 @@ storybook-scenes/
 
 ## Environment Variables
 
-```bash
+\`\`\`bash
 # Supabase
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_anon_key
@@ -380,7 +380,7 @@ FCM_SERVER_KEY=your_fcm_server_key
 
 # Vercel
 VERCEL_URL=your_vercel_url
-```
+\`\`\`
 
 ## Deployment
 
@@ -432,4 +432,3 @@ VERCEL_URL=your_vercel_url
 - Lazy load storybook scenes
 - Cache character photos locally
 - Optimize image loading and display
-
