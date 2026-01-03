@@ -6,8 +6,21 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') || '/'
 
-  // Use the request's origin to ensure we redirect to the correct domain
-  const redirectUrl = new URL(next, requestUrl.origin)
+  // Check for custom domain via environment variable or use request origin
+  // Vercel sets x-forwarded-host header when using custom domains
+  const customDomain = process.env.NEXT_PUBLIC_SITE_URL
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  
+  // Prefer custom domain env var, then forwarded host (custom domain), then request origin
+  let baseUrl = requestUrl.origin
+  if (customDomain) {
+    baseUrl = customDomain
+  } else if (forwardedHost) {
+    baseUrl = `${forwardedProto}://${forwardedHost}`
+  }
+  
+  const redirectUrl = new URL(next, baseUrl)
 
   let supabaseResponse = NextResponse.redirect(redirectUrl)
 

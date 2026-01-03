@@ -71,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase])
 
   const signInWithGoogle = async () => {
+    // Use window.location.origin which will be the custom domain if accessed via custom domain
+    // Supabase will respect the redirectTo parameter, but the Site URL in Supabase config
+    // determines the final redirect domain
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
