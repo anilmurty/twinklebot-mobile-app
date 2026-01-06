@@ -361,18 +361,18 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                 <div className="h-1.5 flex-1 bg-muted rounded-full" />
               </div>
 
-              <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
+              <div className="relative aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
                 {previewSceneUrl ? (
                   <img
                     src={previewSceneUrl}
                     alt="Story preview"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 ) : selectedCharacterData ? (
                   <img
                     src={selectedCharacterData.front_photo_url || "/placeholder.svg"}
                     alt="Story preview"
-                    className="w-full h-full object-cover opacity-80"
+                    className="w-full h-full object-contain opacity-80"
                   />
                 ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
@@ -455,7 +455,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                               className={`w-full mt-4 ${
                                 isSubscription
                                   ? 'bg-primary hover:bg-primary/90'
-                                  : 'bg-transparent'
+                                  : 'hover:bg-accent hover:border-primary'
                               }`}
                               variant={isSubscription ? 'default' : 'outline'}
                               size="lg"

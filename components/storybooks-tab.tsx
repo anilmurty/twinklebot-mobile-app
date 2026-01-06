@@ -438,12 +438,12 @@ export function StorybooksTab() {
           <div className="space-y-6 py-6">
             {resumeStorybook && (
               <>
-                <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
+                <div className="relative aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
                   {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
                     <img
                       src={resumeStorybook.scenes[0].image_url}
                       alt="Story preview"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   ) : null}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
@@ -522,7 +522,7 @@ export function StorybooksTab() {
                                 className={`w-full mt-4 ${
                                   isSubscription
                                     ? 'bg-primary hover:bg-primary/90'
-                                    : 'bg-transparent'
+                                    : 'hover:bg-accent hover:border-primary'
                                 }`}
                                 variant={isSubscription ? 'default' : 'outline'}
                                 size="lg"
