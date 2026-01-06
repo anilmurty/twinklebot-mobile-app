@@ -95,10 +95,64 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       console.log(`[PREVIEW] Character variations generated`)
     } else {
       console.log(`[PREVIEW] Using existing character variations`)
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 50, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
+      // Verify the files actually exist in storage before using them
+      const { getSignedUrl } = await import('@/lib/supabase/storage')
+      const extractStoragePath = (url: string): string | null => {
+        const publicUrlMatch = url.match(/\/character-variations\/(.+)$/)
+        if (publicUrlMatch) return publicUrlMatch[1]
+        const relativeMatch = url.match(/^character-variations\/(.+)$/)
+        if (relativeMatch) return relativeMatch[1]
+        if (!url.includes('http') && !url.includes('character-variations')) return url
+        return null
+      }
+
+      const frontPath = extractStoragePath(variations.front_variation_url)
+      let variationsValid = false
+      if (frontPath) {
+        try {
+          await getSignedUrl('character-variations', frontPath, 60) // Short expiry for check
+          variationsValid = true
+          console.log(`[PREVIEW] Verified character variation files exist in storage`)
+        } catch (error: any) {
+          console.warn(`[PREVIEW] Character variation file not found in storage, will regenerate:`, error.message)
+          variationsValid = false
+        }
+      } else {
+        console.warn(`[PREVIEW] Could not extract path from variation URL: ${variations.front_variation_url}`)
+        variationsValid = false
+      }
+
+      if (!variationsValid) {
+        console.log(`[PREVIEW] Character variation files missing or invalid, regenerating...`)
+        // Delete the invalid record
+        await supabaseAdmin
+          .from('character_variations')
+          .delete()
+          .eq('character_id', character.id)
+          .eq('template_id', template.id)
+        
+        // Update progress
+        await supabaseAdmin
+          .from('storybooks')
+          .update({ progress: 10, updated_at: new Date().toISOString() })
+          .eq('id', storybookId)
+
+        // Regenerate
+        variations = await generateCharacterVariations(
+          character.id,
+          template.id,
+          character.front_photo_url,
+          userId,
+          storybookId,
+          true
+        )
+        console.log(`[PREVIEW] Character variations regenerated`)
+      } else {
+        await supabaseAdmin
+          .from('storybooks')
+          .update({ progress: 50, updated_at: new Date().toISOString() })
+          .eq('id', storybookId)
+      }
     }
 
     // Step 2: Generate first scene
@@ -131,16 +185,47 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     // Convert character variation URL to signed URL for Replicate access
     const { getSignedUrl } = await import('@/lib/supabase/storage')
     const extractStoragePath = (url: string): string | null => {
-      const match = url.match(/character-variations\/(.+)$/)
-      return match ? match[1] : null
+      // Handle full Supabase public URLs: https://<project>.supabase.co/storage/v1/object/public/character-variations/<path>
+      const publicUrlMatch = url.match(/\/character-variations\/(.+)$/)
+      if (publicUrlMatch) {
+        return publicUrlMatch[1]
+      }
+      // Handle relative paths: character-variations/<path>
+      const relativeMatch = url.match(/^character-variations\/(.+)$/)
+      if (relativeMatch) {
+        return relativeMatch[1]
+      }
+      // Handle paths that already start with the path (no bucket prefix)
+      if (!url.includes('http') && !url.includes('character-variations')) {
+        return url
+      }
+      return null
     }
 
     const variationPath = extractStoragePath(characterVariationUrl)
     if (!variationPath) {
+      console.error(`[PREVIEW] Could not extract storage path from variation URL: ${characterVariationUrl}`)
       throw new Error(`Could not extract storage path from variation URL: ${characterVariationUrl}`)
     }
 
-    const signedVariationUrl = await getSignedUrl('character-variations', variationPath, 3600)
+    console.log(`[PREVIEW] Extracted storage path: ${variationPath} from URL: ${characterVariationUrl}`)
+
+    // Try to create signed URL, but if the bucket is public, we can use the public URL directly
+    let signedVariationUrl: string
+    try {
+      signedVariationUrl = await getSignedUrl('character-variations', variationPath, 3600)
+      console.log(`[PREVIEW] Created signed URL for variation`)
+    } catch (error: any) {
+      console.warn(`[PREVIEW] Failed to create signed URL, trying to use public URL directly:`, error.message)
+      // If signed URL fails, check if the original URL is already a public URL we can use
+      if (characterVariationUrl.startsWith('http')) {
+        console.log(`[PREVIEW] Using public URL directly: ${characterVariationUrl}`)
+        signedVariationUrl = characterVariationUrl
+      } else {
+        console.error(`[PREVIEW] Failed to create signed URL for path: ${variationPath}`, error)
+        throw new Error(`Failed to create signed URL for character variation: ${error.message}. Path: ${variationPath}, URL: ${characterVariationUrl}`)
+      }
+    }
 
     // Generate first scene image
     const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
