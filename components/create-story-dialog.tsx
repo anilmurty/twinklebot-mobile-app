@@ -142,7 +142,7 @@ export function CreateStoryDialog({
 
       // Poll for preview completion
       let attempts = 0
-      const maxAttempts = 180 // 90 seconds max (500ms * 180)
+      const maxAttempts = 1800 // 15 minutes max (500ms * 1800) - Replicate predictions can take up to 5 min each
       const pollInterval = setInterval(async () => {
         attempts++
         setPreviewProgress(Math.min(20 + (attempts / maxAttempts) * 70, 90))

@@ -74,14 +74,18 @@ export async function generateCharacterVariations(
     }
   }
 
+  const variationGenStartTime = Date.now()
+  console.log(`[TIMING] Character variation generation started at ${new Date().toISOString()}`)
   console.log(`Generating character variations for character ${characterId} and template ${templateId}`)
 
   // Fetch character's gender from database
+  const genderQueryStart = Date.now()
   const { data: characterData, error: characterError } = await supabaseAdmin
     .from('characters')
     .select('gender')
     .eq('id', characterId)
     .single()
+  console.log(`[TIMING] Gender query: ${Date.now() - genderQueryStart}ms`)
 
   if (characterError || !characterData) {
     throw new Error(`Failed to fetch character data: ${characterError?.message || 'Character not found'}`)
@@ -139,6 +143,7 @@ export async function generateCharacterVariations(
   console.log('=====================================\n')
 
   // Get model identifier from template
+  const modelQueryStart = Date.now()
   let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
   try {
     const { data: template } = await supabaseAdmin
@@ -149,6 +154,7 @@ export async function generateCharacterVariations(
       `)
       .eq('id', templateId)
       .single()
+  console.log(`[TIMING] Model identifier query: ${Date.now() - modelQueryStart}ms`)
 
     if (template?.generation_models) {
       const modelData = Array.isArray(template.generation_models) 
@@ -194,6 +200,8 @@ export async function generateCharacterVariations(
     
     // Create prediction and update progress to 40% when prediction is created (10% base + 30% for char 1)
     const predictionCreateStart = Date.now()
+    const totalTimeBeforePrediction = Date.now() - variationGenStartTime
+    console.log(`[TIMING] ⏱️  TOTAL TIME BEFORE FIRST PREDICTION: ${totalTimeBeforePrediction}ms (${(totalTimeBeforePrediction/1000).toFixed(2)}s)`)
     console.log(`[TIMING] Creating first Replicate prediction at ${new Date().toISOString()}`)
     const predictionId = await createPrediction(
       modelVersion,

@@ -32,9 +32,11 @@ export interface PreviewResult {
  * Generate preview: character variations + first scene only
  */
 export async function generatePreview(storybookId: string): Promise<PreviewResult> {
-  console.log(`[PREVIEW] Starting preview generation for storybook ${storybookId}`)
+  const previewStartTime = Date.now()
+  console.log(`[PREVIEW] Starting preview generation for storybook ${storybookId} at ${new Date().toISOString()}`)
 
   // Get storybook with related data
+  const dbQueryStart = Date.now()
   const { data: storybook, error: sbError } = await supabaseAdmin
     .from('storybooks')
     .select(`
@@ -44,6 +46,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     `)
     .eq('id', storybookId)
     .single()
+  console.log(`[TIMING] Database query (storybook+character+template): ${Date.now() - dbQueryStart}ms`)
 
   if (sbError || !storybook) {
     throw new Error(`Storybook not found: ${storybookId}`)
@@ -72,8 +75,10 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
   try {
     // Step 1: Generate or get character variations
+    const variationsCheckStart = Date.now()
     console.log(`[PREVIEW] Step 1: Checking character variations...`)
     let variations = await getCharacterVariations(character.id, template.id)
+    console.log(`[TIMING] Character variations check: ${Date.now() - variationsCheckStart}ms`)
 
     if (!variations) {
       console.log(`[PREVIEW] No existing variations found. Generating...`)
