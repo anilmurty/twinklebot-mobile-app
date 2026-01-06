@@ -338,6 +338,24 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <p className="text-sm text-muted-foreground">{Math.round(previewProgress)}% complete</p>
                 </div>
               </div>
+
+              <div className="space-y-4 pt-4">
+                <p className="text-center text-sm text-muted-foreground">
+                  Feel free to close this. We will let you know when the preview is ready.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      onOpenChange(false)
+                      router.push("/?tab=storybooks")
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
             </div>
           </>
         )}
