@@ -58,21 +58,63 @@ export async function GET(request: NextRequest) {
           total_scenes: sb.template?.scene_count || 0, // Add total_scenes from template
         }
 
-        // Always start with template thumbnail, then replace with first scene when available
-        // Default to template thumbnail - convert if it's a relative path
-        let templateThumbnailUrl = sb.template?.thumbnail_url || null
-        if (templateThumbnailUrl && templateThumbnailUrl.startsWith('/') && !templateThumbnailUrl.startsWith('http')) {
-          // Convert relative path like "/day-at-the-zoo/cover.png" to Supabase Storage URL
-          const storagePath = templateThumbnailUrl.slice(1) // Remove leading slash
-          const { getStorageUrl } = await import('@/lib/supabase/storage')
-          try {
-            templateThumbnailUrl = getStorageUrl('story-template-assets', storagePath)
-          } catch (err) {
-            console.error(`Failed to convert template thumbnail URL for storybook ${sb.id}:`, err)
-            templateThumbnailUrl = null
+        // Determine thumbnail URL based on storybook status
+        let thumbnailUrl: string | null = null
+        
+        // If preview is generating (preview_pending with no scenes), use first scene base photo
+        const isGeneratingPreview = sb.status === 'preview_pending' && (!sb.scenes || sb.scenes.length === 0)
+        if (isGeneratingPreview && sb.template?.script_data?.scenes) {
+          // Get first scene base photo
+          const scenes = sb.template.script_data.scenes as any[]
+          if (scenes && scenes.length > 0) {
+            const firstScene = scenes.reduce((prev, curr) => 
+              (curr.scene_number < prev.scene_number) ? curr : prev
+            )
+            if (firstScene.base_photo) {
+              // Construct base photo path
+              let basePhotoPath: string
+              const templateThumbnailUrl = sb.template?.thumbnail_url || ''
+              if (templateThumbnailUrl && templateThumbnailUrl.includes('/')) {
+                const thumbnailParts = templateThumbnailUrl.split('/')
+                if (thumbnailParts.length >= 2) {
+                  const folder = thumbnailParts[1] // Extract folder name (e.g., "day-at-the-zoo")
+                  basePhotoPath = `${folder}/${firstScene.base_photo}`
+                } else {
+                  basePhotoPath = `day-at-the-zoo/${firstScene.base_photo}`
+                }
+              } else {
+                basePhotoPath = `day-at-the-zoo/${firstScene.base_photo}`
+              }
+              
+              // Get public URL from Supabase Storage
+              const { getStorageUrl } = await import('@/lib/supabase/storage')
+              try {
+                thumbnailUrl = getStorageUrl('story-template-assets', basePhotoPath)
+                result.first_scene_base_image = thumbnailUrl
+              } catch (err) {
+                console.error(`Failed to get base photo URL for storybook ${sb.id}:`, err)
+              }
+            }
           }
         }
-        result.thumbnail_url = templateThumbnailUrl
+        
+        // If no base photo found, use template thumbnail
+        if (!thumbnailUrl) {
+          let templateThumbnailUrl = sb.template?.thumbnail_url || null
+          if (templateThumbnailUrl && templateThumbnailUrl.startsWith('/') && !templateThumbnailUrl.startsWith('http')) {
+            // Convert relative path like "/day-at-the-zoo/cover.png" to Supabase Storage URL
+            const storagePath = templateThumbnailUrl.slice(1) // Remove leading slash
+            const { getStorageUrl } = await import('@/lib/supabase/storage')
+            try {
+              templateThumbnailUrl = getStorageUrl('story-template-assets', storagePath)
+            } catch (err) {
+              console.error(`Failed to convert template thumbnail URL for storybook ${sb.id}:`, err)
+              templateThumbnailUrl = null
+            }
+          }
+          thumbnailUrl = templateThumbnailUrl
+        }
+        result.thumbnail_url = thumbnailUrl
         
         // Generate thumbnail from first scene if available (even during generation)
         if (sb.scenes && Array.isArray(sb.scenes) && sb.scenes.length > 0) {

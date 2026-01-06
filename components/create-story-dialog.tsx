@@ -169,9 +169,7 @@ export function CreateStoryDialog({
         console.error("Preview generation error:", err)
       })
 
-      // Navigate to storybooks page immediately - user can close modal
-      onOpenChange(false)
-      router.push("/?tab=storybooks")
+      // Don't navigate automatically - let user close modal when ready
     } catch (err: any) {
       console.error("Failed to generate preview:", err)
       setError(err.message || "Failed to start preview generation")
