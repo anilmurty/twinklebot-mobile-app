@@ -145,23 +145,12 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
 async function resolveModelVersion(modelIdentifier: string): Promise<string> {
   // Version IDs are typically long alphanumeric strings (e.g., "abc123def456...")
   // Model names contain slashes (e.g., "google/nano-banana", "google/nano-banana-pro")
-  // If it looks like a model name (contains slash), try to fetch version
+  
   if (modelIdentifier.includes('/')) {
-    const { getModelVersion } = await import('./replicate-helper')
-    try {
-      const fetchedVersion = await getModelVersion(modelIdentifier)
-      // Check if we got the special marker indicating model doesn't expose versions
-      if (fetchedVersion === 'MODEL_NAME_REQUIRED') {
-        console.log('ℹ️  Model does not expose versions via API, using model name directly')
-        return modelIdentifier // Use model name directly
-      } else {
-        console.log('✅ Using model version ID:', fetchedVersion)
-        return fetchedVersion
-      }
-    } catch (error: any) {
-      console.warn(`⚠️  Could not fetch version for ${modelIdentifier}, using model name directly:`, error.message)
-      return modelIdentifier // Fallback to model name
-    }
+    // Model name format - use directly without API call
+    // Most Replicate models accept model names directly, eliminating 1-4 second delay
+    console.log('✅ Using model name directly (no API call):', modelIdentifier)
+    return modelIdentifier
   } else {
     // Check if it looks like a valid version ID (long alphanumeric, no slashes)
     // Version IDs are typically 30+ characters and contain only alphanumeric characters

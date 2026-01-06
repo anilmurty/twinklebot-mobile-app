@@ -166,21 +166,20 @@ export async function generateCharacterVariations(
   
   console.log(`Using model identifier: ${modelIdentifier}`)
 
-  // Resolve model version (handle version ID lookup if needed)
+  // Use model identifier directly - most Replicate models accept model names (e.g., "google/nano-banana-pro")
+  // Only resolve to version ID if absolutely necessary (most models work with names)
+  // This eliminates 1-4 seconds of delay from unnecessary API calls
   let modelVersion = modelIdentifier
-  if (modelIdentifier.includes('/')) {
-    try {
-      const { getModelVersion } = await import('./replicate-helper')
-      const fetchedVersion = await getModelVersion(modelIdentifier)
-      if (fetchedVersion === 'MODEL_NAME_REQUIRED') {
-        modelVersion = modelIdentifier // Use model name directly
-      } else {
-        modelVersion = fetchedVersion
-      }
-    } catch (error: any) {
-      console.warn(`⚠️  Could not fetch version for ${modelIdentifier}, using model name directly:`, error.message)
-      modelVersion = modelIdentifier
-    }
+  
+  // Only resolve if it looks like a version ID is required (long alphanumeric string)
+  // Model names contain '/' and can be used directly
+  if (!modelIdentifier.includes('/') && modelIdentifier.length > 30) {
+    // Looks like a version ID already, use it directly
+    console.log(`✅ Using provided version ID: ${modelIdentifier}`)
+  } else {
+    // Model name format (e.g., "google/nano-banana-pro") - use directly
+    // Replicate accepts model names for most models, no need to resolve
+    console.log(`✅ Using model name directly (no API call needed): ${modelIdentifier}`)
   }
 
   // Generate front variation first (uses uploaded photo)
