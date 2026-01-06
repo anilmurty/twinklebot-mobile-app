@@ -203,7 +203,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       }
 
       // Always use front variation for all scenes (we only generate one variation now)
-      const characterVariationUrl = variations.front_variation_url
+      let characterVariationUrl = variations.front_variation_url
 
       if (!characterVariationUrl) {
         throw new Error(`Character variation URL not found`)
