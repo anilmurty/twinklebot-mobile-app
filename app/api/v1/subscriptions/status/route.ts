@@ -17,20 +17,17 @@ export async function GET(request: NextRequest) {
     const userId = user.data.user?.id!
 
     // Check for active subscription
-    const { data: subscription, error } = await supabaseAdmin
+    const { data: subscription, error: subscriptionError } = await supabaseAdmin
       .from('subscriptions')
-      .select(`
-        *,
-        subscription_plan:subscription_plans(*)
-      `)
+      .select('*')
       .eq('user_id', userId)
       .eq('status', 'active')
-      .single()
+      .maybeSingle()
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows returned, which is fine
+    if (subscriptionError) {
+      console.error('Error fetching subscription:', subscriptionError)
       return NextResponse.json(
-        { error: error.message },
+        { error: subscriptionError.message },
         { status: 500 }
       )
     }
@@ -42,7 +39,30 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const plan = subscription.subscription_plan as any
+    // Fetch subscription plan separately
+    const { data: plan, error: planError } = await supabaseAdmin
+      .from('subscription_plans')
+      .select('*')
+      .eq('id', subscription.subscription_plan_id)
+      .single()
+
+    if (planError) {
+      console.error('Error fetching subscription plan:', planError)
+      // Return subscription without plan details if plan fetch fails
+      return NextResponse.json({
+        has_subscription: true,
+        subscription: {
+          id: subscription.id,
+          plan: null,
+          status: subscription.status,
+          current_period_start: subscription.current_period_start,
+          current_period_end: subscription.current_period_end,
+          stories_used_this_period: subscription.stories_used_this_period || 0,
+          stories_remaining: 0,
+          cancel_at_period_end: subscription.cancel_at_period_end,
+        },
+      })
+    }
 
     // Calculate stories remaining
     const storiesRemaining = Math.max(
