@@ -242,9 +242,28 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       }
     }
 
+    // Construct base photo path - extract folder from template thumbnail_url
+    // thumbnail_url format: "/day-at-the-zoo/cover.png" -> folder is "day-at-the-zoo"
+    let basePhotoPath: string
+    if (template.thumbnail_url && template.thumbnail_url.includes('/')) {
+      const thumbnailParts = template.thumbnail_url.split('/')
+      if (thumbnailParts.length >= 2) {
+        const folder = thumbnailParts[1] // Extract folder name (e.g., "day-at-the-zoo")
+        basePhotoPath = `/${folder}/${firstScene.base_photo}`
+      } else {
+        // Fallback: hardcode for "Day at the Zoo" template
+        basePhotoPath = `/day-at-the-zoo/${firstScene.base_photo}`
+      }
+    } else {
+      // Fallback: hardcode for "Day at the Zoo" template
+      basePhotoPath = `/day-at-the-zoo/${firstScene.base_photo}`
+    }
+
+    console.log(`[PREVIEW] Constructed base photo path: ${basePhotoPath} from base_photo: ${firstScene.base_photo}`)
+
     // Generate first scene image
     const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
-      firstScene.base_photo,
+      basePhotoPath,
       signedVariationUrl,
       firstScene.insertion_prompt,
       firstScene.aspect_ratio || 'match_input_image',
