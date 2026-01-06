@@ -570,120 +570,122 @@ export function StorybooksTab() {
                   </DialogContent>
                 </Dialog>
 
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Choose Your Plan</Label>
+                    <div className="space-y-3">
+                      <Label className="text-base font-semibold">Choose Your Plan</Label>
 
-                  {subscriptionPlans.length === 0 ? (
-                    <Card className="p-4 text-center">
-                      <p className="text-sm text-muted-foreground">Loading payment plans...</p>
-                    </Card>
-                  ) : (
-                    <RadioGroup
-                      value={selectedPlanId?.toString() || ""}
-                      onValueChange={(value) => setSelectedPlanId(Number.parseInt(value))}
-                    >
-                      <div className="space-y-3">
-                        {subscriptionPlans.map((plan) => {
-                          const isSelected = selectedPlanId === plan.id
-                          const isSubscription = plan.plan_type === 'subscription'
-                          const price = (plan.price_amount / 100).toFixed(2)
-                          const features = plan.features || []
+                      {subscriptionPlans.length === 0 ? (
+                        <Card className="p-4 text-center">
+                          <p className="text-sm text-muted-foreground">Loading payment plans...</p>
+                        </Card>
+                      ) : (
+                        <RadioGroup
+                          value={selectedPlanId?.toString() || ""}
+                          onValueChange={(value) => setSelectedPlanId(Number.parseInt(value))}
+                        >
+                          <div className="space-y-3">
+                            {subscriptionPlans.map((plan) => {
+                              const isSelected = selectedPlanId === plan.id
+                              const isSubscription = plan.plan_type === 'subscription'
+                              const price = (plan.price_amount / 100).toFixed(2)
+                              const features = plan.features || []
 
-                          return (
-                            <Card
-                              key={plan.id}
-                              className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                                isSelected ? 'border-2 border-primary bg-primary/5' : ''
-                              } ${isSubscription && !isSelected ? 'border-2 border-primary/50 bg-primary/5' : ''}`}
-                            >
-                              <label className="flex items-start gap-4 cursor-pointer w-full">
-                                <RadioGroupItem
-                                  value={plan.id.toString()}
-                                  id={`resume-plan-${plan.id}`}
-                                  className="mt-1"
-                                />
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <h4 className="font-bold text-lg">{plan.name}</h4>
-                                    {isSubscription && (
-                                      <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                                        Best Value
-                                      </span>
+                              return (
+                                <Card
+                                  key={plan.id}
+                                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                                    isSelected ? 'border-2 border-primary bg-primary/5' : ''
+                                  } ${isSubscription && !isSelected ? 'border-2 border-primary/50 bg-primary/5' : ''}`}
+                                >
+                                  <label className="flex items-start gap-4 cursor-pointer w-full">
+                                    <RadioGroupItem
+                                      value={plan.id.toString()}
+                                      id={`resume-plan-${plan.id}`}
+                                      className="mt-1"
+                                    />
+                                    <div className="flex-1 space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <h4 className="font-bold text-lg">{plan.name}</h4>
+                                        {isSubscription && (
+                                          <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                                            Best Value
+                                          </span>
+                                        )}
+                                      </div>
+                                      {plan.description && (
+                                        <p className="text-sm text-muted-foreground">{plan.description}</p>
+                                      )}
+                                      {features.length > 0 && (
+                                        <ul className="text-sm space-y-1 text-muted-foreground">
+                                          {features.map((feature: string, idx: number) => (
+                                            <li key={idx} className="flex items-start gap-2">
+                                              <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                                              <span>{feature}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      )}
+                                      <div className="pt-2">
+                                        <span className="text-2xl font-bold text-primary">${price}</span>
+                                        {plan.billing_interval && (
+                                          <span className="text-sm text-muted-foreground ml-1">
+                                            /{plan.billing_interval}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </label>
+                                  <Button
+                                    className={`w-full mt-4 ${
+                                      isSubscription
+                                        ? 'bg-primary hover:bg-primary/90'
+                                        : 'hover:bg-accent hover:border-primary'
+                                    }`}
+                                    variant={isSubscription ? 'default' : 'outline'}
+                                    size="lg"
+                                    onClick={() => handleResumePurchase(plan.id)}
+                                    disabled={isSubmitting || !isSelected}
+                                  >
+                                    {isSubmitting ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Processing...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ShoppingCart className="w-4 h-4 mr-2" />
+                                        {isSubscription
+                                          ? 'Subscribe & Generate Full Story'
+                                          : 'Purchase & Generate Full Story'}
+                                      </>
                                     )}
-                                  </div>
-                                  {plan.description && (
-                                    <p className="text-sm text-muted-foreground">{plan.description}</p>
-                                  )}
-                                  {features.length > 0 && (
-                                    <ul className="text-sm space-y-1 text-muted-foreground">
-                                      {features.map((feature: string, idx: number) => (
-                                        <li key={idx} className="flex items-start gap-2">
-                                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                                          <span>{feature}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                  <div className="pt-2">
-                                    <span className="text-2xl font-bold text-primary">${price}</span>
-                                    {plan.billing_interval && (
-                                      <span className="text-sm text-muted-foreground ml-1">
-                                        /{plan.billing_interval}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </label>
-                              <Button
-                                className={`w-full mt-4 ${
-                                  isSubscription
-                                    ? 'bg-primary hover:bg-primary/90'
-                                    : 'hover:bg-accent hover:border-primary'
-                                }`}
-                                variant={isSubscription ? 'default' : 'outline'}
-                                size="lg"
-                                onClick={() => handleResumePurchase(plan.id)}
-                                disabled={isSubmitting || !isSelected}
-                              >
-                                {isSubmitting ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Processing...
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShoppingCart className="w-4 h-4 mr-2" />
-                                    {isSubscription
-                                      ? 'Subscribe & Generate Full Story'
-                                      : 'Purchase & Generate Full Story'}
-                                  </>
-                                )}
-                              </Button>
-                            </Card>
-                          )
-                        })}
+                                  </Button>
+                                </Card>
+                              )
+                            })}
+                          </div>
+                        </RadioGroup>
+                      )}
+
+                      <div className="pt-2">
+                        <CouponInput
+                          onCouponApplied={(coupon) => setAppliedCoupon(coupon)}
+                          onCouponRemoved={() => setAppliedCoupon(null)}
+                          disabled={isSubmitting}
+                        />
                       </div>
-                    </RadioGroup>
-                  )}
+                    </div>
 
-                  <div className="pt-2">
-                    <CouponInput
-                      onCouponApplied={(coupon) => setAppliedCoupon(coupon)}
-                      onCouponRemoved={() => setAppliedCoupon(null)}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                </div>
+                    {paymentError && (
+                      <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+                        <p className="text-sm text-destructive">{paymentError}</p>
+                      </div>
+                    )}
 
-                {paymentError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
-                    <p className="text-sm text-destructive">{paymentError}</p>
-                  </div>
+                    <Button variant="ghost" className="w-full" onClick={handleResumeMaybeLater} disabled={isSubmitting}>
+                      Maybe Later
+                    </Button>
+                  </>
                 )}
-
-                <Button variant="ghost" className="w-full" onClick={handleResumeMaybeLater} disabled={isSubmitting}>
-                  Maybe Later
-                </Button>
               </>
             )}
           </div>
