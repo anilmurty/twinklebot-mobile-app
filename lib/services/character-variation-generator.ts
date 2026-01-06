@@ -78,27 +78,7 @@ export async function generateCharacterVariations(
   console.log(`[TIMING] Character variation generation started at ${new Date().toISOString()}`)
   console.log(`Generating character variations for character ${characterId} and template ${templateId}`)
 
-  // Fetch character's gender from database
-  const genderQueryStart = Date.now()
-  const { data: characterData, error: characterError } = await supabaseAdmin
-    .from('characters')
-    .select('gender')
-    .eq('id', characterId)
-    .single()
-  console.log(`[TIMING] Gender query: ${Date.now() - genderQueryStart}ms`)
-
-  if (characterError || !characterData) {
-    throw new Error(`Failed to fetch character data: ${characterError?.message || 'Character not found'}`)
-  }
-
-  const gender = characterData.gender as 'male' | 'female'
-  if (!gender || !['male', 'female'].includes(gender)) {
-    throw new Error(`Invalid or missing gender for character ${characterId}`)
-  }
-
-  console.log(`Character gender: ${gender}`)
-
-  // Extract storage path from URL
+  // Extract storage path from URL (synchronous, can be done immediately)
   const getPhotoPath = (url: string) => {
     if (!url || url.trim() === '') {
       throw new Error('Character photo URL is missing')
@@ -113,7 +93,59 @@ export async function generateCharacterVariations(
   const pathExtractionStart = Date.now()
   const basePhotoPath = getPhotoPath(basePhotoUrl)
   console.log(`[TIMING] Extracted photo path: ${Date.now() - pathExtractionStart}ms`)
+
+  // PARALLELIZE: Fetch character gender and model identifier simultaneously
+  const parallelQueriesStart = Date.now()
+  const [characterResult, templateResult] = await Promise.all([
+    // Fetch character's gender from database
+    supabaseAdmin
+      .from('characters')
+      .select('gender')
+      .eq('id', characterId)
+      .single(),
+    // Get model identifier from template
+    supabaseAdmin
+      .from('story_templates')
+      .select(`
+        generation_model_id,
+        generation_models:generation_models!story_templates_generation_model_id_fkey(model_identifier)
+      `)
+      .eq('id', templateId)
+      .single()
+  ])
+  console.log(`[TIMING] Parallel queries (gender + model): ${Date.now() - parallelQueriesStart}ms`)
+
+  const { data: characterData, error: characterError } = characterResult
+  if (characterError || !characterData) {
+    throw new Error(`Failed to fetch character data: ${characterError?.message || 'Character not found'}`)
+  }
+
+  const gender = characterData.gender as 'male' | 'female'
+  if (!gender || !['male', 'female'].includes(gender)) {
+    throw new Error(`Invalid or missing gender for character ${characterId}`)
+  }
+
+  console.log(`Character gender: ${gender}`)
+
+  // Process model identifier
+  let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
+  const { data: template, error: templateError } = templateResult
+  if (!templateError && template?.generation_models) {
+    const modelData = Array.isArray(template.generation_models) 
+      ? template.generation_models[0] 
+      : template.generation_models
+    const templateModelId = (modelData as any)?.model_identifier
+    if (templateModelId) {
+      modelIdentifier = templateModelId
+      console.log(`✅ Using model from template: ${modelIdentifier}`)
+    }
+  } else if (templateError) {
+    console.warn(`⚠️  Could not get model from template ${templateId}, using default:`, templateError.message)
+  }
   
+  console.log(`Using model identifier: ${modelIdentifier}`)
+  
+  // Get signed URL (this is the slowest operation - network call to Supabase Storage)
   const signedUrlStart = Date.now()
   console.log(`[TIMING] Getting signed URL at ${new Date().toISOString()}`)
   const signedBasePhotoUrl = await getSignedUrl('character-photos', basePhotoPath, 3600)
@@ -141,36 +173,6 @@ export async function generateCharacterVariations(
   console.log('\n--- Right Variation Prompt ---')
   console.log(rightPrompt)
   console.log('=====================================\n')
-
-  // Get model identifier from template
-  const modelQueryStart = Date.now()
-  let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
-  try {
-    const { data: template } = await supabaseAdmin
-      .from('story_templates')
-      .select(`
-        generation_model_id,
-        generation_models:generation_models!story_templates_generation_model_id_fkey(model_identifier)
-      `)
-      .eq('id', templateId)
-      .single()
-  console.log(`[TIMING] Model identifier query: ${Date.now() - modelQueryStart}ms`)
-
-    if (template?.generation_models) {
-      const modelData = Array.isArray(template.generation_models) 
-        ? template.generation_models[0] 
-        : template.generation_models
-      const templateModelId = (modelData as any)?.model_identifier
-      if (templateModelId) {
-        modelIdentifier = templateModelId
-        console.log(`✅ Using model from template: ${modelIdentifier}`)
-      }
-    }
-  } catch (error: any) {
-    console.warn(`⚠️  Could not get model from template ${templateId}, using default:`, error.message)
-  }
-  
-  console.log(`Using model identifier: ${modelIdentifier}`)
 
   // Use model identifier directly - most Replicate models accept model names (e.g., "google/nano-banana-pro")
   // Only resolve to version ID if absolutely necessary (most models work with names)
