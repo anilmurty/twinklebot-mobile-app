@@ -348,14 +348,14 @@ export function StorybooksTab() {
                       </div>
 
                       {isCompleted ? (
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="space-y-2">
                           <Badge variant="secondary" className="bg-accent text-accent-foreground shrink-0">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Ready
                           </Badge>
                           <Button
                             size="sm"
-                            className="ml-auto shrink-0"
+                            className="w-full"
                             onClick={() => handleReadStorybook(storybook.id)}
                           >
                             Read Now
