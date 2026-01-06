@@ -54,40 +54,14 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     if (open) {
       fetchCharacters()
       checkPaymentStatus()
-      checkForExistingPreview()
       setCurrentStep("character-selection")
       setPreviewProgress(0)
+      setStorybookId(null)
+      setPreviewSceneUrl(null)
       setSelectedPlanId(null)
       setAppliedCoupon(null)
     }
   }, [open, story.id])
-
-  const checkForExistingPreview = async () => {
-    try {
-      // Check if there's an existing preview_pending storybook for this template
-      const storybooksData = await storybooksApi.list('preview_pending')
-      const existingPreview = storybooksData.storybooks?.find(
-        (sb: any) => sb.template?.id === story.id
-      )
-      
-      if (existingPreview && existingPreview.scenes && existingPreview.scenes.length > 0) {
-        // Found existing preview, restore it
-        setStorybookId(existingPreview.id)
-        setPreviewSceneUrl(existingPreview.scenes[0].image_url)
-        setCurrentStep("payment")
-        console.log("[PREVIEW] Restored existing preview:", existingPreview.id)
-      } else {
-        // No existing preview, reset state
-        setStorybookId(null)
-        setPreviewSceneUrl(null)
-      }
-    } catch (err: any) {
-      console.error("Failed to check for existing preview:", err)
-      // On error, reset state
-      setStorybookId(null)
-      setPreviewSceneUrl(null)
-    }
-  }
 
   const checkPaymentStatus = async () => {
     try {
