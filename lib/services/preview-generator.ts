@@ -138,15 +138,25 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
           .eq('id', storybookId)
 
         // Regenerate
-        variations = await generateCharacterVariations(
-          character.id,
-          template.id,
-          character.front_photo_url,
-          userId,
-          storybookId,
-          true
-        )
-        console.log(`[PREVIEW] Character variations regenerated`)
+        try {
+          variations = await generateCharacterVariations(
+            character.id,
+            template.id,
+            character.front_photo_url,
+            userId,
+            storybookId,
+            true
+          )
+          console.log(`[PREVIEW] Character variations regenerated successfully`)
+          console.log(`[PREVIEW] New variation URLs:`, {
+            front: variations.front_variation_url,
+            left: variations.left_variation_url,
+            right: variations.right_variation_url,
+          })
+        } catch (regenerateError: any) {
+          console.error(`[PREVIEW] Failed to regenerate character variations:`, regenerateError)
+          throw new Error(`Failed to regenerate character variations: ${regenerateError.message}`)
+        }
       } else {
         await supabaseAdmin
           .from('storybooks')
@@ -214,16 +224,21 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     let signedVariationUrl: string
     try {
       signedVariationUrl = await getSignedUrl('character-variations', variationPath, 3600)
-      console.log(`[PREVIEW] Created signed URL for variation`)
+      console.log(`[PREVIEW] Created signed URL for variation: ${signedVariationUrl.substring(0, 50)}...`)
     } catch (error: any) {
-      console.warn(`[PREVIEW] Failed to create signed URL, trying to use public URL directly:`, error.message)
+      console.warn(`[PREVIEW] Failed to create signed URL for path "${variationPath}", error: ${error.message}`)
+      console.warn(`[PREVIEW] Original URL: ${characterVariationUrl}`)
+      
       // If signed URL fails, check if the original URL is already a public URL we can use
       if (characterVariationUrl.startsWith('http')) {
-        console.log(`[PREVIEW] Using public URL directly: ${characterVariationUrl}`)
+        console.log(`[PREVIEW] Using public URL directly (bucket may be public): ${characterVariationUrl}`)
         signedVariationUrl = characterVariationUrl
       } else {
-        console.error(`[PREVIEW] Failed to create signed URL for path: ${variationPath}`, error)
-        throw new Error(`Failed to create signed URL for character variation: ${error.message}. Path: ${variationPath}, URL: ${characterVariationUrl}`)
+        // If it's not a public URL and signed URL failed, this is a problem
+        console.error(`[PREVIEW] Cannot use variation - signed URL failed and URL is not public`)
+        console.error(`[PREVIEW] Path: ${variationPath}`)
+        console.error(`[PREVIEW] URL: ${characterVariationUrl}`)
+        throw new Error(`Failed to create signed URL for character variation. The file may not exist in storage. Path: ${variationPath}, URL: ${characterVariationUrl}, Error: ${error.message}`)
       }
     }
 
