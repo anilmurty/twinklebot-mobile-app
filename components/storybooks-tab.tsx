@@ -506,26 +506,6 @@ export function StorybooksTab() {
                       <Progress value={resumeStorybook.progress || 0} className="w-full h-2" />
                       <p className="text-sm text-muted-foreground">{Math.round(resumeStorybook.progress || 0)}% complete</p>
                     </div>
-                    {/* Poll for updates */}
-                    {useEffect(() => {
-                      if (!resumeStorybook || resumeStorybook.status !== 'preview_pending' || (resumeStorybook.scenes && resumeStorybook.scenes.length > 0)) {
-                        return
-                      }
-                      const pollInterval = setInterval(async () => {
-                        try {
-                          const freshStorybook = await storybooksApi.get(resumeStorybook.id)
-                          if (freshStorybook.status === 'preview_pending' && freshStorybook.scenes && freshStorybook.scenes.length > 0) {
-                            setResumeStorybook(freshStorybook)
-                            clearInterval(pollInterval)
-                          } else {
-                            setResumeStorybook(freshStorybook)
-                          }
-                        } catch (err) {
-                          console.error("Error polling preview:", err)
-                        }
-                      }, 2000)
-                      return () => clearInterval(pollInterval)
-                    }, [resumeStorybook?.id])}
                   </div>
                 ) : (
                   // Show preview and payment options when ready
