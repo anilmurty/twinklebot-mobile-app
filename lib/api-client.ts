@@ -285,6 +285,14 @@ export const storybooksApi = {
       method: 'POST',
       body: JSON.stringify({ character_id: characterId, template_id: templateId }),
     }),
+  generatePreview: (id: string) =>
+    apiRequest<{ message: string; storybook_id: string }>(`/storybooks/${id}/generate-preview`, {
+      method: 'POST',
+    }),
+  resumeGeneration: (id: string) =>
+    apiRequest<{ message: string; storybook_id: string }>(`/storybooks/${id}/resume-generation`, {
+      method: 'POST',
+    }),
   getStatus: (id: string) => apiRequest<any>(`/storybooks/${id}/status`),
   triggerGeneration: (id: string) =>
     apiRequest<any>(`/storybooks/${id}/generate`, { method: 'POST' }),
@@ -306,3 +314,32 @@ export const profileApi = {
       body: JSON.stringify(data),
     }),
 }
+
+// Subscription Plans API
+export const subscriptionPlansApi = {
+  list: () => apiRequest<{ plans: any[] }>('/subscription-plans'),
+}
+
+// Subscriptions API
+export const subscriptionsApi = {
+  getStatus: () => apiRequest<{ has_subscription: boolean; subscription: any }>('/subscriptions/status'),
+}
+
+// Payments API
+export const paymentsApi = {
+  createCheckout: (storybookId: string, planId: number, couponCode?: string) =>
+    apiRequest<{ checkout_url: string; session_id: string }>('/payments/create-checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        storybook_id: storybookId,
+        plan_id: planId,
+        coupon_code: couponCode,
+      }),
+    }),
+  validateCoupon: (couponCode: string) =>
+    apiRequest<{ valid: boolean; coupon?: any; error?: string }>('/payments/validate-coupon', {
+      method: 'POST',
+      body: JSON.stringify({ coupon_code: couponCode }),
+    }),
+}
+

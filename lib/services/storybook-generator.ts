@@ -46,6 +46,11 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     return
   }
 
+  // Check if resuming from preview_pending
+  const isResumingFromPreview = storybook.status === 'preview_pending'
+  const existingScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
+  const hasPreviewScene = existingScenes.length > 0 && existingScenes[0]?.image_url
+
   // Update status to generating
   const statusUpdateStart = Date.now()
   await supabaseAdmin
@@ -53,6 +58,11 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     .update({ status: 'generating' })
     .eq('id', storybookId)
   console.log(`[TIMING] Updated status to generating: ${Date.now() - statusUpdateStart}ms`)
+
+  if (isResumingFromPreview) {
+    console.log(`[RESUME] Resuming generation from preview state`)
+    console.log(`[RESUME] Preview scene exists: ${hasPreviewScene}`)
+  }
 
   const character = storybook.character
   const template = storybook.template
@@ -71,6 +81,9 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     console.log(`Template: ${template.title}`)
     console.log(`Total scenes expected: ${totalScenes}`)
     console.log(`Scene numbers:`, scenes.map(s => s.scene_number).sort((a, b) => a - b))
+    if (isResumingFromPreview) {
+      console.log(`[RESUME] Resuming from preview - will skip first scene if already generated`)
+    }
 
   try {
     // Check for existing character variations, generate if needed
@@ -129,14 +142,23 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     }
     console.log('=====================================\n')
 
-    // Initialize scenes array if not exists
-    let generatedScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
+    // Initialize scenes array - use existing scenes if resuming from preview
+    let generatedScenes = isResumingFromPreview && hasPreviewScene
+      ? existingScenes
+      : Array.isArray(storybook.scenes) ? storybook.scenes : []
 
-    // Set progress to 110% (10% in scene generation phase) for "Starting storybook generation"
+    // If resuming from preview, we've already done character variations and first scene
+    // Set progress accordingly
+    const initialProgress = isResumingFromPreview && hasPreviewScene ? 110 : 110
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 110, updated_at: new Date().toISOString() }) // 110 = 10% in scene generation (100 + 10)
+      .update({ progress: initialProgress, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
+
+    // If resuming from preview, skip first scene generation
+    const scenesToGenerate = isResumingFromPreview && hasPreviewScene
+      ? scenes.filter(s => s.scene_number !== existingScenes[0]?.scene_number)
+      : scenes
 
     // Helper function to check if scene already exists in database
     const checkSceneExists = async (sceneNumber: number): Promise<boolean> => {
@@ -451,14 +473,17 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
     // Generate all scenes in parallel
     console.log(`\n=== STARTING PARALLEL SCENE GENERATION ===`)
-    console.log(`Generating ${totalScenes} scenes concurrently...`)
+    console.log(`Generating ${scenesToGenerate.length} scenes concurrently...`)
+    if (isResumingFromPreview && hasPreviewScene) {
+      console.log(`[RESUME] Skipping preview scene (scene ${existingScenes[0]?.scene_number})`)
+    }
     
-    const scenePromises = scenes.map(sceneTemplate => generateScene(sceneTemplate))
+    const scenePromises = scenesToGenerate.map(sceneTemplate => generateScene(sceneTemplate))
     const results = await Promise.allSettled(scenePromises)
     
     // Check for failures
     const failures = results
-      .map((result, index) => ({ result, sceneNumber: scenes[index].scene_number }))
+      .map((result, index) => ({ result, sceneNumber: scenesToGenerate[index].scene_number }))
       .filter(({ result }) => result.status === 'rejected')
 
     if (failures.length > 0) {

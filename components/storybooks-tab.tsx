@@ -1,14 +1,19 @@
 "use client"
 
-import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus } from "lucide-react"
+import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { storybooksApi, charactersApi } from "@/lib/api-client"
+import { storybooksApi, charactersApi, paymentsApi, subscriptionPlansApi } from "@/lib/api-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { ShoppingCart, Check } from "lucide-react"
+import { CouponInput } from "@/components/coupon-input"
 
 interface Storybook {
   id: string
@@ -33,6 +38,12 @@ export function StorybooksTab() {
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [resumeStorybook, setResumeStorybook] = useState<Storybook | null>(null)
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const isFetchingRef = useRef(false)
 
@@ -75,8 +86,12 @@ export function StorybooksTab() {
   // Poll for updates every 3 seconds if there are generating storybooks
   useEffect(() => {
     const interval = setInterval(() => {
-      // Check if any storybooks are generating
-      const hasGenerating = storybooks.some((sb) => sb.status === "generating" || sb.status === "pending")
+      // Check if any storybooks are generating or pending preview
+      const hasGenerating = storybooks.some((sb) => 
+        sb.status === "generating" || 
+        sb.status === "pending" || 
+        sb.status === "preview_pending"
+      )
 
       if (hasGenerating && !isFetchingRef.current) {
         fetchStorybooks()
@@ -140,6 +155,55 @@ export function StorybooksTab() {
     } finally {
       setDeleteConfirm(null)
     }
+  }
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const plansData = await subscriptionPlansApi.list()
+      setSubscriptionPlans(plansData.plans || [])
+      if (plansData.plans && plansData.plans.length > 0) {
+        const subscriptionPlan = plansData.plans.find((p: any) => p.plan_type === 'subscription')
+        const oneTimePlan = plansData.plans.find((p: any) => p.plan_type === 'one-time')
+        setSelectedPlanId(subscriptionPlan?.id || oneTimePlan?.id || plansData.plans[0].id)
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch subscription plans:", err)
+    }
+  }
+
+  const handleResumePurchase = async (planId: number) => {
+    if (!resumeStorybook || !planId) {
+      setPaymentError("Missing required information")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setPaymentError(null)
+
+      const checkout = await paymentsApi.createCheckout(
+        resumeStorybook.id,
+        planId,
+        appliedCoupon?.id
+      )
+
+      if (checkout.checkout_url) {
+        window.location.href = checkout.checkout_url
+      } else {
+        setPaymentError("Failed to create checkout session")
+      }
+    } catch (err: any) {
+      console.error("Failed to create checkout:", err)
+      setPaymentError(err.message || "Failed to create checkout session")
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleResumeMaybeLater = () => {
+    setResumeStorybook(null)
+    setSelectedPlanId(null)
+    setAppliedCoupon(null)
+    setPaymentError(null)
   }
 
   const getThumbnailOverlay = (title: string) => {
@@ -209,7 +273,8 @@ export function StorybooksTab() {
               const progress = storybook.progress || 0
               const isGenerating = storybook.status === "generating" || storybook.status === "pending"
               const isCompleted = storybook.status === "completed"
-              const thumbnailUrl = storybook.thumbnail_url || storybook.first_scene_image
+              const isPreviewPending = storybook.status === "preview_pending"
+              const thumbnailUrl = storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
               const overlay = getThumbnailOverlay(storybook.title)
 
               return (
@@ -285,6 +350,23 @@ export function StorybooksTab() {
                             Read Now
                           </Button>
                         </div>
+                      ) : isPreviewPending ? (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            Preview Ready
+                          </Badge>
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setResumeStorybook(storybook)
+                              fetchSubscriptionPlans()
+                            }}
+                          >
+                            <Play className="w-4 h-4 mr-2" />
+                            Resume Story Creation
+                          </Button>
+                        </div>
                       ) : (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs">
@@ -344,6 +426,153 @@ export function StorybooksTab() {
         onConfirm={handleDeleteConfirm}
         variant="destructive"
       />
+
+      {/* Resume Story Creation Dialog */}
+      <Dialog open={!!resumeStorybook} onOpenChange={(open) => !open && handleResumeMaybeLater()}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Complete Your Story</DialogTitle>
+            <DialogDescription>Choose how you'd like to continue your adventure</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-6">
+            {resumeStorybook && (
+              <>
+                <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
+                  {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
+                    <img
+                      src={resumeStorybook.scenes[0].image_url}
+                      alt="Story preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
+                    <div className="text-white">
+                      <h3 className="text-2xl font-bold mb-2">{resumeStorybook.title}</h3>
+                      <p className="text-sm opacity-90">Starring {resumeStorybook.character_name}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Choose Your Plan</Label>
+
+                  {subscriptionPlans.length === 0 ? (
+                    <Card className="p-4 text-center">
+                      <p className="text-sm text-muted-foreground">Loading payment plans...</p>
+                    </Card>
+                  ) : (
+                    <RadioGroup
+                      value={selectedPlanId?.toString() || ""}
+                      onValueChange={(value) => setSelectedPlanId(Number.parseInt(value))}
+                    >
+                      <div className="space-y-3">
+                        {subscriptionPlans.map((plan) => {
+                          const isSelected = selectedPlanId === plan.id
+                          const isSubscription = plan.plan_type === 'subscription'
+                          const price = (plan.price_amount / 100).toFixed(2)
+                          const features = plan.features || []
+
+                          return (
+                            <Card
+                              key={plan.id}
+                              className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                                isSelected ? 'border-2 border-primary bg-primary/5' : ''
+                              } ${isSubscription && !isSelected ? 'border-2 border-primary/50 bg-primary/5' : ''}`}
+                            >
+                              <label className="flex items-start gap-4 cursor-pointer w-full">
+                                <RadioGroupItem
+                                  value={plan.id.toString()}
+                                  id={`resume-plan-${plan.id}`}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-lg">{plan.name}</h4>
+                                    {isSubscription && (
+                                      <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                                        Best Value
+                                      </span>
+                                    )}
+                                  </div>
+                                  {plan.description && (
+                                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                                  )}
+                                  {features.length > 0 && (
+                                    <ul className="text-sm space-y-1 text-muted-foreground">
+                                      {features.map((feature: string, idx: number) => (
+                                        <li key={idx} className="flex items-start gap-2">
+                                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                                          <span>{feature}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                  <div className="pt-2">
+                                    <span className="text-2xl font-bold text-primary">${price}</span>
+                                    {plan.billing_interval && (
+                                      <span className="text-sm text-muted-foreground ml-1">
+                                        /{plan.billing_interval}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </label>
+                              <Button
+                                className={`w-full mt-4 ${
+                                  isSubscription
+                                    ? 'bg-primary hover:bg-primary/90'
+                                    : 'bg-transparent'
+                                }`}
+                                variant={isSubscription ? 'default' : 'outline'}
+                                size="lg"
+                                onClick={() => handleResumePurchase(plan.id)}
+                                disabled={isSubmitting || !isSelected}
+                              >
+                                {isSubmitting ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="w-4 h-4 mr-2" />
+                                    {isSubscription
+                                      ? 'Subscribe & Generate Full Story'
+                                      : 'Purchase & Generate Full Story'}
+                                  </>
+                                )}
+                              </Button>
+                            </Card>
+                          )
+                        })}
+                      </div>
+                    </RadioGroup>
+                  )}
+
+                  <div className="pt-2">
+                    <CouponInput
+                      onCouponApplied={(coupon) => setAppliedCoupon(coupon)}
+                      onCouponRemoved={() => setAppliedCoupon(null)}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {paymentError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+                    <p className="text-sm text-destructive">{paymentError}</p>
+                  </div>
+                )}
+
+                <Button variant="ghost" className="w-full" onClick={handleResumeMaybeLater} disabled={isSubmitting}>
+                  Maybe Later
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

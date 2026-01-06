@@ -217,7 +217,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create storybook
+    // Check payment override and subscription status
+    const { data: profileWithOverride } = await supabase
+      .from('profiles')
+      .select('payment_override')
+      .eq('id', userId)
+      .single()
+
+    const { data: activeSubscription } = await supabaseAdmin
+      .from('subscriptions')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .single()
+
+    const hasPaymentOverride = profileWithOverride?.payment_override === true
+    const hasActiveSubscription = !!activeSubscription
+
+    // If user has payment override or active subscription, skip preview and go straight to generation
+    const shouldSkipPreview = hasPaymentOverride || hasActiveSubscription
+
+    // Create storybook with preview_pending status initially
+    // Status will be updated after preview generation or if skipping preview
     const { data: storybook, error: createError } = await supabase
       .from('storybooks')
       .insert({
@@ -225,7 +246,7 @@ export async function POST(request: NextRequest) {
         character_id,
         template_id,
         title: template.title,
-        status: 'pending',
+        status: shouldSkipPreview ? 'pending' : 'preview_pending',
         progress: 0,
       })
       .select()
@@ -233,19 +254,6 @@ export async function POST(request: NextRequest) {
 
     if (createError) {
       return NextResponse.json({ error: createError.message }, { status: 500 })
-    }
-
-    // Create generation job
-    const { error: jobError } = await supabaseAdmin
-      .from('generation_jobs')
-      .insert({
-        storybook_id: storybook.id,
-        status: 'queued',
-        total_scenes: template.scene_count || 10,
-      })
-
-    if (jobError) {
-      console.error('Failed to create generation job:', jobError)
     }
 
     // Increment monthly counter
@@ -256,14 +264,24 @@ export async function POST(request: NextRequest) {
       })
       .eq('id', userId)
 
-    // Auto-start generation in development (for testing)
-    // In production, cron job will pick it up
-    if (process.env.NODE_ENV === 'development') {
-      const { generateStorybook } = await import('@/lib/services/storybook-generator')
-      // Start generation asynchronously (don't wait)
-      generateStorybook(storybook.id).catch((error) => {
-        console.error(`Background generation error for ${storybook.id}:`, error)
-      })
+    // If skipping preview, start full generation immediately
+    if (shouldSkipPreview) {
+      // Create generation job
+      await supabaseAdmin
+        .from('generation_jobs')
+        .insert({
+          storybook_id: storybook.id,
+          status: 'queued',
+          total_scenes: template.scene_count || 10,
+        })
+
+      // Start generation (async - don't wait)
+      if (process.env.NODE_ENV === 'development') {
+        const { generateStorybook } = await import('@/lib/services/storybook-generator')
+        generateStorybook(storybook.id).catch((error) => {
+          console.error(`Background generation error for ${storybook.id}:`, error)
+        })
+      }
     }
 
     return NextResponse.json(
@@ -281,9 +299,9 @@ export async function POST(request: NextRequest) {
           title: template.title,
         },
         created_at: storybook.created_at,
-        message: process.env.NODE_ENV === 'development' 
-          ? 'Storybook created and generation started (dev mode)'
-          : 'Storybook created and queued for generation',
+        message: shouldSkipPreview
+          ? 'Storybook created and generation started'
+          : 'Storybook created. Preview generation will start.',
       },
       { status: 201 }
     )

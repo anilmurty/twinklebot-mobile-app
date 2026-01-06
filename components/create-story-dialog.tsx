@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2, ShoppingCart, Check } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { storybooksApi, templatesApi } from "@/lib/api-client"
+import { storybooksApi, templatesApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
+import { CouponInput } from "@/components/coupon-input"
 
 interface Template {
   id: number
@@ -45,14 +46,54 @@ export function CreateStoryDialog({
   const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<GenerationStep>("template-selection")
   const [previewProgress, setPreviewProgress] = useState(0)
+  const [storybookId, setStorybookId] = useState<string | null>(null)
+  const [previewSceneUrl, setPreviewSceneUrl] = useState<string | null>(null)
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
+  const [hasPaymentOverride, setHasPaymentOverride] = useState(false)
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
+  const [loadingPlans, setLoadingPlans] = useState(false)
 
   useEffect(() => {
     if (open) {
       fetchTemplates()
+      checkPaymentStatus()
       setCurrentStep("template-selection")
       setPreviewProgress(0)
+      setStorybookId(null)
+      setPreviewSceneUrl(null)
+      setSelectedPlanId(null)
+      setAppliedCoupon(null)
     }
   }, [open])
+
+  const checkPaymentStatus = async () => {
+    try {
+      // Check subscription status
+      const subscriptionStatus = await subscriptionsApi.getStatus()
+      setHasActiveSubscription(subscriptionStatus.has_subscription || false)
+
+      // Check payment override
+      const profile = await profileApi.get()
+      setHasPaymentOverride(profile?.payment_override === true)
+
+      // Fetch subscription plans
+      setLoadingPlans(true)
+      const plansData = await subscriptionPlansApi.list()
+      setSubscriptionPlans(plansData.plans || [])
+      if (plansData.plans && plansData.plans.length > 0) {
+        // Set default to first subscription plan, or first one-time if no subscriptions
+        const subscriptionPlan = plansData.plans.find((p: any) => p.plan_type === 'subscription')
+        const oneTimePlan = plansData.plans.find((p: any) => p.plan_type === 'one-time')
+        setSelectedPlanId(subscriptionPlan?.id || oneTimePlan?.id || plansData.plans[0].id)
+      }
+    } catch (err: any) {
+      console.error("Failed to check payment status:", err)
+    } finally {
+      setLoadingPlans(false)
+    }
+  }
 
   const fetchTemplates = async () => {
     try {
@@ -77,38 +118,103 @@ export function CreateStoryDialog({
       return
     }
 
-    setCurrentStep("generating-preview")
-    setPreviewProgress(0)
+    try {
+      setError(null)
+      setCurrentStep("generating-preview")
+      setPreviewProgress(0)
 
-    const progressInterval = setInterval(() => {
-      setPreviewProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval)
-          setTimeout(() => setCurrentStep("payment"), 500)
-          return 100
+      // Step 1: Create storybook
+      setPreviewProgress(10)
+      const storybook = await storybooksApi.create(characterId, selectedTemplate)
+      setStorybookId(storybook.id)
+
+      // If user has payment override or subscription, skip preview and go straight to generation
+      if (hasPaymentOverride || hasActiveSubscription) {
+        // Generation will start automatically via the API
+        onOpenChange(false)
+        router.push("/?tab=storybooks")
+        return
+      }
+
+      // Step 2: Generate preview
+      setPreviewProgress(20)
+      await storybooksApi.generatePreview(storybook.id)
+
+      // Poll for preview completion
+      let attempts = 0
+      const maxAttempts = 60 // 30 seconds max (500ms * 60)
+      const pollInterval = setInterval(async () => {
+        attempts++
+        setPreviewProgress(Math.min(20 + (attempts / maxAttempts) * 70, 90))
+
+        try {
+          const storybookData = await storybooksApi.get(storybook.id)
+          
+          if (storybookData.status === 'preview_pending' && storybookData.scenes && storybookData.scenes.length > 0) {
+            // Preview is ready
+            clearInterval(pollInterval)
+            setPreviewProgress(100)
+            setPreviewSceneUrl(storybookData.scenes[0].image_url)
+            setTimeout(() => setCurrentStep("payment"), 500)
+          } else if (storybookData.status === 'failed') {
+            clearInterval(pollInterval)
+            setError(storybookData.error_message || "Preview generation failed")
+            setCurrentStep("template-selection")
+          } else if (attempts >= maxAttempts) {
+            clearInterval(pollInterval)
+            setError("Preview generation is taking longer than expected. Please check back later.")
+            setCurrentStep("template-selection")
+          }
+        } catch (err: any) {
+          console.error("Error polling preview:", err)
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval)
+            setError("Failed to check preview status")
+            setCurrentStep("template-selection")
+          }
         }
-        return prev + 10
-      })
-    }, 400)
+      }, 500)
+    } catch (err: any) {
+      console.error("Failed to generate preview:", err)
+      setError(err.message || "Failed to start preview generation")
+      setCurrentStep("template-selection")
+    }
   }
 
-  const handleCompletePurchase = async (purchaseType: "subscribe" | "one-time") => {
+  const handleCompletePurchase = async (planId: number) => {
+    if (!storybookId || !planId) {
+      setError("Missing required information")
+      return
+    }
+
     try {
       setIsSubmitting(true)
       setError(null)
 
-      console.log(`Processing ${purchaseType} purchase...`)
+      // Create checkout session
+      const checkout = await paymentsApi.createCheckout(
+        storybookId,
+        planId,
+        appliedCoupon?.id
+      )
 
-      const result = await storybooksApi.create(characterId, selectedTemplate!)
-
-      onOpenChange(false)
-      router.push("/?tab=storybooks")
+      // Redirect to Stripe checkout
+      if (checkout.checkout_url) {
+        window.location.href = checkout.checkout_url
+      } else {
+        setError("Failed to create checkout session")
+      }
     } catch (err: any) {
-      console.error("Failed to create storybook:", err)
-      setError(err.message || "Failed to create storybook. Please try again.")
-    } finally {
+      console.error("Failed to create checkout:", err)
+      setError(err.message || "Failed to create checkout session. Please try again.")
       setIsSubmitting(false)
     }
+  }
+
+  const handleMaybeLater = () => {
+    // Storybook is already saved as preview_pending, just close the dialog
+    onOpenChange(false)
+    router.push("/?tab=storybooks")
   }
 
   const selectedTemplateData = templates.find((t) => t.id === selectedTemplate)
@@ -282,13 +388,19 @@ export function CreateStoryDialog({
               </div>
 
               <div className="relative aspect-[4/3] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
-                {characterPhotoUrl && (
+                {previewSceneUrl ? (
                   <img
-                    src={characterPhotoUrl || "/placeholder.svg"}
+                    src={previewSceneUrl}
+                    alt="Story preview"
+                    className="w-full h-full object-cover"
+                  />
+                ) : characterPhotoUrl ? (
+                  <img
+                    src={characterPhotoUrl}
                     alt="Story preview"
                     className="w-full h-full object-cover opacity-80"
                   />
-                )}
+                ) : null}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
                   <div className="text-white">
                     <h3 className="text-2xl font-bold mb-2">{selectedTemplateData?.title}</h3>
@@ -300,90 +412,112 @@ export function CreateStoryDialog({
               <div className="space-y-3">
                 <Label className="text-base font-semibold">Choose Your Plan</Label>
 
-                <Card className="p-4 cursor-pointer hover:border-primary transition-colors border-2 border-primary bg-primary/5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-lg">Subscribe & Save</h4>
-                        <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                          Best Value
-                        </span>
-                      </div>
-                      <ul className="text-sm space-y-1 text-muted-foreground">
-                        <li className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span>A new adventure starring your child, every month</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span>Save 40% per story with subscriber pricing</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span>High-quality keepsakes they'll treasure forever</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                          <span>Cancel anytime - no commitment</span>
-                        </li>
-                      </ul>
-                      <div className="pt-2">
-                        <span className="text-2xl font-bold text-primary">$24.99</span>
-                        <span className="text-sm text-muted-foreground line-through ml-2">$39.99</span>
-                        <span className="text-sm text-muted-foreground ml-1">/month</span>
-                      </div>
-                    </div>
+                {loadingPlans ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
-                  <Button
-                    className="w-full mt-4 bg-primary hover:bg-primary/90"
-                    size="lg"
-                    onClick={() => handleCompletePurchase("subscribe")}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Subscribe & Generate Full Story
-                      </>
-                    )}
-                  </Button>
-                </Card>
+                ) : subscriptionPlans.length === 0 ? (
+                  <Card className="p-4 text-center">
+                    <p className="text-sm text-muted-foreground">No payment plans available.</p>
+                  </Card>
+                ) : (
+                  <>
+                    <RadioGroup
+                      value={selectedPlanId?.toString() || ""}
+                      onValueChange={(value) => setSelectedPlanId(Number.parseInt(value))}
+                    >
+                      <div className="space-y-3">
+                        {subscriptionPlans.map((plan) => {
+                          const isSelected = selectedPlanId === plan.id
+                          const isSubscription = plan.plan_type === 'subscription'
+                          const price = (plan.price_amount / 100).toFixed(2)
+                          const features = plan.features || []
 
-                <Card className="p-4 cursor-pointer hover:border-primary transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <h4 className="font-bold text-lg">One-Time Purchase</h4>
-                      <p className="text-sm text-muted-foreground">Purchase just this story without a subscription</p>
-                      <div className="pt-2">
-                        <span className="text-2xl font-bold">$39.99</span>
+                          return (
+                            <Card
+                              key={plan.id}
+                              className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                                isSelected ? 'border-2 border-primary bg-primary/5' : ''
+                              } ${isSubscription && !isSelected ? 'border-2 border-primary/50 bg-primary/5' : ''}`}
+                            >
+                              <label className="flex items-start gap-4 cursor-pointer w-full">
+                                <RadioGroupItem
+                                  value={plan.id.toString()}
+                                  id={`plan-${plan.id}`}
+                                  className="mt-1"
+                                />
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-lg">{plan.name}</h4>
+                                    {isSubscription && (
+                                      <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                                        Best Value
+                                      </span>
+                                    )}
+                                  </div>
+                                  {plan.description && (
+                                    <p className="text-sm text-muted-foreground">{plan.description}</p>
+                                  )}
+                                  {features.length > 0 && (
+                                    <ul className="text-sm space-y-1 text-muted-foreground">
+                                      {features.map((feature: string, idx: number) => (
+                                        <li key={idx} className="flex items-start gap-2">
+                                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                                          <span>{feature}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                  <div className="pt-2">
+                                    <span className="text-2xl font-bold text-primary">${price}</span>
+                                    {plan.billing_interval && (
+                                      <span className="text-sm text-muted-foreground ml-1">
+                                        /{plan.billing_interval}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </label>
+                              <Button
+                                className={`w-full mt-4 ${
+                                  isSubscription
+                                    ? 'bg-primary hover:bg-primary/90'
+                                    : 'bg-transparent'
+                                }`}
+                                variant={isSubscription ? 'default' : 'outline'}
+                                size="lg"
+                                onClick={() => handleCompletePurchase(plan.id)}
+                                disabled={isSubmitting || !isSelected}
+                              >
+                                {isSubmitting ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Processing...
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="w-4 h-4 mr-2" />
+                                    {isSubscription
+                                      ? 'Subscribe & Generate Full Story'
+                                      : 'Purchase & Generate Full Story'}
+                                  </>
+                                )}
+                              </Button>
+                            </Card>
+                          )
+                        })}
                       </div>
+                    </RadioGroup>
+
+                    <div className="pt-2">
+                      <CouponInput
+                        onCouponApplied={(coupon) => setAppliedCoupon(coupon)}
+                        onCouponRemoved={() => setAppliedCoupon(null)}
+                        disabled={isSubmitting}
+                      />
                     </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full mt-4 bg-transparent"
-                    size="lg"
-                    onClick={() => handleCompletePurchase("one-time")}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Purchase & Generate Full Story
-                      </>
-                    )}
-                  </Button>
-                </Card>
+                  </>
+                )}
               </div>
 
               {error && (
@@ -392,7 +526,7 @@ export function CreateStoryDialog({
                 </div>
               )}
 
-              <Button variant="ghost" className="w-full" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+              <Button variant="ghost" className="w-full" onClick={handleMaybeLater} disabled={isSubmitting}>
                 Maybe Later
               </Button>
             </div>
