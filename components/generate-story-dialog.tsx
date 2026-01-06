@@ -136,7 +136,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
       // Poll for preview completion
       let attempts = 0
-      const maxAttempts = 60 // 30 seconds max (500ms * 60)
+      const maxAttempts = 180 // 90 seconds max (500ms * 180)
       const pollInterval = setInterval(async () => {
         attempts++
         setPreviewProgress(Math.min(20 + (attempts / maxAttempts) * 70, 90))
@@ -339,7 +339,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                     Bringing {selectedCharacterData?.name} into {story.title}...
                   </h3>
                   <Progress value={previewProgress} className="w-full h-2" />
-                  <p className="text-sm text-muted-foreground">{previewProgress}% complete</p>
+                  <p className="text-sm text-muted-foreground">{Math.round(previewProgress)}% complete</p>
                 </div>
               </div>
             </div>
