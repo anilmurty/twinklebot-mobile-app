@@ -359,9 +359,24 @@ export function StorybooksTab() {
                           <Button
                             size="sm"
                             className="w-full"
-                            onClick={() => {
-                              setResumeStorybook(storybook)
-                              fetchSubscriptionPlans()
+                            onClick={async () => {
+                              // Fetch fresh storybook data to ensure we have the latest preview scene
+                              try {
+                                const freshStorybook = await storybooksApi.get(storybook.id)
+                                setResumeStorybook(freshStorybook)
+                                // Fetch subscription plans if not already loaded
+                                if (subscriptionPlans.length === 0) {
+                                  await fetchSubscriptionPlans()
+                                } else {
+                                  // Ensure plans are loaded
+                                  await fetchSubscriptionPlans()
+                                }
+                              } catch (err: any) {
+                                console.error("Failed to fetch storybook:", err)
+                                // Fallback to using the storybook from the list
+                                setResumeStorybook(storybook)
+                                await fetchSubscriptionPlans()
+                              }
                             }}
                           >
                             <Play className="w-4 h-4 mr-2" />
