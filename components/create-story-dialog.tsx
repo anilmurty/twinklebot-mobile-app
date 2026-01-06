@@ -388,37 +388,40 @@ export function CreateStoryDialog({
                 <div className="h-1.5 flex-1 bg-muted rounded-full" />
               </div>
 
-              <div className="relative aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group">
-                {previewSceneUrl ? (
-                  <img
-                    src={previewSceneUrl}
-                    alt="Story preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : characterPhotoUrl ? (
-                  <img
-                    src={characterPhotoUrl}
-                    alt="Story preview"
-                    className="w-full h-full object-cover opacity-80"
-                  />
-                ) : null}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
-                  <div className="text-white">
-                    <h3 className="text-2xl font-bold mb-2">{selectedTemplateData?.title}</h3>
-                    <p className="text-sm opacity-90">Starring {characterName}</p>
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative w-full max-w-xs mx-auto aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group shadow-lg">
+                  {previewSceneUrl ? (
+                    <img
+                      src={previewSceneUrl}
+                      alt="Story preview"
+                      className="w-full h-full object-cover cursor-pointer"
+                      onClick={() => setShowFullImage(true)}
+                    />
+                  ) : characterPhotoUrl ? (
+                    <img
+                      src={characterPhotoUrl}
+                      alt="Story preview"
+                      className="w-full h-full object-cover opacity-80"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                    <div className="text-white">
+                      <h3 className="text-xl font-bold mb-1">{selectedTemplateData?.title}</h3>
+                      <p className="text-xs opacity-90">Starring {characterName}</p>
+                    </div>
                   </div>
+                  {previewSceneUrl && (
+                    <button
+                      onClick={() => setShowFullImage(true)}
+                      className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm text-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                      View Full
+                    </button>
+                  )}
                 </div>
-                {previewSceneUrl && (
-                  <button
-                    onClick={() => setShowFullImage(true)}
-                    className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                    </svg>
-                    View Full Image
-                  </button>
-                )}
               </div>
 
               {/* Full Image Modal */}
