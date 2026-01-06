@@ -398,16 +398,18 @@ export async function generateCharacterVariations(
     throw new Error(`Failed to upload right variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
   }
 
-  // Store in database
+  // Store in database using upsert to handle race conditions
   console.log('Saving character variations to database...')
   const { error: insertError } = await supabaseAdmin
     .from('character_variations')
-    .insert({
+    .upsert({
       character_id: characterId,
       template_id: templateId,
       front_variation_url: frontVariationUrl,
       left_variation_url: leftVariationUrl,
       right_variation_url: rightVariationUrl,
+    }, {
+      onConflict: 'character_id,template_id'
     })
 
   if (insertError) {
