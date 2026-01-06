@@ -44,6 +44,7 @@ export function StorybooksTab() {
   const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [showFullImage, setShowFullImage] = useState(false)
 
   const isFetchingRef = useRef(false)
 
@@ -438,12 +439,12 @@ export function StorybooksTab() {
           <div className="space-y-6 py-6">
             {resumeStorybook && (
               <>
-                <div className="relative aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden">
+                <div className="relative aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group">
                   {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
                     <img
                       src={resumeStorybook.scenes[0].image_url}
                       alt="Story preview"
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-cover"
                     />
                   ) : null}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-6">
@@ -452,7 +453,48 @@ export function StorybooksTab() {
                       <p className="text-sm opacity-90">Starring {resumeStorybook.character_name}</p>
                     </div>
                   </div>
+                  {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
+                    <button
+                      onClick={() => setShowFullImage(true)}
+                      className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                      View Full Image
+                    </button>
+                  )}
                 </div>
+
+                {/* Full Image Modal */}
+                <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
+                  <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-black/95">
+                    <div className="relative w-full h-[90vh] flex items-center justify-center">
+                      {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
+                        <img
+                          src={resumeStorybook.scenes[0].image_url}
+                          alt="Story preview - full view"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      )}
+                      <button
+                        onClick={() => setShowFullImage(false)}
+                        className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
+                        aria-label="Close"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setShowFullImage(false)}
+                        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-colors"
+                      >
+                        Back to Purchase
+                      </button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
 
                 <div className="space-y-3">
                   <Label className="text-base font-semibold">Choose Your Plan</Label>
