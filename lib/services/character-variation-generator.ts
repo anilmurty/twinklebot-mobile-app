@@ -190,8 +190,8 @@ export async function generateCharacterVariations(
     console.log(`✅ Using model name directly (no API call needed): ${modelIdentifier}`)
   }
 
-  // Generate front variation first (uses uploaded photo)
-  console.log('Generating front variation (step 1/3)...')
+  // Generate front variation only (we use this for all scenes)
+  console.log('Generating front variation...')
   let frontUrl: string
   
   if (storybookId) {
@@ -200,7 +200,7 @@ export async function generateCharacterVariations(
     const { createPrediction, pollPrediction } = await import('./image-generation')
     console.log(`[TIMING] Imported modules: ${Date.now() - importStart}ms`)
     
-    // Create prediction and update progress to 40% when prediction is created (10% base + 30% for char 1)
+    // Create prediction and update progress
     const predictionCreateStart = Date.now()
     const totalTimeBeforePrediction = Date.now() - variationGenStartTime
     console.log(`[TIMING] ⏱️  TOTAL TIME BEFORE FIRST PREDICTION: ${totalTimeBeforePrediction}ms (${(totalTimeBeforePrediction/1000).toFixed(2)}s)`)
@@ -220,9 +220,9 @@ export async function generateCharacterVariations(
     const progressUpdateStart = Date.now()
     await supabaseAdmin
       .from('storybooks')
-      .update({ progress: 40, updated_at: new Date().toISOString() })
+      .update({ progress: 50, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
-    console.log(`[TIMING] Updated progress to 40%: ${Date.now() - progressUpdateStart}ms`)
+    console.log(`[TIMING] Updated progress to 50%: ${Date.now() - progressUpdateStart}ms`)
     
     // Now poll for result
     const pollStart = Date.now()
@@ -246,128 +246,19 @@ export async function generateCharacterVariations(
     })
   }
 
-  // Generate left and right variations in parallel (both use front variation as input)
-  console.log('Generating left and right variations (step 2/3)...')
-  let leftUrl: string
-  let rightUrl: string
-  
-  if (storybookId) {
-    const { supabaseAdmin } = await import('@/lib/supabase/server')
-    const { createPrediction, pollPrediction } = await import('./image-generation')
-    
-    // Create both predictions first, then update progress
-    const [leftPredictionId, rightPredictionId] = await Promise.all([
-      createPrediction(
-        modelVersion,
-        {
-          prompt: leftPrompt,
-          image_input: [frontUrl],
-          aspect_ratio: 'match_input_image',
-          output_format: 'jpg',
-        }
-      ),
-      createPrediction(
-        modelVersion,
-        {
-          prompt: rightPrompt,
-          image_input: [frontUrl],
-          aspect_ratio: 'match_input_image',
-          output_format: 'jpg',
-        }
-      ),
-    ])
-    
-    // Update progress to 70% when predictions are created (10% base + 30% for char 1 + 30% for char 2)
-    await supabaseAdmin
-      .from('storybooks')
-      .update({ progress: 70, updated_at: new Date().toISOString() })
-      .eq('id', storybookId)
-    
-    // Poll for both results
-    const [leftResult, rightResult] = await Promise.all([
-      pollPrediction(leftPredictionId).then(url => {
-        console.log('✅ Left variation generated:', url)
-        return url
-      }).catch(err => {
-        console.error('❌ Left variation generation failed:', err)
-        throw new Error(`Left variation generation failed: ${err.message}`)
-      }),
-      pollPrediction(rightPredictionId).then(url => {
-        console.log('✅ Right variation generated:', url)
-        return url
-      }).catch(err => {
-        console.error('❌ Right variation generation failed:', err)
-        throw new Error(`Right variation generation failed: ${err.message}`)
-      }),
-    ])
-    
-    leftUrl = leftResult
-    rightUrl = rightResult
-    
-    // Update progress to 100% after all variations generated (10% base + 30% * 3 = 100%)
-    await supabaseAdmin
-      .from('storybooks')
-      .update({ progress: 100, updated_at: new Date().toISOString() })
-      .eq('id', storybookId)
-  } else {
-    // No storybookId, use regular function
-    const { generateImageWithNanoBanana } = await import('./image-generation')
-    const [leftResult, rightResult] = await Promise.all([
-      generateImageWithNanoBanana(
-        leftPrompt,
-        [frontUrl], // Use front variation as input
-        'match_input_image',
-        templateId // Pass template ID to get model from template
-      ).then(url => {
-        console.log('✅ Left variation generated:', url)
-        return url
-      }).catch(err => {
-        console.error('❌ Left variation generation failed:', err)
-        throw new Error(`Left variation generation failed: ${err.message}`)
-      }),
-      generateImageWithNanoBanana(
-        rightPrompt,
-        [frontUrl], // Use front variation as input
-        'match_input_image',
-        templateId // Pass template ID to get model from template
-      ).then(url => {
-        console.log('✅ Right variation generated:', url)
-        return url
-      }).catch(err => {
-        console.error('❌ Right variation generation failed:', err)
-        throw new Error(`Right variation generation failed: ${err.message}`)
-      }),
-    ])
-    
-    leftUrl = leftResult
-    rightUrl = rightResult
-  }
-
-  // Download and upload each variation to Supabase Storage
+  // Download and upload front variation to Supabase Storage
   const storagePath = `${userId}/${characterId}/${templateId}`
-  console.log(`\nDownloading generated variations and uploading to storage...`)
+  console.log(`\nDownloading generated variation and uploading to storage...`)
   console.log(`Storage bucket: character-variations`)
   console.log(`Storage path: ${storagePath}`)
 
-  const [frontBuffer, leftBuffer, rightBuffer] = await Promise.all([
-    fetch(frontUrl).then((r) => {
-      if (!r.ok) throw new Error(`Failed to download front variation: ${r.status}`)
-      return r.arrayBuffer()
-    }),
-    fetch(leftUrl).then((r) => {
-      if (!r.ok) throw new Error(`Failed to download left variation: ${r.status}`)
-      return r.arrayBuffer()
-    }),
-    fetch(rightUrl).then((r) => {
-      if (!r.ok) throw new Error(`Failed to download right variation: ${r.status}`)
-      return r.arrayBuffer()
-    }),
-  ])
+  const frontBuffer = await fetch(frontUrl).then((r) => {
+    if (!r.ok) throw new Error(`Failed to download front variation: ${r.status}`)
+    return r.arrayBuffer()
+  })
 
-  console.log('Uploading variations to Supabase Storage...')
+  console.log('Uploading variation to Supabase Storage...')
   let frontVariationUrl: string
-  let leftVariationUrl: string
-  let rightVariationUrl: string
 
   try {
     frontVariationUrl = await uploadToStorage('character-variations', `${storagePath}/front.jpg`, frontBuffer, 'image/jpeg')
@@ -377,64 +268,35 @@ export async function generateCharacterVariations(
     throw new Error(`Failed to upload front variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
   }
 
-  try {
-    leftVariationUrl = await uploadToStorage('character-variations', `${storagePath}/left.jpg`, leftBuffer, 'image/jpeg')
-    console.log('✅ Left variation uploaded:', leftVariationUrl)
-  } catch (err: any) {
-    console.error('❌ Failed to upload left variation:', err)
-    // Clean up front variation if left fails
-    await deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {})
-    throw new Error(`Failed to upload left variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
-  }
-
-  try {
-    rightVariationUrl = await uploadToStorage('character-variations', `${storagePath}/right.jpg`, rightBuffer, 'image/jpeg')
-    console.log('✅ Right variation uploaded:', rightVariationUrl)
-  } catch (err: any) {
-    console.error('❌ Failed to upload right variation:', err)
-    // Clean up front and left variations if right fails
-    await Promise.all([
-      deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {}),
-      deleteFromStorage('character-variations', `${storagePath}/left.jpg`).catch(() => {}),
-    ])
-    throw new Error(`Failed to upload right variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
-  }
-
   // Store in database using upsert to handle race conditions
-  console.log('Saving character variations to database...')
+  // Store front URL in all three fields since we only generate one variation
+  console.log('Saving character variation to database...')
   const { error: insertError } = await supabaseAdmin
     .from('character_variations')
     .upsert({
       character_id: characterId,
       template_id: templateId,
       front_variation_url: frontVariationUrl,
-      left_variation_url: leftVariationUrl,
-      right_variation_url: rightVariationUrl,
+      left_variation_url: frontVariationUrl, // Use front for all
+      right_variation_url: frontVariationUrl, // Use front for all
     }, {
       onConflict: 'character_id,template_id'
     })
 
   if (insertError) {
-    console.error('❌ Failed to save character variations to database:', insertError)
-    // Clean up uploaded files if DB insert fails
-    await Promise.all([
-      deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {}),
-      deleteFromStorage('character-variations', `${storagePath}/left.jpg`).catch(() => {}),
-      deleteFromStorage('character-variations', `${storagePath}/right.jpg`).catch(() => {}),
-    ])
-    throw new Error(`Failed to save character variations to database: ${insertError.message}`)
+    console.error('❌ Failed to save character variation to database:', insertError)
+    // Clean up uploaded file if DB insert fails
+    await deleteFromStorage('character-variations', `${storagePath}/front.jpg`).catch(() => {})
+    throw new Error(`Failed to save character variation to database: ${insertError.message}`)
   }
 
-  console.log(`✅ Successfully generated and stored character variations for character ${characterId}`)
-  console.log('Character variations URLs:')
-  console.log(`  Front: ${frontVariationUrl}`)
-  console.log(`  Left: ${leftVariationUrl}`)
-  console.log(`  Right: ${rightVariationUrl}`)
+  console.log(`✅ Successfully generated and stored character variation for character ${characterId}`)
+  console.log('Character variation URL:', frontVariationUrl)
 
   return {
     front_variation_url: frontVariationUrl,
-    left_variation_url: leftVariationUrl,
-    right_variation_url: rightVariationUrl,
+    left_variation_url: frontVariationUrl, // Use front for all
+    right_variation_url: frontVariationUrl, // Use front for all
   }
 }
 

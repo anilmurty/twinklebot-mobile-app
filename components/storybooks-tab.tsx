@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ShoppingCart, Check } from "lucide-react"
 import { CouponInput } from "@/components/coupon-input"
+import { Progress } from "@/components/ui/progress"
 
 interface Storybook {
   id: string
@@ -275,7 +276,12 @@ export function StorybooksTab() {
               const isGenerating = storybook.status === "generating" || storybook.status === "pending"
               const isCompleted = storybook.status === "completed"
               const isPreviewPending = storybook.status === "preview_pending"
-              const thumbnailUrl = storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
+              const isGeneratingPreview = isPreviewPending && sceneCount === 0 // Preview pending but no scenes yet = generating
+              const isPreviewReady = isPreviewPending && sceneCount > 0 // Preview pending with scenes = ready
+              // Use template thumbnail when generating preview, otherwise use scene image
+              const thumbnailUrl = isGeneratingPreview 
+                ? storybook.template?.thumbnail_url || storybook.thumbnail_url
+                : storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
               const overlay = getThumbnailOverlay(storybook.title)
 
               return (
@@ -304,7 +310,7 @@ export function StorybooksTab() {
                           <BookOpen className="w-10 h-10 text-muted-foreground" />
                         </div>
                       )}
-                      {isGenerating && (
+                      {(isGenerating || isGeneratingPreview) && (
                         <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
                           <Clock className="w-6 h-6 text-white animate-spin" />
                         </div>
@@ -351,7 +357,7 @@ export function StorybooksTab() {
                             Read Now
                           </Button>
                         </div>
-                      ) : isPreviewPending ? (
+                      ) : isPreviewReady ? (
                         <div className="space-y-2">
                           <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
                             Preview Ready
@@ -380,7 +386,23 @@ export function StorybooksTab() {
                             }}
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            Resume Story Creation
+                            View Preview
+                          </Button>
+                        </div>
+                      ) : isGeneratingPreview ? (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            Generating Preview
+                          </Badge>
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              setResumeStorybook(storybook)
+                            }}
+                          >
+                            <Clock className="w-4 h-4 mr-2 animate-spin" />
+                            View Generation
                           </Button>
                         </div>
                       ) : (
@@ -447,42 +469,96 @@ export function StorybooksTab() {
       <Dialog open={!!resumeStorybook} onOpenChange={(open) => !open && handleResumeMaybeLater()}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Complete Your Story</DialogTitle>
-            <DialogDescription>Choose how you'd like to continue your adventure</DialogDescription>
+            <DialogTitle className="text-2xl">
+              {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
+                ? "Generating Preview"
+                : "Complete Your Story"}
+            </DialogTitle>
+            <DialogDescription>
+              {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
+                ? "Creating a magical preview just for you"
+                : "Choose how you'd like to continue your adventure"}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-6">
             {resumeStorybook && (
               <>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative w-full max-w-xs mx-auto aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group shadow-lg">
-                    {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
-                      <img
-                        src={resumeStorybook.scenes[0].image_url}
-                        alt="Story preview"
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => setShowFullImage(true)}
-                      />
-                    ) : null}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                      <div className="text-white">
-                        <h3 className="text-xl font-bold mb-1">{resumeStorybook.title}</h3>
-                        <p className="text-xs opacity-90">Starring {resumeStorybook.character_name}</p>
+                {resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0) ? (
+                  // Show progress when generating preview
+                  <div className="flex flex-col items-center justify-center space-y-6">
+                    <div className="relative w-64 h-64 bg-gradient-to-br from-primary/20 via-accent/30 to-secondary/20 rounded-3xl flex items-center justify-center overflow-hidden">
+                      {(resumeStorybook.template?.thumbnail_url || resumeStorybook.thumbnail_url) ? (
+                        <img
+                          src={resumeStorybook.template?.thumbnail_url || resumeStorybook.thumbnail_url || "/placeholder.svg"}
+                          alt={resumeStorybook.title}
+                          className="w-full h-full object-cover rounded-3xl"
+                        />
+                      ) : null}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <Clock className="w-16 h-16 text-white animate-spin opacity-80" />
                       </div>
                     </div>
-                    {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
-                      <button
-                        onClick={() => setShowFullImage(true)}
-                        className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm text-sm"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                      </svg>
-                        View Full
-                      </button>
-                    )}
+                    <div className="text-center space-y-2 max-w-md">
+                      <h3 className="text-xl font-bold">
+                        Bringing {resumeStorybook.character_name} into {resumeStorybook.title}...
+                      </h3>
+                      <Progress value={resumeStorybook.progress || 0} className="w-full h-2" />
+                      <p className="text-sm text-muted-foreground">{Math.round(resumeStorybook.progress || 0)}% complete</p>
+                    </div>
+                    {/* Poll for updates */}
+                    {useEffect(() => {
+                      if (!resumeStorybook || resumeStorybook.status !== 'preview_pending' || (resumeStorybook.scenes && resumeStorybook.scenes.length > 0)) {
+                        return
+                      }
+                      const pollInterval = setInterval(async () => {
+                        try {
+                          const freshStorybook = await storybooksApi.get(resumeStorybook.id)
+                          if (freshStorybook.status === 'preview_pending' && freshStorybook.scenes && freshStorybook.scenes.length > 0) {
+                            setResumeStorybook(freshStorybook)
+                            clearInterval(pollInterval)
+                          } else {
+                            setResumeStorybook(freshStorybook)
+                          }
+                        } catch (err) {
+                          console.error("Error polling preview:", err)
+                        }
+                      }, 2000)
+                      return () => clearInterval(pollInterval)
+                    }, [resumeStorybook?.id])}
                   </div>
-                </div>
+                ) : (
+                  // Show preview and payment options when ready
+                  <>
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="relative w-full max-w-xs mx-auto aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group shadow-lg">
+                        {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
+                          <img
+                            src={resumeStorybook.scenes[0].image_url}
+                            alt="Story preview"
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => setShowFullImage(true)}
+                          />
+                        ) : null}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                          <div className="text-white">
+                            <h3 className="text-xl font-bold mb-1">{resumeStorybook.title}</h3>
+                            <p className="text-xs opacity-90">Starring {resumeStorybook.character_name}</p>
+                          </div>
+                        </div>
+                        {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
+                          <button
+                            onClick={() => setShowFullImage(true)}
+                            className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm text-sm"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                          </svg>
+                            View Full
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
                 {/* Full Image Modal */}
                 <Dialog open={showFullImage} onOpenChange={setShowFullImage}>

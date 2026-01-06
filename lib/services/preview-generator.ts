@@ -177,24 +177,11 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       .update({ progress: 60, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
 
-    // Get the appropriate character variation URL
-    let characterVariationUrl: string
-    switch (firstScene.child_photo) {
-      case 'front':
-        characterVariationUrl = variations.front_variation_url
-        break
-      case 'left':
-        characterVariationUrl = variations.left_variation_url
-        break
-      case 'right':
-        characterVariationUrl = variations.right_variation_url
-        break
-      default:
-        throw new Error(`Invalid child_photo value: ${firstScene.child_photo}`)
-    }
+    // Always use front variation (we only generate one variation now)
+    const characterVariationUrl = variations.front_variation_url
 
     if (!characterVariationUrl) {
-      throw new Error(`Character variation URL not found for ${firstScene.child_photo} view`)
+      throw new Error(`Character variation URL not found`)
     }
 
     // Convert character variation URL to signed URL for Replicate access

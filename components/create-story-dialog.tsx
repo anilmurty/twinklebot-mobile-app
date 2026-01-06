@@ -163,44 +163,15 @@ export function CreateStoryDialog({
         return
       }
 
-      // Step 2: Generate preview
+      // Step 2: Generate preview (async - don't wait)
       setPreviewProgress(20)
-      await storybooksApi.generatePreview(storybook.id)
+      storybooksApi.generatePreview(storybook.id).catch((err: any) => {
+        console.error("Preview generation error:", err)
+      })
 
-      // Poll for preview completion
-      let attempts = 0
-      const maxAttempts = 1800 // 15 minutes max (500ms * 1800) - Replicate predictions can take up to 5 min each
-      const pollInterval = setInterval(async () => {
-        attempts++
-        setPreviewProgress(Math.min(20 + (attempts / maxAttempts) * 70, 90))
-
-        try {
-          const storybookData = await storybooksApi.get(storybook.id)
-          
-          if (storybookData.status === 'preview_pending' && storybookData.scenes && storybookData.scenes.length > 0) {
-            // Preview is ready
-            clearInterval(pollInterval)
-            setPreviewProgress(100)
-            setPreviewSceneUrl(storybookData.scenes[0].image_url)
-            setTimeout(() => setCurrentStep("payment"), 500)
-          } else if (storybookData.status === 'failed') {
-            clearInterval(pollInterval)
-            setError(storybookData.error_message || "Preview generation failed")
-            setCurrentStep("template-selection")
-          } else if (attempts >= maxAttempts) {
-            clearInterval(pollInterval)
-            setError("Preview generation is taking longer than expected. Please check back later.")
-            setCurrentStep("template-selection")
-          }
-        } catch (err: any) {
-          console.error("Error polling preview:", err)
-          if (attempts >= maxAttempts) {
-            clearInterval(pollInterval)
-            setError("Failed to check preview status")
-            setCurrentStep("template-selection")
-          }
-        }
-      }, 500)
+      // Navigate to storybooks page immediately - user can close modal
+      onOpenChange(false)
+      router.push("/?tab=storybooks")
     } catch (err: any) {
       console.error("Failed to generate preview:", err)
       setError(err.message || "Failed to start preview generation")
