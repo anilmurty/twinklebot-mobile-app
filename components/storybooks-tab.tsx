@@ -23,10 +23,14 @@ interface Storybook {
   status: string
   thumbnail_url?: string
   first_scene_image?: string
+  first_scene_base_image?: string
   created_at: string
   scenes?: any[]
   progress?: number
   total_scenes?: number
+  template?: {
+    thumbnail_url?: string
+  }
 }
 
 export function StorybooksTab() {
@@ -488,9 +492,9 @@ export function StorybooksTab() {
                   // Show progress when generating preview
                   <div className="flex flex-col items-center justify-center space-y-6">
                     <div className="relative w-64 h-64 bg-gradient-to-br from-primary/20 via-accent/30 to-secondary/20 rounded-3xl flex items-center justify-center overflow-hidden">
-                      {(resumeStorybook.template?.thumbnail_url || resumeStorybook.thumbnail_url) ? (
+                      {(resumeStorybook.first_scene_base_image || resumeStorybook.thumbnail_url) ? (
                         <img
-                          src={resumeStorybook.template?.thumbnail_url || resumeStorybook.thumbnail_url || "/placeholder.svg"}
+                          src={resumeStorybook.first_scene_base_image || resumeStorybook.thumbnail_url || "/placeholder.svg"}
                           alt={resumeStorybook.title}
                           className="w-full h-full object-cover rounded-3xl"
                         />
