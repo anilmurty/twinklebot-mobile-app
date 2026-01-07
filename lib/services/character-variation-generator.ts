@@ -5,7 +5,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateImageWithNanoBanana } from './image-generation'
-import { uploadToStorage, getSignedUrl, deleteFromStorage } from '@/lib/supabase/storage'
+import { uploadToStorage, getSignedUrl, deleteFromStorage, getStorageUrl } from '@/lib/supabase/storage'
 
 export interface CharacterVariations {
   front_variation_url: string
