@@ -121,14 +121,14 @@ export default function SharedStorybookPage() {
         {scene ? (
           <>
             {/* Scene Image - Responsive Container */}
-            <div className="flex-1 flex items-center justify-center p-4 md:p-6 lg:p-8 bg-muted/30 min-h-0">
+            <div className="flex-1 flex items-center justify-center p-4 md:p-6 bg-muted/30 min-h-0 overflow-auto">
               {scene.image_url ? (
-                <div className="w-full h-full flex items-center justify-center max-w-4xl mx-auto">
+                <div className="w-full flex items-center justify-center max-w-3xl mx-auto">
                   <img
                     src={scene.image_url}
                     alt={scene.headline || `Scene ${scene.scene_number || currentScene + 1}`}
-                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-                    style={{ maxHeight: 'calc(100vh - 300px)' }}
+                    className="max-w-full object-contain rounded-lg shadow-2xl"
+                    style={{ maxHeight: 'calc(100vh - 400px)', maxWidth: '100%' }}
                   />
                 </div>
               ) : (
@@ -142,7 +142,7 @@ export default function SharedStorybookPage() {
             <div className="border-t bg-card p-4 md:p-6 shrink-0">
               <Card className="p-4 md:p-6 max-w-2xl mx-auto">
                 {scene.headline && (
-                  <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">{scene.headline}</h2>
+                  <h2 className="text-xl md:text-2xl font-bold mb-2">{scene.headline}</h2>
                 )}
                 <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">
                   {scene.text || scene.script_text || ''}
