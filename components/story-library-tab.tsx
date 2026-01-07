@@ -162,9 +162,6 @@ export function StoryLibraryTab() {
                           </span>
                         </div>
                       )}
-                      <Badge className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs">
-                        {category}
-                      </Badge>
                     </div>
 
                     <div className="flex-1 space-y-2 w-full">
