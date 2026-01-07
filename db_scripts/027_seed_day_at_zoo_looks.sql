@@ -51,7 +51,7 @@ BEGIN
     look_order,
     'looks/zoo-boy-casual-model.png',
     'looks/zoo-boy-casual-attire.png',
-    'dress this little boy in casual zoo-appropriate clothing. keep facial features identical to the original image. white background and full length',
+    'dress this little boy in the casual zoo-appropriate clothing shown in the image. keep facial and body features identical to the original image. white background and full length',
     false,
     true
   ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
@@ -80,7 +80,7 @@ BEGIN
     look_order,
     'looks/zoo-boy-denim-model.png',
     'looks/zoo-boy-denim-attire.png',
-    'dress this little boy in denim zoo-appropriate clothing. keep facial features identical to the original image. white background and full length',
+    'dress this little boy in the denim zoo-appropriate clothing shown in the image. keep facial and body features identical to the original image. white background and full length',
     false,
     true
   ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
@@ -109,7 +109,7 @@ BEGIN
     look_order,
     'looks/zoo-boy-safari-model.png',
     'looks/zoo-boy-safari-attire.png',
-    'dress this little boy in safari-style zoo-appropriate clothing. keep facial features identical to the original image. white background and full length',
+    'dress this little boy in the safari zoo-appropriate clothing shown in the image. keep facial and body features identical to the original image. white background and full length',
     false,
     true
   ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
@@ -166,7 +166,7 @@ BEGIN
     look_order,
     'looks/zoo-girl-casual-model.png',
     'looks/zoo-girl-casual-attire.png',
-    'dress this little girl in casual zoo-appropriate clothing. keep facial features identical to the original image. white background and full length',
+    'dress this little girl in the casual zoo-appropriate clothing shown in the image. keep facial and body features identical to the original image. white background and full length',
     false,
     true
   ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
@@ -195,7 +195,7 @@ BEGIN
     look_order,
     'looks/zoo-girl-denim-model.png',
     'looks/zoo-girl-denim-attire.png',
-    'dress this little girl in denim zoo-appropriate clothing. keep facial features identical to the original image. white background and full length',
+    'dress this little girl in the denim zoo-appropriate clothing shown in the image. keep facial and body features identical to the original image. white background and full length',
     false,
     true
   ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
@@ -224,7 +224,7 @@ BEGIN
     look_order,
     'looks/zoo-girl-safari-model.png',
     'looks/zoo-girl-safari-attire.png',
-    'dress this little girl in safari-style zoo-appropriate clothing. keep facial features identical to the original image. white background and full length',
+    'dress this little girl in the safari zoo-appropriate clothing shown in the image. keep facial and body features identical to the original image. white background and full length',
     false,
     true
   ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
