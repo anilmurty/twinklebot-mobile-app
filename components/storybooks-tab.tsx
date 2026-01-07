@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play } from "lucide-react"
+import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, Check } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ShoppingCart, Check } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { CouponInput } from "@/components/coupon-input"
 import { Progress } from "@/components/ui/progress"
 
@@ -50,6 +51,9 @@ export function StorybooksTab() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [showFullImage, setShowFullImage] = useState(false)
+  const [shareUrl, setShareUrl] = useState<{ storybookId: string; url: string } | null>(null)
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false)
+  const [copiedShareUrl, setCopiedShareUrl] = useState(false)
 
   const isFetchingRef = useRef(false)
 
@@ -144,6 +148,31 @@ export function StorybooksTab() {
 
   const handleReadStorybook = (id: string) => {
     window.location.href = `/storybook/${id}`
+  }
+
+  const handleGenerateShare = async (storybookId: string) => {
+    try {
+      setIsGeneratingShare(true)
+      setCopiedShareUrl(false)
+      const result = await storybooksApi.generateShare(storybookId)
+      setShareUrl({ storybookId, url: result.share_url })
+    } catch (err: any) {
+      console.error("Failed to generate share link:", err)
+      setError(err.message || "Failed to generate share link")
+    } finally {
+      setIsGeneratingShare(false)
+    }
+  }
+
+  const handleCopyShareUrl = async () => {
+    if (!shareUrl) return
+    try {
+      await navigator.clipboard.writeText(shareUrl.url)
+      setCopiedShareUrl(true)
+      setTimeout(() => setCopiedShareUrl(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy URL:", err)
+    }
   }
 
   const handleDeleteClick = (id: string, title: string) => {
@@ -355,13 +384,27 @@ export function StorybooksTab() {
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Ready
                           </Badge>
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={() => handleReadStorybook(storybook.id)}
-                          >
-                            Read Now
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleReadStorybook(storybook.id)}
+                            >
+                              Read Now
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleGenerateShare(storybook.id)}
+                              disabled={isGeneratingShare}
+                            >
+                              {isGeneratingShare ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Share2 className="w-4 h-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       ) : isPreviewReady ? (
                         <div className="space-y-2">
@@ -694,6 +737,43 @@ export function StorybooksTab() {
                 )}
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Share URL Dialog */}
+      <Dialog open={!!shareUrl} onOpenChange={(open) => !open && setShareUrl(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Share Storybook</DialogTitle>
+            <DialogDescription>
+              Copy this link to share your storybook with others. Anyone with this link can view it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex gap-2">
+              <Input
+                value={shareUrl?.url || ''}
+                readOnly
+                className="flex-1 font-mono text-sm"
+              />
+              <Button
+                onClick={handleCopyShareUrl}
+                variant={copiedShareUrl ? "default" : "outline"}
+              >
+                {copiedShareUrl ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

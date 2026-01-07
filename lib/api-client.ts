@@ -297,6 +297,10 @@ export const storybooksApi = {
   triggerGeneration: (id: string) =>
     apiRequest<any>(`/storybooks/${id}/generate`, { method: 'POST' }),
   delete: (id: string) => apiRequest<void>(`/storybooks/${id}`, { method: 'DELETE' }),
+  generateShare: (id: string) =>
+    apiRequest<{ share_token: string; share_url: string }>(`/storybooks/${id}/generate-share`, {
+      method: 'POST',
+    }),
 }
 
 // Story Templates API
