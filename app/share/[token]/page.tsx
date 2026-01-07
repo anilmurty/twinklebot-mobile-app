@@ -142,11 +142,13 @@ export default function SharedStorybookPage() {
             <div className="border-t bg-card p-4 md:p-6 shrink-0">
               <Card className="p-4 md:p-6 max-w-2xl mx-auto">
                 {scene.headline && (
-                  <h2 className="text-xl md:text-2xl font-bold mb-2">{scene.headline}</h2>
+                  <h2 className="text-xl md:text-2xl font-bold mb-2 block">{scene.headline}</h2>
                 )}
-                <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">
-                  {scene.text || scene.script_text || ''}
-                </p>
+                {(scene.text || scene.script_text) && (
+                  <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">
+                    {scene.text || scene.script_text}
+                  </p>
+                )}
               </Card>
             </div>
 
