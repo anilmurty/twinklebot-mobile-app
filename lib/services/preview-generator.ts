@@ -280,10 +280,17 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     console.log(`[PREVIEW] Scene image uploaded: ${uploadedSceneUrl}`)
 
     // Create scene object
+    // Format character name: first letter uppercase, rest lowercase
+    const titleCaseName = character.name.charAt(0).toUpperCase() + character.name.slice(1).toLowerCase()
+    const scriptText = firstScene.script_text
+      .replace(/\[Name\]/g, titleCaseName)
+      .replace(/\[NAME\]/g, titleCaseName)
+      .replace(/{character_name}/g, titleCaseName)
+    
     const scene = {
       scene_number: firstScene.scene_number,
       image_url: uploadedSceneUrl,
-      text: firstScene.script_text.replace('{character_name}', character.name),
+      text: scriptText,
       number: firstScene.scene_number,
       generated_at: new Date().toISOString(),
     }
