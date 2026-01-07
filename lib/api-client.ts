@@ -301,6 +301,10 @@ export const storybooksApi = {
     apiRequest<{ share_token: string; share_url: string }>(`/storybooks/${id}/generate-share`, {
       method: 'POST',
     }),
+  revokeShare: (id: string) =>
+    apiRequest<{ message: string; revoked: boolean }>(`/storybooks/${id}/revoke-share`, {
+      method: 'POST',
+    }),
 }
 
 // Story Templates API
