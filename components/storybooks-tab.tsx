@@ -175,6 +175,20 @@ export function StorybooksTab() {
     }
   }
 
+  const handleRevokeShare = async () => {
+    if (!shareUrl) return
+    try {
+      await storybooksApi.revokeShare(shareUrl.storybookId)
+      setShareUrl(null)
+      setCopiedShareUrl(false)
+      // Refresh storybooks to reflect the change
+      await fetchStorybooks()
+    } catch (err: any) {
+      console.error("Failed to revoke share link:", err)
+      setError(err.message || "Failed to revoke share link")
+    }
+  }
+
   const handleDeleteClick = (id: string, title: string) => {
     setDeleteConfirm({ id, title })
   }
