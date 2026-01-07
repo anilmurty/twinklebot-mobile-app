@@ -386,11 +386,13 @@ export function StorybooksTab() {
                         </Button>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        {sceneCount > 0 && <span>{sceneCount} scenes</span>}
-                        {sceneCount > 0 && <span>•</span>}
-                        <span>{formatDate(storybook.created_at)}</span>
-                      </div>
+                      {isCompleted && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {sceneCount > 0 && <span>{sceneCount} scenes</span>}
+                          {sceneCount > 0 && <span>•</span>}
+                          <span>{formatDate(storybook.created_at)}</span>
+                        </div>
+                      )}
 
                       {isCompleted ? (
                         <div className="space-y-2">
