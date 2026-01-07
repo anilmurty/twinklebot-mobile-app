@@ -151,11 +151,57 @@ export async function generateCharacterVariations(
   const signedBasePhotoUrl = await getSignedUrl('character-photos', basePhotoPath, 3600)
   console.log(`[TIMING] Got signed URL: ${Date.now() - signedUrlStart}ms`)
 
-  // Generate three variations with prompts for different views
-  // Front variation: Use uploaded photo, dress for zoo (gender-specific)
-  const frontPrompt = gender === 'male'
-    ? "dress this little boy to look like he is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
-    : "dress this little girl to look like she is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
+  // Fetch selected look if storybookId is provided
+  let selectedLook: { attire_image_url: string; prompt_modifier: string; is_original: boolean } | null = null
+  if (storybookId) {
+    const lookFetchStart = Date.now()
+    const { data: storybook } = await supabaseAdmin
+      .from('storybooks')
+      .select('look_id, character_looks:look_id(attire_image_url, prompt_modifier, is_original)')
+      .eq('id', storybookId)
+      .single()
+    
+    if (storybook?.look_id && storybook.character_looks) {
+      const lookData = Array.isArray(storybook.character_looks) 
+        ? storybook.character_looks[0] 
+        : storybook.character_looks
+      selectedLook = lookData as any
+      console.log(`[TIMING] Fetched look data: ${Date.now() - lookFetchStart}ms`)
+      console.log(`Selected look: ${selectedLook.is_original ? 'Original' : 'Custom'}`)
+    }
+  }
+
+  // Generate prompts based on selected look
+  let frontPrompt: string
+  let imageInputArray: string[]
+
+  if (selectedLook && !selectedLook.is_original) {
+    // Custom look selected: use attire image + user photo + prompt modifier
+    frontPrompt = selectedLook.prompt_modifier
+    // Get signed URL for attire image (if it's in Supabase Storage)
+    let attireImageUrl = selectedLook.attire_image_url
+    // If attire image is a relative path or Supabase Storage path, convert to signed URL
+    if (attireImageUrl && !attireImageUrl.startsWith('http')) {
+      // Assume it's in story-template-assets bucket
+      const attirePath = attireImageUrl.startsWith('/') ? attireImageUrl.slice(1) : attireImageUrl
+      attireImageUrl = getStorageUrl('story-template-assets', attirePath)
+    } else if (attireImageUrl && attireImageUrl.includes('supabase.co') && !attireImageUrl.includes('/object/public/')) {
+      // Private Supabase Storage URL - need signed URL
+      const attireMatch = attireImageUrl.match(/story-template-assets\/(.+)$/)
+      if (attireMatch) {
+        attireImageUrl = await getSignedUrl('story-template-assets', attireMatch[1], 3600)
+      }
+    }
+    imageInputArray = [signedBasePhotoUrl, attireImageUrl] // User photo first, then attire
+    console.log(`Using custom look with attire image`)
+  } else {
+    // Original look: use default prompt with just user photo
+    frontPrompt = gender === 'male'
+      ? "dress this little boy to look like he is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
+      : "dress this little girl to look like she is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
+    imageInputArray = [signedBasePhotoUrl] // Just user photo
+    console.log(`Using original look (no attire image)`)
+  }
   
   // Left and Right variations: Use front variation as input, change facing direction
   const leftPrompt = "Change this so that the child is facing right"
@@ -209,7 +255,7 @@ export async function generateCharacterVariations(
       modelVersion,
       {
         prompt: frontPrompt,
-        image_input: [signedBasePhotoUrl],
+        image_input: imageInputArray, // Use attire image if custom look selected
         aspect_ratio: 'match_input_image',
         output_format: 'jpg',
       }
@@ -234,7 +280,7 @@ export async function generateCharacterVariations(
     const { generateImageWithNanoBanana } = await import('./image-generation')
     frontUrl = await generateImageWithNanoBanana(
       frontPrompt,
-      [signedBasePhotoUrl],
+      imageInputArray, // Use attire image if custom look selected
       'match_input_image',
       templateId // Pass template ID to get model from template
     ).then(url => {

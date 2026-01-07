@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS character_looks (
   gender TEXT NOT NULL CHECK (gender IN ('male', 'female')),
   look_name TEXT NOT NULL, -- e.g., "Safari Explorer", "Zoo Keeper", "Animal Lover"
   display_order INTEGER NOT NULL DEFAULT 0, -- Order in which looks are displayed
-  reference_image_url TEXT NOT NULL, -- URL to reference image shown to user and passed to Replicate
+  reference_image_url TEXT NOT NULL, -- URL to model image shown to user in selection UI
+  attire_image_url TEXT NOT NULL, -- URL to attire image sent to Replicate with user's photo
   prompt_modifier TEXT NOT NULL, -- Additional prompt text to modify character generation for this look
   is_original BOOLEAN DEFAULT false, -- If true, this is the "original" option (uses uploaded photo as-is)
   is_active BOOLEAN DEFAULT true,
@@ -26,7 +27,8 @@ CREATE INDEX IF NOT EXISTS idx_character_looks_template_gender ON character_look
 CREATE INDEX IF NOT EXISTS idx_character_looks_display_order ON character_looks(template_id, gender, display_order);
 
 COMMENT ON TABLE character_looks IS 'Stores character appearance options (looks) for each story template, organized by gender';
-COMMENT ON COLUMN character_looks.reference_image_url IS 'URL to reference image shown to user and passed to Replicate API';
+COMMENT ON COLUMN character_looks.reference_image_url IS 'URL to model image shown to user in selection UI (preview of how child looks in outfit)';
+COMMENT ON COLUMN character_looks.attire_image_url IS 'URL to attire image sent to Replicate API along with user photo (clothing/outfit reference)';
 COMMENT ON COLUMN character_looks.prompt_modifier IS 'Additional prompt text to modify character generation for this specific look';
-COMMENT ON COLUMN character_looks.is_original IS 'If true, uses the original uploaded photo without modifications';
+COMMENT ON COLUMN character_looks.is_original IS 'If true, uses the original uploaded photo without modifications (attire_image_url not used)';
 
