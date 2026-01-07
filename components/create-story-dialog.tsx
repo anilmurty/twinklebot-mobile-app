@@ -423,25 +423,29 @@ export function CreateStoryDialog({
                             id={`look-${look.id}`}
                             className="sr-only"
                           />
-                          {look.reference_image_url ? (
-                            <img
-                              src={look.reference_image_url}
-                              alt={look.look_name}
-                              className="w-full aspect-[3/4] object-cover rounded-lg"
-                              onError={(e) => {
-                                console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
-                                const target = e.target as HTMLImageElement
-                                target.style.display = 'none'
-                              }}
-                              onLoad={() => {
-                                console.log(`Successfully loaded image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full aspect-[3/4] bg-secondary rounded-lg flex items-center justify-center">
+                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                            {look.reference_image_url ? (
+                              <img
+                                src={look.reference_image_url}
+                                alt={look.look_name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                  const parent = target.parentElement
+                                  if (parent) {
+                                    parent.innerHTML = '<span class="text-xs text-muted-foreground">Image not found</span>'
+                                  }
+                                }}
+                                onLoad={() => {
+                                  console.log(`Successfully loaded image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                                }}
+                              />
+                            ) : (
                               <span className="text-xs text-muted-foreground">No image</span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           <div className="text-center">
                             <div className="font-medium">{look.look_name}</div>
                             {look.is_original && (

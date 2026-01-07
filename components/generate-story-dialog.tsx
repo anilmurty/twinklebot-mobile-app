@@ -332,6 +332,110 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
           </>
         )}
 
+        {currentStep === "look-selection" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                Choose Character Look
+              </DialogTitle>
+              <DialogDescription>
+                Select how {selectedCharacterData?.name} should appear in this story
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 pt-4">
+              {error && (
+                <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+
+              {loadingLooks ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : looks.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No looks available for this story.</p>
+                </div>
+              ) : (
+                <RadioGroup
+                  value={selectedLookId?.toString() || ""}
+                  onValueChange={(value) => setSelectedLookId(Number.parseInt(value))}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    {looks.map((look) => (
+                      <Card
+                        key={look.id}
+                        className={`p-4 cursor-pointer transition-all ${
+                          selectedLookId === look.id
+                            ? "border-primary border-2 bg-primary/5"
+                            : "hover:border-primary/50"
+                        }`}
+                        onClick={() => setSelectedLookId(look.id)}
+                      >
+                        <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
+                          <RadioGroupItem
+                            value={look.id.toString()}
+                            id={`look-${look.id}`}
+                            className="sr-only"
+                          />
+                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                            {look.reference_image_url ? (
+                              <img
+                                src={look.reference_image_url}
+                                alt={look.look_name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                  const parent = target.parentElement
+                                  if (parent) {
+                                    parent.innerHTML = '<span class="text-xs text-muted-foreground">Image not found</span>'
+                                  }
+                                }}
+                                onLoad={() => {
+                                  console.log(`Successfully loaded image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                                }}
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No image</span>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <div className="font-medium">{look.look_name}</div>
+                            {look.is_original && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Uses original photo
+                              </div>
+                            )}
+                          </div>
+                        </label>
+                      </Card>
+                    ))}
+                  </div>
+                </RadioGroup>
+              )}
+            </div>
+
+            <div className="flex justify-between gap-2 mt-6">
+              <Button variant="outline" onClick={() => setCurrentStep("character-selection")}>
+                Back
+              </Button>
+              <Button
+                className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={selectedLookId === null || loadingLooks || isSubmitting}
+                onClick={handleGeneratePreview}
+              >
+                <Sparkles className="w-4 h-4 mr-1" />
+                Generate Preview
+              </Button>
+            </div>
+          </>
+        )}
+
         {currentStep === "generating-preview" && (
           <>
             <DialogHeader>
