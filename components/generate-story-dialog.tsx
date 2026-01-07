@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2, ShoppingCart, Check } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { charactersApi, storybooksApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi } from "@/lib/api-client"
+import { charactersApi, storybooksApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CouponInput } from "@/components/coupon-input"
@@ -29,7 +29,7 @@ interface GenerateStoryDialogProps {
   }
 }
 
-type GenerationStep = "character-selection" | "generating-preview" | "payment"
+type GenerationStep = "character-selection" | "look-selection" | "generating-preview" | "payment"
 
 export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
   const router = useRouter()
@@ -49,6 +49,10 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [showFullImage, setShowFullImage] = useState(false)
+  const [characterGender, setCharacterGender] = useState<'male' | 'female' | null>(null)
+  const [looks, setLooks] = useState<any[]>([])
+  const [selectedLookId, setSelectedLookId] = useState<number | null>(null)
+  const [loadingLooks, setLoadingLooks] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -60,8 +64,58 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setPreviewSceneUrl(null)
       setSelectedPlanId(null)
       setAppliedCoupon(null)
+      setSelectedLookId(null)
+      setLooks([])
+      setCharacterGender(null)
     }
   }, [open, story.id])
+
+  const fetchCharacterGender = async (characterId: string) => {
+    try {
+      const character = await charactersApi.get(characterId)
+      setCharacterGender(character.gender)
+      return character.gender
+    } catch (err: any) {
+      console.error("Failed to fetch character gender:", err)
+      return null
+    }
+  }
+
+  const fetchLooks = async (templateId: number, gender: 'male' | 'female') => {
+    try {
+      setLoadingLooks(true)
+      const data = await characterLooksApi.list(templateId, gender)
+      setLooks(data.looks || [])
+      // Auto-select "original" if available, otherwise first look
+      const originalLook = data.looks?.find((l: any) => l.is_original)
+      if (originalLook) {
+        setSelectedLookId(originalLook.id)
+      } else if (data.looks && data.looks.length > 0) {
+        setSelectedLookId(data.looks[0].id)
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch looks:", err)
+      setError(err.message || "Failed to load character looks")
+    } finally {
+      setLoadingLooks(false)
+    }
+  }
+
+  const handleCharacterSelected = async () => {
+    if (!selectedCharacter) {
+      setError("Please select a character")
+      return
+    }
+    
+    // Fetch character gender and looks
+    const gender = await fetchCharacterGender(selectedCharacter)
+    if (gender) {
+      await fetchLooks(story.id, gender)
+      setCurrentStep("look-selection")
+    } else {
+      setError("Failed to load character data")
+    }
+  }
 
   const checkPaymentStatus = async () => {
     try {
@@ -113,14 +167,19 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       return
     }
 
+    if (!selectedLookId) {
+      setError("Please select a character look")
+      return
+    }
+
     try {
       setError(null)
       setCurrentStep("generating-preview")
       setPreviewProgress(0)
 
-      // Step 1: Create storybook
+      // Step 1: Create storybook with selected look
       setPreviewProgress(10)
-      const storybook = await storybooksApi.create(selectedCharacter, story.id)
+      const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId)
       setStorybookId(storybook.id)
 
       // If user has payment override or subscription, skip preview and go straight to generation
@@ -263,10 +322,10 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                 <Button
                   className="flex-1 bg-primary hover:bg-primary/90"
                   disabled={!selectedCharacter || isSubmitting || characters.length === 0}
-                  onClick={handleGeneratePreview}
+                  onClick={handleCharacterSelected}
                 >
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Generate
+                  Continue
                 </Button>
               </div>
             </div>
