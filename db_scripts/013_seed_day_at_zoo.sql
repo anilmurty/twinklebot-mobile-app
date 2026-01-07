@@ -125,7 +125,7 @@ BEGIN
     -- Update existing template
     UPDATE story_templates
     SET
-      description = 'Join {character_name} on an exciting adventure through the zoo, meeting animals and having fun!',
+      description = 'Send {character_name} on an exciting adventure through the zoo, meeting animals and having fun!',
       category = 'numbers',
       age_range = '1-5 years',
       scene_count = 10,
