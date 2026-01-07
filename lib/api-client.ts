@@ -280,10 +280,14 @@ export const storybooksApi = {
     return apiRequest<{ storybooks: any[]; total: number }>(`/storybooks${query}`)
   },
   get: (id: string) => apiRequest<any>(`/storybooks/${id}`),
-  create: (characterId: string, templateId: number) =>
+  create: (characterId: string, templateId: number, lookId?: number | null) =>
     apiRequest<any>('/storybooks', {
       method: 'POST',
-      body: JSON.stringify({ character_id: characterId, template_id: templateId }),
+      body: JSON.stringify({ 
+        character_id: characterId, 
+        template_id: templateId,
+        look_id: lookId || null
+      }),
     }),
   generatePreview: (id: string) =>
     apiRequest<{ message: string; storybook_id: string }>(`/storybooks/${id}/generate-preview`, {
@@ -305,6 +309,12 @@ export const storybooksApi = {
     apiRequest<{ message: string; revoked: boolean }>(`/storybooks/${id}/revoke-share`, {
       method: 'POST',
     }),
+}
+
+// Character Looks API
+export const characterLooksApi = {
+  list: (templateId: number, gender: 'male' | 'female') =>
+    apiRequest<{ looks: any[] }>(`/character-looks?template_id=${templateId}&gender=${gender}`),
 }
 
 // Story Templates API

@@ -29,7 +29,7 @@ interface CreateStoryDialogProps {
   characterPhotoUrl?: string
 }
 
-type GenerationStep = "template-selection" | "generating-preview" | "payment"
+type GenerationStep = "template-selection" | "look-selection" | "generating-preview" | "payment"
 
 export function CreateStoryDialog({
   open,
@@ -55,19 +55,68 @@ export function CreateStoryDialog({
   const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [showFullImage, setShowFullImage] = useState(false)
+  const [characterGender, setCharacterGender] = useState<'male' | 'female' | null>(null)
+  const [looks, setLooks] = useState<any[]>([])
+  const [selectedLookId, setSelectedLookId] = useState<number | null>(null)
+  const [loadingLooks, setLoadingLooks] = useState(false)
 
   useEffect(() => {
     if (open) {
       fetchTemplates()
       checkPaymentStatus()
+      fetchCharacterGender()
       setCurrentStep("template-selection")
       setPreviewProgress(0)
       setStorybookId(null)
       setPreviewSceneUrl(null)
       setSelectedPlanId(null)
       setAppliedCoupon(null)
+      setSelectedLookId(null)
+      setLooks([])
     }
   }, [open, characterId])
+
+  const fetchCharacterGender = async () => {
+    try {
+      const character = await charactersApi.get(characterId)
+      setCharacterGender(character.gender)
+    } catch (err: any) {
+      console.error("Failed to fetch character gender:", err)
+    }
+  }
+
+  const fetchLooks = async (templateId: number) => {
+    if (!characterGender) return
+    
+    try {
+      setLoadingLooks(true)
+      const data = await characterLooksApi.list(templateId, characterGender)
+      setLooks(data.looks || [])
+      // Auto-select "original" if available, otherwise first look
+      const originalLook = data.looks?.find((l: any) => l.is_original)
+      if (originalLook) {
+        setSelectedLookId(originalLook.id)
+      } else if (data.looks && data.looks.length > 0) {
+        setSelectedLookId(data.looks[0].id)
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch looks:", err)
+      setError(err.message || "Failed to load character looks")
+    } finally {
+      setLoadingLooks(false)
+    }
+  }
+
+  const handleTemplateSelected = async () => {
+    if (!selectedTemplate) {
+      setError("Please select a story template")
+      return
+    }
+    
+    // Fetch looks for this template
+    await fetchLooks(selectedTemplate)
+    setCurrentStep("look-selection")
+  }
 
   const checkPaymentStatus = async () => {
     try {
@@ -119,14 +168,19 @@ export function CreateStoryDialog({
       return
     }
 
+    if (!selectedLookId) {
+      setError("Please select a character look")
+      return
+    }
+
     try {
       setError(null)
       setCurrentStep("generating-preview")
       setPreviewProgress(0)
 
-      // Step 1: Create storybook
+      // Step 1: Create storybook with selected look
       setPreviewProgress(10)
-      const storybook = await storybooksApi.create(characterId, selectedTemplate)
+      const storybook = await storybooksApi.create(characterId, selectedTemplate, selectedLookId)
       setStorybookId(storybook.id)
 
       // If user has payment override or subscription, skip preview and go straight to generation
@@ -291,10 +345,111 @@ export function CreateStoryDialog({
                 <Button
                   className="flex-1 bg-primary hover:bg-primary/90"
                   disabled={!selectedTemplate || isSubmitting || templates.length === 0}
-                  onClick={handleGeneratePreview}
+                  onClick={handleTemplateSelected}
                 >
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Generate
+                  Continue
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {currentStep === "look-selection" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                Choose Character Look
+              </DialogTitle>
+              <DialogDescription>
+                Select how {characterName} should appear in this story
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 pt-4">
+              {error && (
+                <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
+              )}
+
+              {loadingLooks ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                </div>
+              ) : looks.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No looks available for this story.</p>
+                </div>
+              ) : (
+                <RadioGroup
+                  value={selectedLookId?.toString() || ""}
+                  onValueChange={(value) => setSelectedLookId(Number.parseInt(value))}
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    {looks.map((look) => (
+                      <Card
+                        key={look.id}
+                        className={`p-4 cursor-pointer transition-all ${
+                          selectedLookId === look.id
+                            ? "border-primary border-2 bg-primary/5"
+                            : "hover:border-primary/50"
+                        }`}
+                        onClick={() => setSelectedLookId(look.id)}
+                      >
+                        <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
+                          <RadioGroupItem
+                            value={look.id.toString()}
+                            id={`look-${look.id}`}
+                            className="sr-only"
+                          />
+                          {look.reference_image_url && (
+                            <img
+                              src={look.reference_image_url}
+                              alt={look.look_name}
+                              className="w-full aspect-[3/4] object-cover rounded-lg"
+                            />
+                          )}
+                          <div className="text-center">
+                            <div className="font-medium">{look.look_name}</div>
+                            {look.is_original && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Uses original photo
+                              </div>
+                            )}
+                          </div>
+                        </label>
+                      </Card>
+                    ))}
+                  </div>
+                </RadioGroup>
+              )}
+
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStep("template-selection")}
+                  className="flex-1"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleGeneratePreview}
+                  disabled={!selectedLookId || loadingLooks}
+                  className="flex-1"
+                >
+                  {loadingLooks ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-1" />
+                      Generate Preview
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

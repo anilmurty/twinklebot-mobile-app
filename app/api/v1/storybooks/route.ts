@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { character_id, template_id } = body
+    const { character_id, template_id, look_id } = body
 
     if (!character_id || !template_id) {
       return NextResponse.json(
@@ -309,6 +309,7 @@ export async function POST(request: NextRequest) {
         title: template.title,
         status: shouldSkipPreview ? 'pending' : 'preview_pending',
         progress: 0,
+        look_id: look_id || null, // Store selected look, null means original
       })
       .select()
       .single()
