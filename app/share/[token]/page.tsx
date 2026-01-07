@@ -101,33 +101,36 @@ export default function SharedStorybookPage() {
     : storybook.character_name
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <div className="border-b bg-card px-4 py-3 flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">{storybook.title}</h1>
+      <div className="border-b bg-card px-4 py-3 flex items-center justify-between shrink-0">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg md:text-xl font-semibold truncate">{storybook.title}</h1>
           {characterName && (
-            <p className="text-sm text-muted-foreground">Starring {characterName}</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Starring {characterName}</p>
           )}
         </div>
-        <Button variant="outline" size="sm" onClick={() => router.push('/')}>
+        <Button variant="outline" size="sm" onClick={() => router.push('/')} className="shrink-0 ml-4">
           <Home className="w-4 h-4 mr-2" />
-          Home
+          <span className="hidden sm:inline">Home</span>
         </Button>
       </div>
 
       {/* Story Content */}
-      <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="flex-1 overflow-auto flex flex-col">
         {scene ? (
           <>
-            {/* Scene Image */}
-            <div className="flex-1 flex items-center justify-center p-4 bg-muted/30">
+            {/* Scene Image - Responsive Container */}
+            <div className="flex-1 flex items-center justify-center p-4 md:p-6 lg:p-8 bg-muted/30 min-h-0">
               {scene.image_url ? (
-                <img
-                  src={scene.image_url}
-                  alt={scene.headline || `Scene ${scene.scene_number || currentScene + 1}`}
-                  className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                />
+                <div className="w-full h-full flex items-center justify-center max-w-4xl mx-auto">
+                  <img
+                    src={scene.image_url}
+                    alt={scene.headline || `Scene ${scene.scene_number || currentScene + 1}`}
+                    className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                    style={{ maxHeight: 'calc(100vh - 300px)' }}
+                  />
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                   <p>No image available</p>
@@ -136,38 +139,44 @@ export default function SharedStorybookPage() {
             </div>
 
             {/* Scene Text */}
-            <div className="border-t bg-card p-6">
-              <Card className="p-6 max-w-2xl mx-auto">
+            <div className="border-t bg-card p-4 md:p-6 shrink-0">
+              <Card className="p-4 md:p-6 max-w-2xl mx-auto">
                 {scene.headline && (
-                  <h2 className="text-2xl font-bold mb-4">{scene.headline}</h2>
+                  <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">{scene.headline}</h2>
                 )}
-                <p className="text-lg leading-relaxed whitespace-pre-line">
+                <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">
                   {scene.text || scene.script_text || ''}
                 </p>
               </Card>
             </div>
 
             {/* Navigation */}
-            <div className="border-t bg-card px-4 py-3 flex items-center justify-between">
+            <div className="border-t bg-card px-4 py-3 flex items-center justify-between shrink-0">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handlePrevious}
                 disabled={currentScene === 0}
+                className="flex-1 sm:flex-initial"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
+                <span className="hidden sm:inline">Previous</span>
+                <span className="sm:hidden">Prev</span>
               </Button>
               
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs md:text-sm text-muted-foreground mx-4 text-center">
                 Scene {currentScene + 1} of {scenes.length}
               </span>
               
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleNext}
                 disabled={currentScene >= scenes.length - 1}
+                className="flex-1 sm:flex-initial"
               >
-                Next
+                <span className="hidden sm:inline">Next</span>
+                <span className="sm:hidden">Next</span>
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
