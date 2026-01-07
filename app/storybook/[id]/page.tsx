@@ -133,14 +133,20 @@ export default function StorybookViewerPage() {
               {/* Text Overlay - Centered */}
               {(scene.text || scene.script_text) && (
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-6 pb-8">
-                  <div className="space-y-2 text-center max-w-2xl mx-auto">
+                  <div className="text-center max-w-2xl mx-auto">
                     {(scene.text || scene.script_text || '')
-                      .split('\n')
-                      .filter(line => line.trim())
-                      .map((line, idx) => (
-                        <p key={idx} className="text-white text-lg leading-relaxed font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                          {line}
-                        </p>
+                      .split('\n\n')
+                      .map((stanza, stanzaIdx) => (
+                        <div key={stanzaIdx} className={stanzaIdx > 0 ? 'mt-4' : ''}>
+                          {stanza
+                            .split('\n')
+                            .filter(line => line.trim())
+                            .map((line, lineIdx) => (
+                              <p key={lineIdx} className="text-white text-lg leading-relaxed font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                                {line}
+                              </p>
+                            ))}
+                        </div>
                       ))}
                   </div>
                 </div>

@@ -145,9 +145,22 @@ export default function SharedStorybookPage() {
                   <h2 className="text-xl md:text-2xl font-bold mb-2 block">{scene.headline}</h2>
                 )}
                 {(scene.text || scene.script_text) && (
-                  <p className="text-base md:text-lg leading-relaxed whitespace-pre-line">
-                    {scene.text || scene.script_text}
-                  </p>
+                  <div className="text-base md:text-lg leading-relaxed">
+                    {(scene.text || scene.script_text || '')
+                      .split('\n\n')
+                      .map((stanza, stanzaIdx) => (
+                        <div key={stanzaIdx} className={stanzaIdx > 0 ? 'mt-4' : ''}>
+                          {stanza
+                            .split('\n')
+                            .filter(line => line.trim())
+                            .map((line, lineIdx) => (
+                              <p key={lineIdx} className="mb-1">
+                                {line}
+                              </p>
+                            ))}
+                        </div>
+                      ))}
+                  </div>
                 )}
               </Card>
             </div>
