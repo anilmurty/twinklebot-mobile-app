@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, Check, X } from "lucide-react"
+import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
