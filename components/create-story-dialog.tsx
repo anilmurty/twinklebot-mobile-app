@@ -85,12 +85,31 @@ export function CreateStoryDialog({
     }
   }
 
-  const fetchLooks = async (templateId: number) => {
-    if (!characterGender) return
+  const fetchLooks = async (templateId: number, gender?: 'male' | 'female') => {
+    // Use provided gender or fall back to characterGender state
+    const genderToUse = gender || characterGender
+    if (!genderToUse) {
+      // If no gender available, try to fetch it
+      try {
+        const character = await charactersApi.get(characterId)
+        const fetchedGender = character.gender as 'male' | 'female'
+        if (fetchedGender) {
+          setCharacterGender(fetchedGender)
+          return await fetchLooks(templateId, fetchedGender)
+        } else {
+          setError("Failed to determine character gender")
+          return
+        }
+      } catch (err: any) {
+        console.error("Failed to fetch character gender:", err)
+        setError("Failed to load character data")
+        return
+      }
+    }
     
     try {
       setLoadingLooks(true)
-      const data = await characterLooksApi.list(templateId, characterGender)
+      const data = await characterLooksApi.list(templateId, genderToUse)
       setLooks(data.looks || [])
       // Auto-select "original" if available, otherwise first look
       const originalLook = data.looks?.find((l: any) => l.is_original)
@@ -113,7 +132,7 @@ export function CreateStoryDialog({
       return
     }
     
-    // Fetch looks for this template
+    // Fetch looks for this template (will fetch gender if needed)
     await fetchLooks(selectedTemplate)
     setCurrentStep("look-selection")
   }
