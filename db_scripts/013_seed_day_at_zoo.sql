@@ -97,7 +97,7 @@ BEGIN
       {
         "scene_number": 9,
         "headline": "The Gift Shop",
-        "script_text": "At the gift shop, it's hard to choose,\nSo many treasures from the zoo!\n\n[Name] hugs a soft penguin tight,\nA cuddly reminder of a day just right.",
+        "script_text": "At the gift shop, it''s hard to choose,\nSo many treasures from the zoo!\n\n[Name] hugs a soft penguin tight,\nA cuddly reminder of a day just right.",
         "base_photo": "gift-shop.png",
         "child_photo": "left",
         "insertion_prompt": "add the child, hugging a penguin stuffed toy like the ones on the shelf affectionately with touching it with their face. keep evetyhing else the same make it look natunal as if the photo was taken with the child in it",
@@ -106,7 +106,7 @@ BEGIN
       {
         "scene_number": 10,
         "headline": "What a day",
-        "script_text": "The sun dips low—it's time to go,\nFeet feel tired but hearts still glow.\n\nWith ice cream in hand and a sleepy smile,\n[Name] walks home dreaming all the while.",
+        "script_text": "The sun dips low—it''s time to go,\nFeet feel tired but hearts still glow.\n\nWith ice cream in hand and a sleepy smile,\n[Name] walks home dreaming all the while.",
         "base_photo": "exit.png",
         "child_photo": "front",
         "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
