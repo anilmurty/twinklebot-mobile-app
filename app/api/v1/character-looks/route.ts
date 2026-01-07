@@ -38,7 +38,37 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    return NextResponse.json({ looks: looks || [] })
+    // Convert relative image paths to full Supabase Storage URLs
+    const { getStorageUrl } = await import('@/lib/supabase/storage')
+    const looksWithUrls = (looks || []).map((look: any) => {
+      const result = { ...look }
+      
+      // Convert reference_image_url (model image shown in UI)
+      if (look.reference_image_url) {
+        if (look.reference_image_url.startsWith('/') || !look.reference_image_url.startsWith('http')) {
+          // Relative path - convert to Supabase Storage URL
+          const storagePath = look.reference_image_url.startsWith('/') 
+            ? look.reference_image_url.slice(1) 
+            : look.reference_image_url
+          result.reference_image_url = getStorageUrl('story-template-assets', storagePath)
+        }
+      }
+      
+      // Convert attire_image_url (sent to Replicate)
+      if (look.attire_image_url) {
+        if (look.attire_image_url.startsWith('/') || !look.attire_image_url.startsWith('http')) {
+          // Relative path - convert to Supabase Storage URL
+          const storagePath = look.attire_image_url.startsWith('/') 
+            ? look.attire_image_url.slice(1) 
+            : look.attire_image_url
+          result.attire_image_url = getStorageUrl('story-template-assets', storagePath)
+        }
+      }
+      
+      return result
+    })
+
+    return NextResponse.json({ looks: looksWithUrls })
   } catch (error: any) {
     console.error('Error fetching character looks:', error)
     return NextResponse.json(
