@@ -136,7 +136,18 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
         })
 
       if (uploadError) {
-        throw new Error(`Failed to upload photo: ${uploadError.message}`)
+        console.error('Upload error details:', uploadError)
+        // Try to parse error message if it's JSON
+        let errorMessage = uploadError.message
+        try {
+          if (typeof uploadError === 'string' && uploadError.includes('{')) {
+            const parsed = JSON.parse(uploadError)
+            errorMessage = parsed.error || parsed.message || uploadError.message
+          }
+        } catch {
+          // Not JSON, use original message
+        }
+        throw new Error(`Failed to upload photo: ${errorMessage}`)
       }
 
       // Get the public URL (we'll move it to final location on server)

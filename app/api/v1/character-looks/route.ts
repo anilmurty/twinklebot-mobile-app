@@ -45,23 +45,41 @@ export async function GET(request: NextRequest) {
       
       // Convert reference_image_url (model image shown in UI)
       if (look.reference_image_url) {
-        if (look.reference_image_url.startsWith('/') || !look.reference_image_url.startsWith('http')) {
+        if (look.reference_image_url.startsWith('/') || (!look.reference_image_url.startsWith('http') && !look.reference_image_url.includes('supabase.co'))) {
           // Relative path - convert to Supabase Storage URL
           const storagePath = look.reference_image_url.startsWith('/') 
             ? look.reference_image_url.slice(1) 
             : look.reference_image_url
-          result.reference_image_url = getStorageUrl('story-template-assets', storagePath)
+          try {
+            result.reference_image_url = getStorageUrl('story-template-assets', storagePath)
+            console.log(`[Look ${look.id}] Converted reference_image_url: ${look.reference_image_url} -> ${result.reference_image_url}`)
+          } catch (err: any) {
+            console.error(`[Look ${look.id}] Failed to convert reference_image_url:`, err)
+            // Keep original URL if conversion fails
+          }
+        } else {
+          // Already a full URL, use as-is
+          result.reference_image_url = look.reference_image_url
         }
       }
       
       // Convert attire_image_url (sent to Replicate)
       if (look.attire_image_url) {
-        if (look.attire_image_url.startsWith('/') || !look.attire_image_url.startsWith('http')) {
+        if (look.attire_image_url.startsWith('/') || (!look.attire_image_url.startsWith('http') && !look.attire_image_url.includes('supabase.co'))) {
           // Relative path - convert to Supabase Storage URL
           const storagePath = look.attire_image_url.startsWith('/') 
             ? look.attire_image_url.slice(1) 
             : look.attire_image_url
-          result.attire_image_url = getStorageUrl('story-template-assets', storagePath)
+          try {
+            result.attire_image_url = getStorageUrl('story-template-assets', storagePath)
+            console.log(`[Look ${look.id}] Converted attire_image_url: ${look.attire_image_url} -> ${result.attire_image_url}`)
+          } catch (err: any) {
+            console.error(`[Look ${look.id}] Failed to convert attire_image_url:`, err)
+            // Keep original URL if conversion fails
+          }
+        } else {
+          // Already a full URL, use as-is
+          result.attire_image_url = look.attire_image_url
         }
       }
       
