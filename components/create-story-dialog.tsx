@@ -424,7 +424,13 @@ export function CreateStoryDialog({
                             className="sr-only"
                           />
                           <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
-                            {look.reference_image_url ? (
+                            {look.is_original && characterPhotoUrl ? (
+                              <img
+                                src={characterPhotoUrl}
+                                alt={look.look_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : look.reference_image_url ? (
                               <img
                                 src={look.reference_image_url}
                                 alt={look.look_name}
