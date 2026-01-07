@@ -282,10 +282,11 @@ export function StorybooksTab() {
               const isPreviewPending = storybook.status === "preview_pending"
               const isGeneratingPreview = isPreviewPending && sceneCount === 0 // Preview pending but no scenes yet = generating
               const isPreviewReady = isPreviewPending && sceneCount > 0 // Preview pending with scenes = ready
-              // Use template thumbnail when generating preview to show placeholder
+              // Use template cover image (thumbnail_url) when generating preview
+              // Fallback to placeholder if not found
               // Otherwise use scene image or template thumbnail
               const thumbnailUrl = isGeneratingPreview 
-                ? storybook.template?.thumbnail_url || storybook.thumbnail_url || storybook.first_scene_base_image
+                ? storybook.thumbnail_url || storybook.template?.thumbnail_url || storybook.first_scene_base_image
                 : storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
               const overlay = getThumbnailOverlay(storybook.title)
 
