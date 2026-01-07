@@ -774,6 +774,19 @@ export function StorybooksTab() {
                 )}
               </Button>
             </div>
+            <div className="pt-2 border-t">
+              <Button
+                variant="destructive"
+                onClick={handleRevokeShare}
+                className="w-full"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Revoke Share Link
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2 text-center">
+                Revoking will make this link invalid. Anyone who already has the link won't be able to access the storybook.
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
