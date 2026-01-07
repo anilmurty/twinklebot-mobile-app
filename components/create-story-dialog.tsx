@@ -423,12 +423,24 @@ export function CreateStoryDialog({
                             id={`look-${look.id}`}
                             className="sr-only"
                           />
-                          {look.reference_image_url && (
+                          {look.reference_image_url ? (
                             <img
                               src={look.reference_image_url}
                               alt={look.look_name}
                               className="w-full aspect-[3/4] object-cover rounded-lg"
+                              onError={(e) => {
+                                console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                              onLoad={() => {
+                                console.log(`Successfully loaded image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                              }}
                             />
+                          ) : (
+                            <div className="w-full aspect-[3/4] bg-secondary rounded-lg flex items-center justify-center">
+                              <span className="text-xs text-muted-foreground">No image</span>
+                            </div>
                           )}
                           <div className="text-center">
                             <div className="font-medium">{look.look_name}</div>

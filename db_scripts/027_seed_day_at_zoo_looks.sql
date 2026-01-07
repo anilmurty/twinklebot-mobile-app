@@ -49,8 +49,8 @@ BEGIN
     'male',
     'Casual',
     look_order,
-    'looks/zoo-boy-casual-model.png',
-    'looks/zoo-boy-casual-attire.png',
+    'day-at-the-zoo/looks/zoo-boy-casual-model.png',
+    'day-at-the-zoo/looks/zoo-boy-casual-attire.png',
     'dress this boy in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
     false,
     true
@@ -78,8 +78,8 @@ BEGIN
     'male',
     'Denim',
     look_order,
-    'looks/zoo-boy-denim-model.png',
-    'looks/zoo-boy-denim-attire.png',
+    'day-at-the-zoo/looks/zoo-boy-denim-model.png',
+    'day-at-the-zoo/looks/zoo-boy-denim-attire.png',
     'dress this boy in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
     false,
     true
@@ -107,8 +107,8 @@ BEGIN
     'male',
     'Safari',
     look_order,
-    'looks/zoo-boy-safari-model.png',
-    'looks/zoo-boy-safari-attire.png',
+    'day-at-the-zoo/looks/zoo-boy-safari-model.png',
+    'day-at-the-zoo/looks/zoo-boy-safari-attire.png',
     'dress this boy in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
     false,
     true
@@ -136,7 +136,7 @@ BEGIN
     'male',
     'Original',
     look_order,
-    'looks/zoo-boy-casual-model.png', -- Placeholder - will use uploaded photo
+    'day-at-the-zoo/looks/zoo-boy-casual-model.png', -- Placeholder - will use uploaded photo
     '', -- Not used for original
     '', -- Not used for original
     true,
@@ -164,8 +164,8 @@ BEGIN
     'female',
     'Casual',
     look_order,
-    'looks/zoo-girl-casual-model.png',
-    'looks/zoo-girl-casual-attire.png',
+    'day-at-the-zoo/looks/zoo-girl-casual-model.png',
+    'day-at-the-zoo/looks/zoo-girl-casual-attire.png',
     'dress this girl in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
     false,
     true
@@ -193,8 +193,8 @@ BEGIN
     'female',
     'Denim',
     look_order,
-    'looks/zoo-girl-denim-model.png',
-    'looks/zoo-girl-denim-attire.png',
+    'day-at-the-zoo/looks/zoo-girl-denim-model.png',
+    'day-at-the-zoo/looks/zoo-girl-denim-attire.png',
     'dress this girl in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
     false,
     true
@@ -222,8 +222,8 @@ BEGIN
     'female',
     'Safari',
     look_order,
-    'looks/zoo-girl-safari-model.png',
-    'looks/zoo-girl-safari-attire.png',
+    'day-at-the-zoo/looks/zoo-girl-safari-model.png',
+    'day-at-the-zoo/looks/zoo-girl-safari-attire.png',
     'dress this girl in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
     false,
     true
@@ -251,7 +251,7 @@ BEGIN
     'female',
     'Original',
     look_order,
-    'looks/zoo-girl-casual-model.png', -- Placeholder - will use uploaded photo
+    'day-at-the-zoo/looks/zoo-girl-casual-model.png', -- Placeholder - will use uploaded photo
     '', -- Not used for original
     '', -- Not used for original
     true,
