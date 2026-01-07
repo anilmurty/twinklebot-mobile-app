@@ -114,8 +114,15 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
       const { createClient } = await import('@/lib/supabase/client-browser')
       const supabase = createClient()
       
+      if (!supabase) {
+        throw new Error('Supabase client not available. Please check your configuration.')
+      }
+      
       // Get current user
-      const { data: { user: currentUser } } = await supabase.auth.getUser()
+      const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser()
+      if (authError) {
+        throw new Error(`Authentication error: ${authError.message}`)
+      }
       if (!currentUser) {
         throw new Error('You must be logged in to create a character')
       }
