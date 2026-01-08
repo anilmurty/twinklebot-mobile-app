@@ -174,8 +174,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
     try {
       setError(null)
-      setCurrentStep("generating-preview")
-      setPreviewProgress(0)
+    setCurrentStep("generating-preview")
+    setPreviewProgress(0)
 
       // Step 1: Create storybook with selected look
       setPreviewProgress(10)
@@ -528,14 +528,14 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                       onClick={() => setShowFullImage(true)}
                     />
                   ) : selectedCharacterData ? (
-                    <img
-                      src={selectedCharacterData.front_photo_url || "/placeholder.svg"}
-                      alt="Story preview"
-                      className="w-full h-full object-cover opacity-80"
-                    />
+                  <img
+                    src={selectedCharacterData.front_photo_url || "/placeholder.svg"}
+                    alt="Story preview"
+                    className="w-full h-full object-cover opacity-80"
+                  />
                   ) : null}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                    <div className="text-white">
+                  <div className="text-white">
                       <h3 className="text-xl font-bold mb-1">{story.title}</h3>
                       <p className="text-xs opacity-90">Starring {selectedCharacterData?.name}</p>
                     </div>
@@ -620,64 +620,64 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                                 id={`plan-${plan.id}`}
                                 className="mt-1"
                               />
-                              <div className="flex-1 space-y-2">
-                                <div className="flex items-center gap-2">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
                                   <h4 className="font-bold text-lg">{plan.name}</h4>
                                   {isSubscription && (
-                                    <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                                      Best Value
-                                    </span>
+                        <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                          Best Value
+                        </span>
                                   )}
-                                </div>
+                      </div>
                                 {plan.description && (
                                   <p className="text-sm text-muted-foreground">{plan.description}</p>
                                 )}
                                 {features.length > 0 && (
-                                  <ul className="text-sm space-y-1 text-muted-foreground">
+                      <ul className="text-sm space-y-1 text-muted-foreground">
                                     {features.map((feature: string, idx: number) => (
                                       <li key={idx} className="flex items-start gap-2">
-                                        <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                                         <span>{feature}</span>
-                                      </li>
+                        </li>
                                     ))}
-                                  </ul>
+                      </ul>
                                 )}
-                                <div className="pt-2">
+                      <div className="pt-2">
                                   <span className="text-2xl font-bold text-primary">${price}</span>
                                   {plan.billing_interval && (
                                     <span className="text-sm text-muted-foreground ml-1">
                                       /{plan.billing_interval}
                                     </span>
                                   )}
-                                </div>
-                              </div>
+                      </div>
+                    </div>
                             </label>
-                            <Button
+                  <Button
                               className={`w-full mt-4 ${
                                 isSubscription
                                   ? 'bg-primary hover:bg-primary/90'
                                   : 'hover:bg-accent hover:border-primary'
                               }`}
                               variant={isSubscription ? 'default' : 'outline'}
-                              size="lg"
+                    size="lg"
                               onClick={() => handleCompletePurchase(plan.id)}
                               disabled={isSubmitting || !isSelected}
-                            >
-                              {isSubmitting ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  Processing...
-                                </>
-                              ) : (
-                                <>
-                                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4 mr-2" />
                                   {isSubscription
                                     ? 'Subscribe & Generate Full Story'
                                     : 'Purchase & Generate Full Story'}
-                                </>
-                              )}
-                            </Button>
-                          </Card>
+                      </>
+                    )}
+                  </Button>
+                </Card>
                         )
                       })}
                     </div>

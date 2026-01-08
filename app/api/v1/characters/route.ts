@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { normalizeCharacterName } from '@/lib/utils/update-storybook-names'
 
 /**
  * GET /api/v1/characters
@@ -100,6 +101,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Normalize name: first letter uppercase, rest lowercase
+    const normalizedName = normalizeCharacterName(name)
+
     if (!gender || !['male', 'female'].includes(gender)) {
       return NextResponse.json(
         { error: 'Gender is required and must be "male" or "female"' },
@@ -152,27 +156,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if character name already exists for this user
-    const { data: existing } = await supabase
-      .from('characters')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('name', name)
-      .single()
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Character name already exists' },
-        { status: 409 }
-      )
-    }
-
-    // Create character record first
+    // Create character record first (names are no longer unique)
     const { data: character, error: createError } = await supabase
       .from('characters')
       .insert({
         user_id: userId,
-        name,
+        name: normalizedName,
         gender,
         front_photo_url: '', // Will update after moving file
         // left_photo_url and right_photo_url are nullable and not used

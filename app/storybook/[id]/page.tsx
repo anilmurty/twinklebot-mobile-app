@@ -271,7 +271,7 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handlePrevious}
                   disabled={currentScene === 0}
-                  className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
+                  className="cursor-pointer absolute left-0 md:left-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
                   aria-label="Previous scene"
                 >
                   <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -281,7 +281,7 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handleNext}
                   disabled={currentScene === scenes.length - 1}
-                  className="absolute right-0 md:right-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
+                  className="cursor-pointer absolute right-0 md:right-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
                   aria-label="Next scene"
                 >
                   <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />

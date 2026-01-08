@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, Sparkles, Loader2, Pencil } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
@@ -9,6 +9,9 @@ import { CreateCharacterDialog } from "@/components/create-character-dialog"
 import { CreateStoryDialog } from "@/components/create-story-dialog"
 import { charactersApi } from "@/lib/api-client"
 import { ConfirmDialog } from "@/components/confirm-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 interface Character {
   id: string
@@ -25,6 +28,9 @@ export function CharactersTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
+  const [renameCharacter, setRenameCharacter] = useState<{ id: string; name: string } | null>(null)
+  const [newName, setNewName] = useState("")
+  const [isRenaming, setIsRenaming] = useState(false)
   const [createStoryForCharacter, setCreateStoryForCharacter] = useState<{
     id: string
     name: string
@@ -77,6 +83,38 @@ export function CharactersTab() {
       alert(`Failed to delete character: ${err.message}`)
     } finally {
       setDeleteConfirm(null)
+    }
+  }
+
+  const handleRenameClick = (character: Character) => {
+    setRenameCharacter({ id: character.id, name: character.name })
+    setNewName(character.name)
+  }
+
+  const handleRenameConfirm = async () => {
+    if (!renameCharacter || !newName.trim()) return
+
+    // Validate name
+    if (newName.length > 20 || !/^[a-zA-Z0-9]+$/.test(newName)) {
+      setError("Name must be 1-20 alphanumeric characters")
+      return
+    }
+
+    setIsRenaming(true)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('name', newName.trim())
+      
+      await charactersApi.update(renameCharacter.id, formData)
+      await fetchCharacters() // Refresh list
+      setRenameCharacter(null)
+      setNewName("")
+    } catch (err: any) {
+      setError(err.message || "Failed to rename character")
+    } finally {
+      setIsRenaming(false)
     }
   }
 
@@ -153,14 +191,26 @@ export function CharactersTab() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-center gap-2">
                         <h3 className="font-bold text-2xl md:text-3xl break-words">{character.name}</h3>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteClick(character.id, character.name)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRenameClick(character)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent"
+                            title="Rename character"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteClick(character.id, character.name)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Delete character"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                       <p className="text-sm md:text-base text-muted-foreground">
                         Created{" "}
@@ -217,6 +267,80 @@ export function CharactersTab() {
         onConfirm={handleDeleteConfirm}
         variant="destructive"
       />
+
+      {/* Rename Character Dialog */}
+      <Dialog open={!!renameCharacter} onOpenChange={(open) => {
+        if (!open) {
+          setRenameCharacter(null)
+          setNewName("")
+          setError(null)
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Character</DialogTitle>
+            <DialogDescription>
+              Renaming this character will update their name in all existing storybooks.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="character-name">Character Name</Label>
+              <Input
+                id="character-name"
+                value={newName}
+                onChange={(e) => {
+                  setNewName(e.target.value)
+                  setError(null)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isRenaming && newName.trim()) {
+                    handleRenameConfirm()
+                  }
+                }}
+                placeholder="Enter character name"
+                maxLength={20}
+                disabled={isRenaming}
+                autoFocus
+              />
+              <p className="text-xs text-muted-foreground">
+                1-20 alphanumeric characters. First letter will be capitalized.
+              </p>
+            </div>
+            {error && (
+              <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRenameCharacter(null)
+                  setNewName("")
+                  setError(null)
+                }}
+                disabled={isRenaming}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleRenameConfirm}
+                disabled={isRenaming || !newName.trim() || newName.trim() === renameCharacter?.name}
+              >
+                {isRenaming ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Rename"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

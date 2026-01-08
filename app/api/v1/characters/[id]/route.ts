@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { normalizeCharacterName, updateStorybooksForCharacter } from '@/lib/utils/update-storybook-names'
 
 /**
  * GET /api/v1/characters/:id
@@ -85,23 +86,41 @@ export async function PATCH(
         )
       }
 
-      // Check if name already exists (excluding current character)
-      const { data: nameExists } = await supabase
+      // Normalize name: first letter uppercase, rest lowercase
+      const normalizedName = normalizeCharacterName(name)
+      
+      // Get current character name before updating
+      const { data: currentCharacter } = await supabase
         .from('characters')
-        .select('id')
-        .eq('user_id', user.data.user?.id)
-        .eq('name', name)
-        .neq('id', id)
+        .select('name')
+        .eq('id', id)
         .single()
 
-      if (nameExists) {
-        return NextResponse.json(
-          { error: 'Character name already exists' },
-          { status: 409 }
-        )
-      }
+      const oldName = currentCharacter?.name || ''
+      
+      // Only update if name actually changed
+      if (normalizedName !== oldName) {
+        updates.name = normalizedName
 
-      updates.name = name
+        // Update all storybooks that use this character
+        try {
+          const { updated, errors } = await updateStorybooksForCharacter(
+            id,
+            oldName,
+            normalizedName
+          )
+          
+          if (errors.length > 0) {
+            console.error('Errors updating storybooks:', errors)
+            // Continue with character update even if some storybooks failed
+          }
+          
+          console.log(`Updated ${updated} storybook(s) for character ${id}`)
+        } catch (err: any) {
+          console.error('Failed to update storybooks:', err)
+          // Continue with character update even if storybook update fails
+        }
+      }
     }
 
     // Upload new photo if provided (only front photo is supported)
