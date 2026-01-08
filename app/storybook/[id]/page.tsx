@@ -156,25 +156,28 @@ export default function StorybookViewerPage() {
       {/* Contained Frame */}
       <div 
         id="storybook-container"
-        className={`mx-auto w-full max-w-4xl relative overflow-hidden rounded-lg shadow-2xl bg-black ${
+        className={`mx-auto w-full max-w-4xl relative rounded-lg shadow-2xl bg-black ${
           isFullscreen 
-            ? 'fixed inset-0 z-50 rounded-none h-screen' 
-            : 'aspect-[9/16] md:aspect-[3/4] lg:aspect-[4/3] max-h-[90vh]'
+            ? 'fixed inset-0 z-50 rounded-none h-screen overflow-hidden' 
+            : 'overflow-visible'
         }`}
         style={isFullscreen ? { maxWidth: 'none' } : {}}
       >
         {scene ? (
           <>
-            {/* Scene Image - Full Screen */}
-            <div className="absolute inset-0">
+            {/* Scene Image - Preserve aspect ratio, show full image without cropping */}
+            <div className={`relative ${isFullscreen ? 'absolute inset-0' : 'w-full flex items-center justify-center min-h-0'}`}>
               <img
                 src={scene.image_url || "/placeholder.svg"}
                 alt={`Scene ${currentScene + 1}`}
-                className="w-full h-full object-cover"
+                className={`${isFullscreen ? 'w-full h-full object-cover' : 'w-full h-auto object-contain max-h-[90vh]'}`}
+                style={isFullscreen ? {} : { display: 'block', maxWidth: '100%' }}
               />
               
+              {/* Overlay Container - positioned relative to image */}
+              <div className={`absolute inset-0 ${isFullscreen ? '' : 'pointer-events-none'}`}>
               {/* Top Header with Headline */}
-              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10">
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10 pointer-events-auto">
                 <div className="flex items-center justify-between gap-2 md:gap-4">
                   <Button 
                     variant="ghost" 
@@ -239,6 +242,7 @@ export default function StorybookViewerPage() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
 
             {/* Navigation Arrows */}
@@ -248,7 +252,7 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handlePrevious}
                   disabled={currentScene === 0}
-                  className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg"
+                  className={`absolute ${isFullscreen ? 'left-2 md:left-4' : 'left-0 md:left-2'} top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto`}
                   aria-label="Previous scene"
                 >
                   <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -258,7 +262,7 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handleNext}
                   disabled={currentScene === scenes.length - 1}
-                  className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg"
+                  className={`absolute ${isFullscreen ? 'right-2 md:right-4' : 'right-0 md:right-2'} top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto`}
                   aria-label="Next scene"
                 >
                   <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
