@@ -179,8 +179,8 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       return exists
     }
 
-    // Helper function to generate a single scene
-    const generateScene = async (sceneTemplate: SceneTemplate, attempt: number = 1): Promise<void> => {
+    // Helper function to generate a single scene (first attempt only - no retries)
+    const generateSceneFirstAttempt = async (sceneTemplate: SceneTemplate): Promise<void> => {
       // Check database first to avoid duplicate predictions
       const alreadyExists = await checkSceneExists(sceneTemplate.scene_number)
       if (alreadyExists) {
@@ -188,8 +188,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         return
       }
 
-      try {
-      console.log(`Generating scene ${sceneTemplate.scene_number} (attempt ${attempt}/3)`)
+      console.log(`Generating scene ${sceneTemplate.scene_number} (first attempt)`)
 
       // Validate required fields
       if (!sceneTemplate.base_photo || sceneTemplate.base_photo.trim() === '') {
@@ -457,14 +456,24 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       if (!updateSuccess) {
         throw new Error(`Failed to update scene ${sceneTemplate.scene_number} after ${maxUpdateAttempts} attempts due to race conditions`)
       }
+    }
+
+    // Helper function to retry a failed scene generation (sequential, not parallel)
+    const retrySceneGeneration = async (sceneTemplate: SceneTemplate, attempt: number): Promise<void> => {
+      console.log(`Retrying scene ${sceneTemplate.scene_number} (attempt ${attempt}/3)`)
+      
+      // Exponential backoff before retry
+      await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt - 1) * 1000))
+      
+      try {
+        // Re-run the generation logic
+        await generateSceneFirstAttempt(sceneTemplate)
       } catch (error: any) {
-        console.error(`Scene ${sceneTemplate.scene_number} attempt ${attempt} failed:`, error.message)
+        console.error(`Scene ${sceneTemplate.scene_number} retry attempt ${attempt} failed:`, error.message)
         
-        // Retry logic: up to 3 attempts
         if (attempt < 3) {
-          // Exponential backoff
-          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, attempt) * 1000))
-          return generateScene(sceneTemplate, attempt + 1)
+          // Try again
+          return retrySceneGeneration(sceneTemplate, attempt + 1)
         } else {
           // All retries failed
           throw new Error(`Failed to generate scene ${sceneTemplate.scene_number} after 3 attempts: ${error.message}`)
@@ -472,36 +481,56 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       }
     }
 
-    // Generate all scenes in parallel
-    console.log(`\n=== STARTING PARALLEL SCENE GENERATION ===`)
+    // Generate all scenes in parallel (first attempt only)
+    console.log(`\n=== STARTING PARALLEL SCENE GENERATION (FIRST ATTEMPT) ===`)
     console.log(`Generating ${scenesToGenerate.length} scenes concurrently...`)
     if (isResumingFromPreview && hasPreviewScene) {
       console.log(`[RESUME] Skipping preview scene (scene ${existingScenes[0]?.scene_number})`)
     }
     
-    const scenePromises = scenesToGenerate.map(sceneTemplate => generateScene(sceneTemplate))
+    const scenePromises = scenesToGenerate.map(sceneTemplate => generateSceneFirstAttempt(sceneTemplate))
     const results = await Promise.allSettled(scenePromises)
     
-    // Check for failures
+    // Check for failures - only retry failed scenes sequentially
     const failures = results
-      .map((result, index) => ({ result, sceneNumber: scenesToGenerate[index].scene_number }))
+      .map((result, index) => ({ 
+        result, 
+        sceneTemplate: scenesToGenerate[index],
+        sceneNumber: scenesToGenerate[index].scene_number 
+      }))
       .filter(({ result }) => result.status === 'rejected')
 
+    // Retry failed scenes sequentially (not in parallel)
     if (failures.length > 0) {
-      const errorMessages = failures.map(({ result, sceneNumber }) => 
-        `Scene ${sceneNumber}: ${result.status === 'rejected' ? result.reason?.message || 'Unknown error' : ''}`
-      ).join('\n')
+      console.log(`\n=== RETRYING FAILED SCENES SEQUENTIALLY ===`)
+      console.log(`${failures.length} scene(s) failed on first attempt, retrying sequentially...`)
       
-      await supabaseAdmin
-        .from('storybooks')
-        .update({
-          status: 'failed',
-          error_message: `Failed to generate ${failures.length} scene(s):\n${errorMessages}`,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', storybookId)
+      const retryErrors: string[] = []
+      
+      for (const { sceneTemplate, sceneNumber, result } of failures) {
+        try {
+          console.log(`\nRetrying scene ${sceneNumber}...`)
+          await retrySceneGeneration(sceneTemplate, 2) // Start at attempt 2 (first was attempt 1)
+          console.log(`✅ Scene ${sceneNumber} succeeded on retry`)
+        } catch (retryError: any) {
+          console.error(`❌ Scene ${sceneNumber} failed after all retries:`, retryError.message)
+          retryErrors.push(`Scene ${sceneNumber}: ${retryError.message}`)
+        }
+      }
+      
+      if (retryErrors.length > 0) {
+        const errorMessages = retryErrors.join('\n')
+        await supabaseAdmin
+          .from('storybooks')
+          .update({
+            status: 'failed',
+            error_message: `Failed to generate ${retryErrors.length} scene(s) after retries:\n${errorMessages}`,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', storybookId)
 
-      throw new Error(`Failed to generate ${failures.length} scene(s)`)
+        throw new Error(`Failed to generate ${retryErrors.length} scene(s) after retries`)
+      }
     }
 
     // Verify all scenes exist in database before marking as complete
