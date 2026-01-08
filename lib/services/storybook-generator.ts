@@ -227,8 +227,22 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       // Create signed URL (valid for 1 hour) for Replicate to access
       characterVariationUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
 
-      // Construct base photo path
-      const basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
+      // Construct base photo path - extract folder from template thumbnail_url
+      // thumbnail_url format: "/counting-general/cover.png" -> folder is "counting-general"
+      let basePhotoPath: string
+      if (template.thumbnail_url && template.thumbnail_url.includes('/')) {
+        const thumbnailParts = template.thumbnail_url.split('/')
+        if (thumbnailParts.length >= 2) {
+          const folder = thumbnailParts[1] // Extract folder name (e.g., "counting-general" or "day-at-the-zoo")
+          basePhotoPath = `/${folder}/${sceneTemplate.base_photo}`
+        } else {
+          // Fallback: hardcode for "Day at the Zoo" template
+          basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
+        }
+      } else {
+        // Fallback: hardcode for "Day at the Zoo" template
+        basePhotoPath = `/day-at-the-zoo/${sceneTemplate.base_photo}`
+      }
 
       console.log(`\n=== SCENE ${sceneTemplate.scene_number} GENERATION ===`)
       console.log(`Character: ${character.name}`)
