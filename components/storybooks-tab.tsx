@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X } from "lucide-react"
+import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Download } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -150,6 +150,83 @@ export function StorybooksTab() {
 
   const handleReadStorybook = (id: string) => {
     window.location.href = `/storybook/${id}`
+  }
+
+  const handleDownloadStorybook = async (storybook: Storybook) => {
+    try {
+      // Fetch full storybook data with all scenes
+      const fullStorybook = await storybooksApi.get(storybook.id)
+      if (!fullStorybook.scenes || fullStorybook.scenes.length === 0) {
+        setError("No scenes available to download")
+        return
+      }
+
+      // Sort scenes by scene_number
+      const sortedScenes = [...fullStorybook.scenes].sort((a: any, b: any) => 
+        (a.scene_number || 0) - (b.scene_number || 0)
+      )
+
+      // Create a text file with story content
+      const storyText = [
+        `Title: ${fullStorybook.title}`,
+        `Starring: ${fullStorybook.character_name}`,
+        `\n${'='.repeat(50)}\n`,
+        ...sortedScenes.map((scene: any, index: number) => {
+          const sceneNum = scene.scene_number || index + 1
+          const headline = scene.headline || `Scene ${sceneNum}`
+          const script = scene.text || scene.script_text || ''
+          return `\nScene ${sceneNum}: ${headline}\n${'-'.repeat(50)}\n${script}\n`
+        })
+      ].join('\n')
+
+      // Download all images and create a ZIP file
+      // Using dynamic import for JSZip
+      let JSZip
+      try {
+        JSZip = (await import('jszip')).default
+      } catch (err) {
+        setError("JSZip library is required for downloads. Please install it: npm install jszip")
+        return
+      }
+      const zip = new JSZip()
+
+      // Add story text file
+      zip.file(`${fullStorybook.title.replace(/[^a-z0-9]/gi, '_')}_story.txt`, storyText)
+
+      // Download and add all scene images
+      const imagePromises = sortedScenes.map(async (scene: any, index: number) => {
+        if (!scene.image_url) return null
+        
+        try {
+          const response = await fetch(scene.image_url)
+          if (!response.ok) throw new Error(`Failed to fetch image: ${response.status}`)
+          const blob = await response.blob()
+          const sceneNum = scene.scene_number || index + 1
+          const filename = `scene-${String(sceneNum).padStart(2, '0')}.jpg`
+          zip.file(filename, blob)
+          return filename
+        } catch (err) {
+          console.error(`Failed to download scene ${scene.scene_number || index + 1}:`, err)
+          return null
+        }
+      })
+
+      await Promise.all(imagePromises)
+
+      // Generate ZIP file and trigger download
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const url = URL.createObjectURL(zipBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${fullStorybook.title.replace(/[^a-z0-9]/gi, '_')}_storybook.zip`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch (err: any) {
+      console.error("Failed to download storybook:", err)
+      setError(err.message || "Failed to download storybook")
+    }
   }
 
   const handleOpenShareModal = (storybook: Storybook) => {
@@ -401,7 +478,7 @@ export function StorybooksTab() {
                           <h3 className="font-semibold text-lg md:text-xl break-words line-clamp-2">
                             {storybook.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground break-words line-clamp-1">
+                          <p className="text-base font-bold text-foreground break-words line-clamp-1">
                             Starring: {storybook.character_name}
                           </p>
                         </div>
@@ -435,15 +512,40 @@ export function StorybooksTab() {
                               className="flex-1"
                               onClick={() => handleReadStorybook(storybook.id)}
                             >
-                              Read Now
+                              Read
                             </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleOpenShareModal(storybook)}
+                              onClick={() => handleDownloadStorybook(storybook)}
+                              className="flex-1"
                             >
-                              <Share2 className="w-4 h-4 mr-1" />
-                              <span className="hidden sm:inline">Share Link</span>
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                if (storybook.share_token) {
+                                  // Directly revoke if link exists
+                                  try {
+                                    await storybooksApi.revokeShare(storybook.id)
+                                    await fetchStorybooks()
+                                  } catch (err: any) {
+                                    console.error("Failed to revoke share link:", err)
+                                    setError(err.message || "Failed to revoke share link")
+                                  }
+                                } else {
+                                  // Open modal to create link
+                                  handleOpenShareModal(storybook)
+                                }
+                              }}
+                              className="flex-1"
+                            >
+                              <Share2 className="w-4 h-4" />
+                              <span className="hidden sm:inline ml-1">
+                                {storybook.share_token ? 'Unshare' : 'Share'}
+                              </span>
                             </Button>
                           </div>
                         </div>

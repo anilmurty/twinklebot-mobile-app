@@ -223,13 +223,21 @@ export default function SharedStorybookPage() {
                     
                     {/* Overlay Container - positioned relative to image */}
                     <div className="absolute inset-0 pointer-events-none">
-                      {/* Top Header with Headline */}
+                      {/* Top Header with Headline and Scene Counter */}
                       <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10 pointer-events-auto">
-                        {scene.headline && (
-                          <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center px-2">
-                            {highlightNumbers(scene.headline, scene.scene_number || currentScene + 1)}
-                          </h1>
-                        )}
+                        <div className="flex items-center justify-between gap-2 md:gap-4">
+                          <div className="flex-1" />
+                          {scene.headline ? (
+                            <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0">
+                              {highlightNumbers(scene.headline, scene.scene_number || currentScene + 1)}
+                            </h1>
+                          ) : (
+                            <div className="flex-1" />
+                          )}
+                          <div className="text-white text-xs md:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
+                            {currentScene + 1} / {scenes.length}
+                          </div>
+                        </div>
                       </div>
 
                       {/* Text Overlay - Centered */}
@@ -260,6 +268,31 @@ export default function SharedStorybookPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Navigation Arrows */}
+                      {scenes.length > 1 && (
+                        <>
+                          {/* Left Arrow */}
+                          <button
+                            onClick={handlePrevious}
+                            disabled={currentScene === 0}
+                            className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
+                            aria-label="Previous scene"
+                          >
+                            <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                          </button>
+
+                          {/* Right Arrow */}
+                          <button
+                            onClick={handleNext}
+                            disabled={currentScene >= scenes.length - 1}
+                            className="absolute right-0 md:right-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
+                            aria-label="Next scene"
+                          >
+                            <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -268,37 +301,6 @@ export default function SharedStorybookPage() {
                   <p>No image available</p>
                 </div>
               )}
-            </div>
-
-            {/* Navigation */}
-            <div className="border-t bg-card px-4 py-3 flex items-center justify-between shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevious}
-                disabled={currentScene === 0}
-                className="flex-1 sm:flex-initial"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Previous</span>
-                <span className="sm:hidden">Prev</span>
-              </Button>
-              
-              <span className="text-xs md:text-sm text-muted-foreground mx-4 text-center">
-                Scene {currentScene + 1} of {scenes.length}
-              </span>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNext}
-                disabled={currentScene >= scenes.length - 1}
-                className="flex-1 sm:flex-initial"
-              >
-                <span className="hidden sm:inline">Next</span>
-                <span className="sm:hidden">Next</span>
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
             </div>
           </>
         ) : (
