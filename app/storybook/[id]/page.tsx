@@ -93,6 +93,7 @@ export default function StorybookViewerPage() {
   ]
 
   // Function to highlight numbers in text for counting story
+  // Only highlights the number word that matches the current scene number
   const highlightNumbers = (text: string, sceneNumber: number): React.ReactNode => {
     if (!isCountingStory) return text
 
@@ -109,12 +110,21 @@ export default function StorybookViewerPage() {
       'Ten': '10',
     }
 
+    // Find the number word that matches the current scene number
+    const targetNumericValue = sceneNumber.toString()
+    const targetNumberWord = Object.keys(numberWords).find(
+      key => numberWords[key] === targetNumericValue
+    )
+
+    if (!targetNumberWord) return text
+
     const color = numberColors[sceneNumber - 1] || numberColors[0]
     
-    // Split text by number words and highlight them
+    // Split text by the target number word only and highlight it
     const parts: React.ReactNode[] = []
     let lastIndex = 0
-    const regex = new RegExp(`\\b(${Object.keys(numberWords).join('|')})\\b`, 'gi')
+    // Case-insensitive regex for the target number word only
+    const regex = new RegExp(`\\b(${targetNumberWord})\\b`, 'gi')
     
     let match
     let keyCounter = 0
@@ -124,30 +134,23 @@ export default function StorybookViewerPage() {
         parts.push(text.substring(lastIndex, match.index))
       }
       
-      // Add highlighted number
+      // Add highlighted number (only the target number word)
       const numberWord = match[1]
-      // Handle case-insensitive matching
-      const normalizedWord = numberWord.charAt(0).toUpperCase() + numberWord.slice(1).toLowerCase()
-      const numericValue = numberWords[normalizedWord] || numberWords[numberWord]
+      const numericValue = numberWords[targetNumberWord]
       
-      if (numericValue) {
-        parts.push(
-          <span 
-            key={`highlight-${keyCounter++}`}
-            style={{ 
-              color, 
-              fontSize: '1.2em',
-              fontWeight: 'bold',
-              textShadow: `0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)`
-            }}
-          >
-            {numberWord} ({numericValue})
-          </span>
-        )
-      } else {
-        // If no match found, just add the word as-is
-        parts.push(numberWord)
-      }
+      parts.push(
+        <span 
+          key={`highlight-${keyCounter++}`}
+          style={{ 
+            color, 
+            fontSize: '1.2em',
+            fontWeight: 'bold',
+            textShadow: `0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)`
+          }}
+        >
+          {numberWord} ({numericValue})
+        </span>
+      )
       
       lastIndex = regex.lastIndex
     }
