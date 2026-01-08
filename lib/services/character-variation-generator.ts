@@ -202,10 +202,6 @@ export async function generateCharacterVariations(
     imageInputArray = [signedBasePhotoUrl] // Just user photo
     console.log(`Using original look (no attire image)`)
   }
-  
-  // Left and Right variations: Use front variation as input, change facing direction
-  const leftPrompt = "Change this so that the child is facing right"
-  const rightPrompt = "Change this so that the child is facing left"
 
   // Log prompts for debugging
   console.log('\n=== CHARACTER VARIATION GENERATION ===')
@@ -214,10 +210,6 @@ export async function generateCharacterVariations(
   console.log(`Base photo URL: ${signedBasePhotoUrl}`)
   console.log('\n--- Front Variation Prompt ---')
   console.log(frontPrompt)
-  console.log('\n--- Left Variation Prompt ---')
-  console.log(leftPrompt)
-  console.log('\n--- Right Variation Prompt ---')
-  console.log(rightPrompt)
   console.log('=====================================\n')
 
   // Use model identifier directly - most Replicate models accept model names (e.g., "google/nano-banana-pro")
