@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2, Maximize, Minimize } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
 import { storybooksApi } from "@/lib/api-client"
 
 interface Scene {
@@ -24,6 +24,10 @@ interface Storybook {
   character_name: string
   status: string
   scenes?: Scene[]
+  template?: {
+    id: number
+    title: string
+  }
 }
 
 export default function StorybookViewerPage() {
@@ -35,7 +39,6 @@ export default function StorybookViewerPage() {
   const [currentScene, setCurrentScene] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     if (storybookId) {
@@ -69,62 +72,93 @@ export default function StorybookViewerPage() {
     }
   }
 
-  const toggleFullscreen = async () => {
-    const container = document.getElementById('storybook-container')
-    if (!container) return
+  // Check if this is the counting story
+  const isCountingStory = storybook?.template?.title?.includes('Learning to Count') || 
+                          storybook?.template?.title?.includes('Counting') ||
+                          storybook?.title?.includes('Learning to Count') ||
+                          storybook?.title?.includes('Counting')
 
-    try {
-      if (!isFullscreen) {
-        // Enter fullscreen
-        if (container.requestFullscreen) {
-          await container.requestFullscreen()
-        } else if ((container as any).webkitRequestFullscreen) {
-          await (container as any).webkitRequestFullscreen()
-        } else if ((container as any).mozRequestFullScreen) {
-          await (container as any).mozRequestFullScreen()
-        } else if ((container as any).msRequestFullscreen) {
-          await (container as any).msRequestFullscreen()
-        }
-      } else {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          await document.exitFullscreen()
-        } else if ((document as any).webkitExitFullscreen) {
-          await (document as any).webkitExitFullscreen()
-        } else if ((document as any).mozCancelFullScreen) {
-          await (document as any).mozCancelFullScreen()
-        } else if ((document as any).msExitFullscreen) {
-          await (document as any).msExitFullscreen()
-        }
+  // Color palette for number highlighting (different color per scene)
+  const numberColors = [
+    '#FF6B6B', // Red
+    '#4ECDC4', // Teal
+    '#45B7D1', // Blue
+    '#FFA07A', // Light Salmon
+    '#98D8C8', // Mint
+    '#F7DC6F', // Yellow
+    '#BB8FCE', // Purple
+    '#85C1E2', // Sky Blue
+    '#F8B739', // Orange
+    '#95A5A6', // Gray
+  ]
+
+  // Function to highlight numbers in text for counting story
+  const highlightNumbers = (text: string, sceneNumber: number): React.ReactNode => {
+    if (!isCountingStory) return text
+
+    const numberWords: { [key: string]: string } = {
+      'One': '1',
+      'Two': '2',
+      'Three': '3',
+      'Four': '4',
+      'Five': '5',
+      'Six': '6',
+      'Seven': '7',
+      'Eight': '8',
+      'Nine': '9',
+      'Ten': '10',
+    }
+
+    const color = numberColors[sceneNumber - 1] || numberColors[0]
+    
+    // Split text by number words and highlight them
+    const parts: React.ReactNode[] = []
+    let lastIndex = 0
+    const regex = new RegExp(`\\b(${Object.keys(numberWords).join('|')})\\b`, 'gi')
+    
+    let match
+    let keyCounter = 0
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before the match
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index))
       }
-    } catch (err) {
-      console.error('Error toggling fullscreen:', err)
+      
+      // Add highlighted number
+      const numberWord = match[1]
+      // Handle case-insensitive matching
+      const normalizedWord = numberWord.charAt(0).toUpperCase() + numberWord.slice(1).toLowerCase()
+      const numericValue = numberWords[normalizedWord] || numberWords[numberWord]
+      
+      if (numericValue) {
+        parts.push(
+          <span 
+            key={`highlight-${keyCounter++}`}
+            style={{ 
+              color, 
+              fontSize: '1.2em',
+              fontWeight: 'bold',
+              textShadow: `0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)`
+            }}
+          >
+            {numberWord} ({numericValue})
+          </span>
+        )
+      } else {
+        // If no match found, just add the word as-is
+        parts.push(numberWord)
+      }
+      
+      lastIndex = regex.lastIndex
     }
+    
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex))
+    }
+    
+    return parts.length > 0 ? <>{parts}</> : text
   }
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isCurrentlyFullscreen = !!(
-        document.fullscreenElement ||
-        (document as any).webkitFullscreenElement ||
-        (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
-      )
-      setIsFullscreen(isCurrentlyFullscreen)
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
-      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
-      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
-    }
-  }, [])
 
   if (loading) {
     return (
@@ -156,26 +190,21 @@ export default function StorybookViewerPage() {
       {/* Contained Frame */}
       <div 
         id="storybook-container"
-        className={`mx-auto w-full max-w-4xl relative rounded-lg shadow-2xl bg-black ${
-          isFullscreen 
-            ? 'fixed inset-0 z-50 rounded-none h-screen overflow-hidden' 
-            : 'overflow-visible'
-        }`}
-        style={isFullscreen ? { maxWidth: 'none' } : {}}
+        className="mx-auto w-full max-w-4xl relative rounded-lg shadow-2xl bg-black overflow-visible"
       >
         {scene ? (
           <>
             {/* Scene Image - Preserve aspect ratio, show full image without cropping */}
-            <div className={`relative ${isFullscreen ? 'absolute inset-0' : 'w-full flex items-center justify-center min-h-0'}`}>
+            <div className="relative w-full flex items-center justify-center min-h-0">
               <img
                 src={scene.image_url || "/placeholder.svg"}
                 alt={`Scene ${currentScene + 1}`}
-                className={`${isFullscreen ? 'w-full h-full object-cover' : 'w-full h-auto object-contain max-h-[90vh]'}`}
-                style={isFullscreen ? {} : { display: 'block', maxWidth: '100%' }}
+                className="w-full h-auto object-contain max-h-[90vh]"
+                style={{ display: 'block', maxWidth: '100%' }}
               />
               
               {/* Overlay Container - positioned relative to image */}
-              <div className={`absolute inset-0 ${isFullscreen ? '' : 'pointer-events-none'}`}>
+              <div className="absolute inset-0 pointer-events-none">
               {/* Top Header with Headline */}
               <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10 pointer-events-auto">
                 <div className="flex items-center justify-between gap-2 md:gap-4">
@@ -190,26 +219,11 @@ export default function StorybookViewerPage() {
                   </Button>
                   {scene.headline && (
                     <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2">
-                      {scene.headline}
+                      {highlightNumbers(scene.headline, scene.scene_number || currentScene + 1)}
                     </h1>
                   )}
-                  <div className="flex items-center gap-2 shrink-0">
-                    <div className="text-white text-xs md:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                      {currentScene + 1} / {scenes.length}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleFullscreen}
-                      className="text-white hover:bg-white/20 p-2"
-                      aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                    >
-                      {isFullscreen ? (
-                        <Minimize className="w-4 h-4" />
-                      ) : (
-                        <Maximize className="w-4 h-4" />
-                      )}
-                    </Button>
+                  <div className="text-white text-xs md:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
+                    {currentScene + 1} / {scenes.length}
                   </div>
                 </div>
               </div>
@@ -234,7 +248,7 @@ export default function StorybookViewerPage() {
                                   letterSpacing: '0.01em'
                                 }}
                               >
-                                {line}
+                                {highlightNumbers(line, scene.scene_number || currentScene + 1)}
                               </p>
                             ))}
                         </div>
@@ -252,7 +266,7 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handlePrevious}
                   disabled={currentScene === 0}
-                  className={`absolute ${isFullscreen ? 'left-2 md:left-4' : 'left-0 md:left-2'} top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto`}
+                  className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
                   aria-label="Previous scene"
                 >
                   <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
@@ -262,7 +276,7 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handleNext}
                   disabled={currentScene === scenes.length - 1}
-                  className={`absolute ${isFullscreen ? 'right-2 md:right-4' : 'right-0 md:right-2'} top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto`}
+                  className="absolute right-0 md:right-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
                   aria-label="Next scene"
                 >
                   <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
