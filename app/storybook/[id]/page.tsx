@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, Maximize, Minimize } from "lucide-react"
 import { storybooksApi } from "@/lib/api-client"
 
 interface Scene {
@@ -35,6 +35,7 @@ export default function StorybookViewerPage() {
   const [currentScene, setCurrentScene] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
     if (storybookId) {
@@ -68,6 +69,63 @@ export default function StorybookViewerPage() {
     }
   }
 
+  const toggleFullscreen = async () => {
+    const container = document.getElementById('storybook-container')
+    if (!container) return
+
+    try {
+      if (!isFullscreen) {
+        // Enter fullscreen
+        if (container.requestFullscreen) {
+          await container.requestFullscreen()
+        } else if ((container as any).webkitRequestFullscreen) {
+          await (container as any).webkitRequestFullscreen()
+        } else if ((container as any).mozRequestFullScreen) {
+          await (container as any).mozRequestFullScreen()
+        } else if ((container as any).msRequestFullscreen) {
+          await (container as any).msRequestFullscreen()
+        }
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen()
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen()
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen()
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen()
+        }
+      }
+    } catch (err) {
+      console.error('Error toggling fullscreen:', err)
+    }
+  }
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isCurrentlyFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      )
+      setIsFullscreen(isCurrentlyFullscreen)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+    }
+  }, [])
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -94,9 +152,17 @@ export default function StorybookViewerPage() {
     : storybook.character_name
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Scene Content - Full Screen */}
-      <div className="flex-1 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-background p-4 md:p-6 lg:p-8">
+      {/* Contained Frame */}
+      <div 
+        id="storybook-container"
+        className={`mx-auto w-full max-w-4xl relative overflow-hidden rounded-lg shadow-2xl bg-black ${
+          isFullscreen 
+            ? 'fixed inset-0 z-50 rounded-none h-screen' 
+            : 'aspect-[9/16] md:aspect-[3/4] lg:aspect-[4/3] max-h-[90vh]'
+        }`}
+        style={isFullscreen ? { maxWidth: 'none' } : {}}
+      >
         {scene ? (
           <>
             {/* Scene Image - Full Screen */}
@@ -109,40 +175,62 @@ export default function StorybookViewerPage() {
               
               {/* Top Header with Headline */}
               <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10">
-                <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center justify-between gap-2 md:gap-4">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => router.push('/')}
                     className="text-white hover:bg-white/20 shrink-0"
                   >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
+                    <ArrowLeft className="w-4 h-4 mr-1 md:mr-2" />
+                    <span className="hidden sm:inline">Back</span>
                   </Button>
                   {scene.headline && (
-                    <h1 className="text-white text-xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1">
+                    <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2">
                       {scene.headline}
                     </h1>
                   )}
-                  <div className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
-                    {currentScene + 1} / {scenes.length}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-white text-xs md:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                      {currentScene + 1} / {scenes.length}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleFullscreen}
+                      className="text-white hover:bg-white/20 p-2"
+                      aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                    >
+                      {isFullscreen ? (
+                        <Minimize className="w-4 h-4" />
+                      ) : (
+                        <Maximize className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
 
               {/* Text Overlay - Centered */}
               {(scene.text || scene.script_text) && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent p-6 pb-8">
-                  <div className="text-center max-w-2xl mx-auto">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-4 md:p-6 lg:p-8 pb-6 md:pb-8 lg:pb-10">
+                  <div className="text-center max-w-3xl mx-auto">
                     {(scene.text || scene.script_text || '')
                       .split('\n\n')
                       .map((stanza, stanzaIdx) => (
-                        <div key={stanzaIdx} className={stanzaIdx > 0 ? 'mt-4' : ''}>
+                        <div key={stanzaIdx} className={stanzaIdx > 0 ? 'mt-3 md:mt-4' : ''}>
                           {stanza
                             .split('\n')
                             .filter(line => line.trim())
                             .map((line, lineIdx) => (
-                              <p key={lineIdx} className="text-white text-lg leading-relaxed font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                              <p 
+                                key={lineIdx} 
+                                className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose font-serif drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
+                                style={{ 
+                                  textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
+                                  letterSpacing: '0.01em'
+                                }}
+                              >
                                 {line}
                               </p>
                             ))}
@@ -160,20 +248,20 @@ export default function StorybookViewerPage() {
                 <button
                   onClick={handlePrevious}
                   disabled={currentScene === 0}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm"
+                  className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg"
                   aria-label="Previous scene"
                 >
-                  <ArrowLeft className="w-6 h-6 text-white" />
+                  <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </button>
 
                 {/* Right Arrow */}
                 <button
                   onClick={handleNext}
                   disabled={currentScene === scenes.length - 1}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm"
+                  className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg"
                   aria-label="Next scene"
                 >
-                  <ArrowRight className="w-6 h-6 text-white" />
+                  <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </button>
               </>
             )}
