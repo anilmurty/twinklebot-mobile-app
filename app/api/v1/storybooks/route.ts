@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         created_at,
         completed_at,
         scenes,
+        share_token,
         character:characters(id, name),
         template:story_templates(id, title, thumbnail_url, scene_count)
       `)

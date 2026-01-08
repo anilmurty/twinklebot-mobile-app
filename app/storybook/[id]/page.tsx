@@ -220,10 +220,12 @@ export default function StorybookViewerPage() {
                     <ArrowLeft className="w-4 h-4 mr-1 md:mr-2" />
                     <span className="hidden sm:inline">Back</span>
                   </Button>
-                  {scene.headline && (
-                    <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2">
+                  {scene.headline ? (
+                    <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0">
                       {highlightNumbers(scene.headline, scene.scene_number || currentScene + 1)}
                     </h1>
+                  ) : (
+                    <div className="flex-1" />
                   )}
                   <div className="text-white text-xs md:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
                     {currentScene + 1} / {scenes.length}

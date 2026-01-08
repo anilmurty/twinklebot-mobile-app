@@ -29,6 +29,7 @@ interface Storybook {
   scenes?: any[]
   progress?: number
   total_scenes?: number
+  share_token?: string | null
   template?: {
     thumbnail_url?: string
   }
@@ -51,6 +52,7 @@ export function StorybooksTab() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [showFullImage, setShowFullImage] = useState(false)
+  const [shareModalStorybook, setShareModalStorybook] = useState<Storybook | null>(null)
   const [shareUrl, setShareUrl] = useState<{ storybookId: string; url: string } | null>(null)
   const [isGeneratingShare, setIsGeneratingShare] = useState(false)
   const [copiedShareUrl, setCopiedShareUrl] = useState(false)
@@ -150,12 +152,33 @@ export function StorybooksTab() {
     window.location.href = `/storybook/${id}`
   }
 
-  const handleGenerateShare = async (storybookId: string) => {
+  const handleOpenShareModal = (storybook: Storybook) => {
+    setShareModalStorybook(storybook)
+    // If share token exists, construct the share URL
+    if (storybook.share_token) {
+      const baseUrl = window.location.origin
+      setShareUrl({ storybookId: storybook.id, url: `${baseUrl}/share/${storybook.share_token}` })
+    } else {
+      setShareUrl(null)
+    }
+    setCopiedShareUrl(false)
+  }
+
+  const handleCreateShare = async () => {
+    if (!shareModalStorybook) return
     try {
       setIsGeneratingShare(true)
       setCopiedShareUrl(false)
-      const result = await storybooksApi.generateShare(storybookId)
-      setShareUrl({ storybookId, url: result.share_url })
+      const result = await storybooksApi.generateShare(shareModalStorybook.id)
+      setShareUrl({ storybookId: shareModalStorybook.id, url: result.share_url })
+      // Refresh storybooks to get updated share_token
+      await fetchStorybooks()
+      // Update the modal storybook state
+      const updatedStorybooksData = await storybooksApi.list()
+      const updatedStorybook = updatedStorybooksData.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
+      if (updatedStorybook) {
+        setShareModalStorybook(updatedStorybook)
+      }
     } catch (err: any) {
       console.error("Failed to generate share link:", err)
       setError(err.message || "Failed to generate share link")
@@ -176,13 +199,19 @@ export function StorybooksTab() {
   }
 
   const handleRevokeShare = async () => {
-    if (!shareUrl) return
+    if (!shareModalStorybook) return
     try {
-      await storybooksApi.revokeShare(shareUrl.storybookId)
+      await storybooksApi.revokeShare(shareModalStorybook.id)
       setShareUrl(null)
       setCopiedShareUrl(false)
       // Refresh storybooks to reflect the change
       await fetchStorybooks()
+      // Update the modal storybook state
+      const updatedStorybooksData = await storybooksApi.list()
+      const updatedStorybook = updatedStorybooksData.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
+      if (updatedStorybook) {
+        setShareModalStorybook(updatedStorybook)
+      }
     } catch (err: any) {
       console.error("Failed to revoke share link:", err)
       setError(err.message || "Failed to revoke share link")
@@ -411,14 +440,10 @@ export function StorybooksTab() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleGenerateShare(storybook.id)}
-                              disabled={isGeneratingShare}
+                              onClick={() => handleOpenShareModal(storybook)}
                             >
-                              {isGeneratingShare ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Share2 className="w-4 h-4" />
-                              )}
+                              <Share2 className="w-4 h-4 mr-1" />
+                              <span className="hidden sm:inline">Share Link</span>
                             </Button>
                           </div>
                         </div>
@@ -757,52 +782,105 @@ export function StorybooksTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Share URL Dialog */}
-      <Dialog open={!!shareUrl} onOpenChange={(open) => !open && setShareUrl(null)}>
+      {/* Share Link Modal */}
+      <Dialog open={!!shareModalStorybook} onOpenChange={(open) => {
+        if (!open) {
+          setShareModalStorybook(null)
+          setShareUrl(null)
+          setCopiedShareUrl(false)
+        }
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Share Storybook</DialogTitle>
+            <DialogTitle>Share Link</DialogTitle>
             <DialogDescription>
-              Copy this link to share your storybook with others. Anyone with this link can view it.
+              Generate a shareable link for your storybook. People who receive the link will be able to view the story without having to log in.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="flex gap-2">
-              <Input
-                value={shareUrl?.url || ''}
-                readOnly
-                className="flex-1 font-mono text-sm"
-              />
-              <Button
-                onClick={handleCopyShareUrl}
-                variant={copiedShareUrl ? "default" : "outline"}
-              >
-                {copiedShareUrl ? (
-                  <>
-                    <Check className="w-4 h-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </>
-                )}
-              </Button>
-            </div>
-            <div className="pt-2 border-t">
-              <Button
-                variant="destructive"
-                onClick={handleRevokeShare}
-                className="w-full"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Revoke Share Link
-              </Button>
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                Revoking will make this link invalid. Anyone who already has the link won't be able to access the storybook.
-              </p>
-            </div>
+            {shareUrl ? (
+              <>
+                <div className="flex gap-2">
+                  <Input
+                    value={shareUrl.url}
+                    readOnly
+                    className="flex-1 font-mono text-sm"
+                  />
+                  <Button
+                    onClick={handleCopyShareUrl}
+                    variant={copiedShareUrl ? "default" : "outline"}
+                  >
+                    {copiedShareUrl ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCreateShare}
+                    disabled={isGeneratingShare}
+                    className="flex-1"
+                  >
+                    {isGeneratingShare ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Re-Create
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleRevokeShare}
+                    className="flex-1"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Revoke
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleCreateShare}
+                  disabled={isGeneratingShare}
+                  className="flex-1"
+                >
+                  {isGeneratingShare ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Create
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleRevokeShare}
+                  disabled={true}
+                  className="flex-1"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Revoke
+                </Button>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
