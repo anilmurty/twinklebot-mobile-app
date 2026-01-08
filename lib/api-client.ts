@@ -257,7 +257,7 @@ export const charactersApi = {
         throw new Error('Not authenticated')
       }
       const response = await fetch(`${API_BASE}/characters/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
