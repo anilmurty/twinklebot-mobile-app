@@ -363,8 +363,8 @@ export function StorybooksTab() {
               const overlay = getThumbnailOverlay(storybook.title)
 
               return (
-                <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="flex flex-col p-4 md:p-6 w-full">
+                <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                  <div className="flex flex-col p-4 md:p-6 w-full h-full">
                     <div className="relative mx-auto mb-4">
                       {thumbnailUrl ? (
                         <>
@@ -395,7 +395,7 @@ export function StorybooksTab() {
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-3 min-w-0">
+                    <div className="flex flex-col flex-1 space-y-3 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <h3 className="font-semibold text-lg md:text-xl break-words line-clamp-2">
@@ -423,129 +423,132 @@ export function StorybooksTab() {
                         </div>
                       )}
 
-                      {isCompleted ? (
-                        <div className="space-y-2">
-                          <Badge variant="secondary" className="bg-accent text-accent-foreground shrink-0">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Ready
-                          </Badge>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleReadStorybook(storybook.id)}
-                            >
-                              Read
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={async () => {
-                                if (storybook.share_token) {
-                                  // Directly revoke if link exists
-                                  try {
-                                    await storybooksApi.revokeShare(storybook.id)
-                                    await fetchStorybooks()
-                                  } catch (err: any) {
-                                    console.error("Failed to revoke share link:", err)
-                                    setError(err.message || "Failed to revoke share link")
+                      {/* Push buttons to bottom */}
+                      <div className="mt-auto">
+                        {isCompleted ? (
+                          <div className="space-y-2">
+                            <Badge variant="secondary" className="bg-accent text-accent-foreground shrink-0">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              Ready
+                            </Badge>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleReadStorybook(storybook.id)}
+                              >
+                                Read
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={storybook.share_token ? "destructive" : "outline"}
+                                onClick={async () => {
+                                  if (storybook.share_token) {
+                                    // Directly revoke if link exists
+                                    try {
+                                      await storybooksApi.revokeShare(storybook.id)
+                                      await fetchStorybooks()
+                                    } catch (err: any) {
+                                      console.error("Failed to revoke share link:", err)
+                                      setError(err.message || "Failed to revoke share link")
+                                    }
+                                  } else {
+                                    // Open modal to create link
+                                    handleOpenShareModal(storybook)
                                   }
-                                } else {
-                                  // Open modal to create link
-                                  handleOpenShareModal(storybook)
+                                }}
+                                className="flex-1"
+                              >
+                                <Share2 className="w-4 h-4" />
+                                <span className="hidden sm:inline ml-1">
+                                  {storybook.share_token ? 'Unshare' : 'Share'}
+                                </span>
+                              </Button>
+                            </div>
+                          </div>
+                        ) : isPreviewReady ? (
+                          <div className="space-y-2">
+                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                              Preview Ready
+                            </Badge>
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              onClick={async () => {
+                                // Fetch fresh storybook data to ensure we have the latest preview scene
+                                try {
+                                  const freshStorybook = await storybooksApi.get(storybook.id)
+                                  setResumeStorybook(freshStorybook)
+                                  // Fetch subscription plans if not already loaded
+                                  if (subscriptionPlans.length === 0) {
+                                    await fetchSubscriptionPlans()
+                                  } else {
+                                    // Ensure plans are loaded
+                                    await fetchSubscriptionPlans()
+                                  }
+                                } catch (err: any) {
+                                  console.error("Failed to fetch storybook:", err)
+                                  // Fallback to using the storybook from the list
+                                  setResumeStorybook(storybook)
+                                  await fetchSubscriptionPlans()
                                 }
                               }}
-                              className="flex-1"
                             >
-                              <Share2 className="w-4 h-4" />
-                              <span className="hidden sm:inline ml-1">
-                                {storybook.share_token ? 'Unshare' : 'Share'}
-                              </span>
+                              <Play className="w-4 h-4 mr-2" />
+                              View Preview
                             </Button>
                           </div>
-                        </div>
-                      ) : isPreviewReady ? (
-                        <div className="space-y-2">
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                            Preview Ready
-                          </Badge>
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={async () => {
-                              // Fetch fresh storybook data to ensure we have the latest preview scene
-                              try {
-                                const freshStorybook = await storybooksApi.get(storybook.id)
-                                setResumeStorybook(freshStorybook)
-                                // Fetch subscription plans if not already loaded
-                                if (subscriptionPlans.length === 0) {
-                                  await fetchSubscriptionPlans()
-                                } else {
-                                  // Ensure plans are loaded
-                                  await fetchSubscriptionPlans()
-                                }
-                              } catch (err: any) {
-                                console.error("Failed to fetch storybook:", err)
-                                // Fallback to using the storybook from the list
+                        ) : isGeneratingPreview ? (
+                          <div className="space-y-2">
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              Generating Preview
+                            </Badge>
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              onClick={() => {
                                 setResumeStorybook(storybook)
-                                await fetchSubscriptionPlans()
-                              }
-                            }}
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            View Preview
-                          </Button>
-                        </div>
-                      ) : isGeneratingPreview ? (
-                        <div className="space-y-2">
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                            Generating Preview
-                          </Badge>
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            onClick={() => {
-                              setResumeStorybook(storybook)
-                            }}
-                          >
-                            <Clock className="w-4 h-4 mr-2 animate-spin" />
-                            View Generation
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground break-words line-clamp-2 flex-1">
-                              {progress < 100
-                                ? progress <= 10
-                                  ? "Starting character creation..."
-                                  : progress <= 40
-                                    ? "Generating character 1..."
-                                    : progress <= 70
-                                      ? "Generating character 2..."
-                                      : "Generating character 3..."
-                                : (() => {
-                                    const sceneProgress = progress - 100
-                                    if (sceneProgress <= 10) {
-                                      return "Starting storybook generation..."
-                                    }
-                                    const totalScenes = storybook.total_scenes || storybook.scenes?.length || 10
-                                    const sceneNumber = Math.ceil(((sceneProgress - 10) / 90) * totalScenes)
-                                    return `Scene ${sceneNumber} of ${totalScenes}...`
-                                  })()}
-                            </span>
-                            <span className="font-medium ml-2 shrink-0">
-                              {progress < 100 ? progress : progress - 100}%
-                            </span>
+                              }}
+                            >
+                              <Clock className="w-4 h-4 mr-2 animate-spin" />
+                              View Generation
+                            </Button>
                           </div>
-                          <div className="w-full bg-secondary rounded-full h-2">
-                            <div
-                              className="bg-primary h-2 rounded-full transition-all"
-                              style={{ width: `${Math.max(progress < 100 ? progress : progress - 100, 10)}%` }}
-                            />
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground break-words line-clamp-2 flex-1">
+                                {progress < 100
+                                  ? progress <= 10
+                                    ? "Starting character creation..."
+                                    : progress <= 40
+                                      ? "Generating character 1..."
+                                      : progress <= 70
+                                        ? "Generating character 2..."
+                                        : "Generating character 3..."
+                                  : (() => {
+                                      const sceneProgress = progress - 100
+                                      if (sceneProgress <= 10) {
+                                        return "Starting storybook generation..."
+                                      }
+                                      const totalScenes = storybook.total_scenes || storybook.scenes?.length || 10
+                                      const sceneNumber = Math.ceil(((sceneProgress - 10) / 90) * totalScenes)
+                                      return `Scene ${sceneNumber} of ${totalScenes}...`
+                                    })()}
+                              </span>
+                              <span className="font-medium ml-2 shrink-0">
+                                {progress < 100 ? progress : progress - 100}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-secondary rounded-full h-2">
+                              <div
+                                className="bg-primary h-2 rounded-full transition-all"
+                                style={{ width: `${Math.max(progress < 100 ? progress : progress - 100, 10)}%` }}
+                              />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Card>
