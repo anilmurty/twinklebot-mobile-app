@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, ImageIcon, Loader2, Lightbulb } from "lucide-react"
+import { BookOpen, ImageIcon, Loader2, Lightbulb, Eye } from "lucide-react"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
 import { templatesApi } from "@/lib/api-client"
 import {
@@ -23,6 +23,10 @@ interface Template {
   description: string
   thumbnail_url?: string
   script_data?: any[]
+  mock_story_data?: {
+    scenes?: any[]
+    character_name?: string
+  }
 }
 
 export function StoryLibraryTab() {
@@ -180,10 +184,27 @@ export function StoryLibraryTab() {
                         </span>
                       </div>
 
-                      <Button size="sm" className="w-full mt-2" onClick={() => setSelectedStory(template)}>
-                        <BookOpen className="w-3 h-3 mr-1" />
-                        Generate
-                      </Button>
+                      <div className="flex gap-2 mt-2">
+                        {template.mock_story_data?.scenes && template.mock_story_data.scenes.length > 0 && (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1" 
+                            onClick={() => window.location.href = `/preview/${template.id}`}
+                          >
+                            <Eye className="w-3 h-3 mr-1" />
+                            Preview
+                          </Button>
+                        )}
+                        <Button 
+                          size="sm" 
+                          className={template.mock_story_data?.scenes && template.mock_story_data.scenes.length > 0 ? "flex-1" : "w-full"} 
+                          onClick={() => setSelectedStory(template)}
+                        >
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          Generate
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </Card>

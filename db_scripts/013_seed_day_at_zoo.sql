@@ -64,7 +64,7 @@ BEGIN
         "script_text": "At a picnic table, time for [Name] to relax,\nJuice box in hand and bear-shaped snacks.\n\nA peacock struts by, feathers so grand,\nLunch tastes better with these birds at hand",
         "base_photo": "lunch.png",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo, sitting and sipping a juice box as if they''re posing for a photo. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, sitting and sipping a juice box and holding a teddy bear shaped sandwich as if they''re posing for a photo. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -73,7 +73,7 @@ BEGIN
         "script_text": "Waddle, waddle—slide and splash!\nPenguins march by in a comical dash.\n\n[Name] watches closely, smiles so wide,\nDiving into the water, chilly and blue inside.",
         "base_photo": "penguins.png",
         "child_photo": "right",
-        "insertion_prompt": "put the child in the photo sitting on the bench facing outward, sitting next to the backpack and holding teddy bear shaped sandwich. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo sitting on the bench facing outward, sitting next to the backpack. keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       },
       {
@@ -109,7 +109,7 @@ BEGIN
         "script_text": "The sun dips low—it''s time to go,\nFeet feel tired but hearts still glow.\n\nWith ice cream in hand and a sleepy smile,\n[Name] walks home dreaming all the while.",
         "base_photo": "exit.png",
         "child_photo": "front",
-        "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand. The child should blend into the rest of the photo as if the photo was taken with them in it. keep everything else the same and make it look natural",
+        "insertion_prompt": "put the child in the photo, they should be walking out after a long day, tired but smiling and with an icecream in the child''s hand. Keep everything else the same and make it look natural",
         "aspect_ratio": "9:16"
       }
     ]

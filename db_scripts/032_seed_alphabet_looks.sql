@@ -252,7 +252,36 @@ BEGIN
       display_order = EXCLUDED.display_order,
       updated_at = NOW();
 
-    -- Look 4: Original (for girls)
+    -- Look 4: Frock
+    look_order := 4;
+    INSERT INTO character_looks (
+      template_id,
+      gender,
+      look_name,
+      display_order,
+      reference_image_url,
+      attire_image_url,
+      prompt_modifier,
+      is_original,
+      is_active
+    ) VALUES (
+      alphabet_a_i_template_id,
+      'female',
+      'Frock',
+      look_order,
+      'alphabet-general/looks/alphabet-girl-frock-model.png',
+      'alphabet-general/looks/alphabet-girl-frock-attire.png',
+      'dress this girl in the clothing shown in the image. keep facial and body features identical to the original image. white background, forward facing and full length',
+      false,
+      true
+    ) ON CONFLICT (template_id, gender, look_name) DO UPDATE SET
+      reference_image_url = EXCLUDED.reference_image_url,
+      attire_image_url = EXCLUDED.attire_image_url,
+      prompt_modifier = EXCLUDED.prompt_modifier,
+      display_order = EXCLUDED.display_order,
+      updated_at = NOW();
+
+    -- Look 5: Original (for girls)
     look_order := 0;
     INSERT INTO character_looks (
       template_id,
