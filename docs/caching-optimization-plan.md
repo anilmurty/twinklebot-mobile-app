@@ -194,16 +194,13 @@ return NextResponse.json(data, {
   - `components/story-library-tab.tsx`
   - `components/profile-tab.tsx`
 
-### Phase 2: Image Proxy - COMPLETED
-- [x] Create image proxy API (`app/api/v1/images/route.ts`)
-  - Validates ownership before serving
-  - Sets Cache-Control: private, max-age=3600
-  - Supports storybook-scenes, character-photos, character-variations buckets
-- [x] Update API routes to return proxy URLs instead of signed URLs:
-  - `app/api/v1/storybooks/route.ts`
-  - `app/api/v1/storybooks/[id]/route.ts`
-  - `app/api/v1/characters/route.ts`
-- [x] Created helper utilities (`lib/utils/image-proxy.ts`)
+### Phase 2: Image Proxy - REVERTED
+- [x] Create image proxy API (`app/api/v1/images/route.ts`) - Created but not used
+- [x] Created helper utilities (`lib/utils/image-proxy.ts`) - Created but not used
+- **REVERTED**: Proxy URLs don't work with `<img>` tags because browsers don't send Authorization headers for image requests
+- **SOLUTION**: Keep using signed URLs for images. The TanStack Query caching still provides significant benefits for API data.
+
+**Note**: A future enhancement could use cookie-based auth for the image proxy, or generate longer-lived signed URLs.
 
 ### Phase 3: Thumbnails - SKIPPED
 - [ ] Add thumbnail generation (deferred - requires more complex changes)
