@@ -49,7 +49,46 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
 
   const storybookId = session.metadata.storybook_id
   const planId = session.metadata.plan_id
+  const userId = session.metadata.user_id
   const couponCode = session.metadata.coupon_code
+
+  // Get the plan to determine how many credits to add
+  let creditsToAdd = 1 // Default to 1 credit
+  if (planId) {
+    const { data: plan } = await supabaseAdmin
+      .from('subscription_plans')
+      .select('stories_per_period')
+      .eq('id', parseInt(planId))
+      .single()
+    
+    if (plan) {
+      creditsToAdd = plan.stories_per_period || 1
+    }
+  }
+
+  // For one-time payments (bundles), add credits to user's profile
+  if (session.mode === 'payment' && userId) {
+    // Add credits to user's profile
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('story_credits')
+      .eq('id', userId)
+      .single()
+    
+    const currentCredits = profile?.story_credits || 0
+    // Add all purchased credits, then deduct 1 for the current storybook
+    const newCredits = currentCredits + creditsToAdd - 1
+    
+    await supabaseAdmin
+      .from('profiles')
+      .update({
+        story_credits: Math.max(0, newCredits),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId)
+    
+    console.log(`Added ${creditsToAdd} credits to user ${userId}, used 1 for storybook ${storybookId}, remaining: ${newCredits}`)
+  }
 
   // Update storybook payment status
   const updateData: any = {
@@ -71,7 +110,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
     .update(updateData)
     .eq('id', storybookId)
 
-  // If subscription, create/update subscription record
+  // If subscription, create/update subscription record (keeping for future Phase 2)
   if (session.mode === 'subscription' && session.subscription) {
     const subscription = await stripe.subscriptions.retrieve(
       session.subscription as string,

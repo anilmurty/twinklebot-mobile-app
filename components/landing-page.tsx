@@ -9,7 +9,6 @@ export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showEmailForm, setShowEmailForm] = useState(false)
-  const [showEnterOverlay, setShowEnterOverlay] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -60,142 +59,134 @@ export function LandingPage() {
         }}
       />
 
-      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 
-      {/* Content overlay */}
-      <div className="relative z-10 flex flex-col h-screen">
-        {/* Spacer to push buttons to bottom */}
+      {/* Content */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Logo/Brand at top */}
+        <div className="pt-8 px-6 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
+            <Sparkles className="w-5 h-5 text-[#F5C563]" />
+            <span className="text-white font-semibold text-lg">Twinklebot</span>
+          </div>
+        </div>
+
+        {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Sign in buttons at bottom 10% */}
-        <div className="px-6 pb-8">
-          <Button
-            onClick={() => setShowEnterOverlay(true)}
-            size="lg"
-            className="w-full rounded-full h-14 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900 border-none shadow-lg"
-          >
-            Enter
-          </Button>
-        </div>
-      </div>
-
-      {showEnterOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/70 backdrop-blur-md">
-          <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold">Welcome to Twinklebot</h2>
-              <button
-                onClick={() => setShowEnterOverlay(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
+        {/* Login Card - Always visible */}
+        <div className="px-4 pb-6 sm:px-6 sm:pb-8">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 w-full max-w-md mx-auto shadow-2xl">
+            <h2 className="text-xl font-bold text-center mb-1">Welcome to Twinklebot</h2>
+            <p className="text-sm text-muted-foreground text-center mb-5">
+              Create personalized storybooks for your child
+            </p>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-500/90 backdrop-blur-sm rounded-2xl">
+              <div className="mb-4 p-3 bg-red-500/90 rounded-2xl">
                 <p className="text-sm text-white text-center">{error}</p>
               </div>
             )}
 
-            {/* Login buttons */}
-            <div className="space-y-3">
-              <Button
-                onClick={handleSignInWithGoogle}
-                disabled={isLoading}
-                size="lg"
-                className="w-full rounded-full h-12 text-base font-medium bg-primary hover:bg-primary/90 text-white"
-              >
-                {isLoading ? "Signing in..." : "Login with Google"}
-              </Button>
+            {!showEmailForm ? (
+              <>
+                {/* Login buttons */}
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleSignInWithGoogle}
+                    disabled={isLoading}
+                    size="lg"
+                    className="w-full rounded-full h-12 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900"
+                  >
+                    {isLoading ? "Signing in..." : "Continue with Google"}
+                  </Button>
 
-              <Button
-                onClick={() => setShowEmailForm(true)}
-                variant="outline"
-                size="lg"
-                disabled={isLoading}
-                className="w-full rounded-full h-12 text-base font-medium"
-              >
-                Login with Email
-              </Button>
-            </div>
+                  <Button
+                    onClick={() => setShowEmailForm(true)}
+                    variant="outline"
+                    size="lg"
+                    disabled={isLoading}
+                    className="w-full rounded-full h-12 text-base font-medium border-gray-300"
+                  >
+                    Continue with Email
+                  </Button>
+                </div>
 
-            {/* How It Works section */}
-            <div className="space-y-2 pt-4 mt-4 border-t border-gray-200">
-              <div className="flex items-center gap-3 p-3 bg-white/70 backdrop-blur-sm rounded-xl">
-                <div className="shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-primary" />
+                {/* How It Works - compact version */}
+                <div className="mt-6 pt-5 border-t border-gray-200">
+                  <p className="text-xs text-muted-foreground text-center mb-3 uppercase tracking-wide font-medium">How it works</p>
+                  <div className="flex justify-between gap-2">
+                    <div className="flex-1 text-center">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-1.5">
+                        <Users className="w-5 h-5 text-primary" />
+                      </div>
+                      <p className="text-xs font-medium text-foreground">Upload Photo</p>
+                    </div>
+                    <div className="flex-1 text-center">
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-1.5">
+                        <BookOpen className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <p className="text-xs font-medium text-foreground">Choose Story</p>
+                    </div>
+                    <div className="flex-1 text-center">
+                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-1.5">
+                        <Sparkles className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <p className="text-xs font-medium text-foreground">Generate</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm text-foreground">Create Characters</h3>
-                  <p className="text-xs text-muted-foreground">Upload your child's photo</p>
-                </div>
-              </div>
+              </>
+            ) : (
+              <>
+                {/* Email form inline */}
+                <div className="space-y-3">
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary text-base"
+                  />
 
-              <div className="flex items-center gap-3 p-3 bg-white/70 backdrop-blur-sm rounded-xl">
-                <div className="shrink-0 w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm text-foreground">Choose a Story</h3>
-                  <p className="text-xs text-muted-foreground">Pick from educational templates</p>
-                </div>
-              </div>
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary text-base"
+                  />
 
-              <div className="flex items-center gap-3 p-3 bg-white/70 backdrop-blur-sm rounded-xl">
-                <div className="shrink-0 w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-amber-600" />
+                  <Button 
+                    onClick={handleEmailAuth} 
+                    disabled={isLoading} 
+                    className="w-full rounded-full h-12 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900"
+                  >
+                    {isLoading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
+                  </Button>
+
+                  <button
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    className="w-full text-center text-sm text-primary hover:underline"
+                  >
+                    {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowEmailForm(false)
+                      setError(null)
+                    }}
+                    className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    ← Back to login options
+                  </button>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm text-foreground">Generate & Enjoy</h3>
-                  <p className="text-xs text-muted-foreground">AI creates your unique storybook</p>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
-      )}
-
-      {/* Email form overlay */}
-      {showEmailForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold">{isSignUp ? "Create Account" : "Sign In"}</h2>
-              <button onClick={() => setShowEmailForm(false)} className="cursor-pointer text-gray-500 hover:text-gray-700">
-                ✕
-              </button>
-            </div>
-
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-
-            <Button onClick={handleEmailAuth} disabled={isLoading} className="w-full rounded-full h-12">
-              {isLoading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
-            </Button>
-
-            <button
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="w-full text-center text-sm text-primary hover:underline"
-            >
-              {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
-            </button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
