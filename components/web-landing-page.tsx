@@ -371,80 +371,163 @@ export function WebLandingPage() {
 
       {/* Pricing Section */}
       <section id="pricing" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-emerald-50/50 to-white/50">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-amber-900 mb-4">
-              Start Creating Today
+              Personalized Keepsakes, Forever Yours
             </h2>
-            <p className="text-lg text-amber-800/60">
-              Try your first story for free. No credit card required.
+            <p className="text-lg text-amber-800/60 max-w-2xl mx-auto">
+              Create magical storybooks your child will treasure. Each story features 10 beautifully illustrated scenes with your child as the hero.
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-amber-200/50">
-            <div className="grid md:grid-cols-2">
-              {/* Free tier */}
-              <div className="p-8 lg:p-10">
-                <h3 className="text-2xl font-bold text-amber-900 mb-2">Free</h3>
-                <p className="text-amber-700/60 mb-6">Perfect for trying it out</p>
-                <div className="text-4xl font-bold text-amber-900 mb-6">
-                  $0
-                  <span className="text-lg font-normal text-amber-700/60">/forever</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "1 free storybook",
-                    "All story templates",
-                    "HD quality images",
-                    "Shareable links",
-                  ].map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3 text-amber-800">
-                      <Check className="w-5 h-5 text-emerald-600 shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/app" className="block">
-                  <Button variant="outline" className="w-full h-12 border-amber-300 text-amber-900 hover:bg-amber-100">
-                    Get Started Free
-                  </Button>
-                </Link>
+          {/* Free Preview Banner */}
+          <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50 rounded-2xl p-6 mb-10 text-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-emerald-600" />
               </div>
-
-              {/* Pro tier */}
-              <div className="p-8 lg:p-10 bg-gradient-to-br from-amber-50 to-orange-50 border-l border-amber-200/50">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-2xl font-bold text-amber-900">Pro</h3>
-                  <span className="px-3 py-1 bg-gradient-to-r from-primary to-amber-500 text-amber-950 text-xs font-bold rounded-full">
-                    POPULAR
-                  </span>
-                </div>
-                <p className="text-amber-700/60 mb-6">For story-loving families</p>
-                <div className="text-4xl font-bold text-amber-900 mb-6">
-                  $9.99
-                  <span className="text-lg font-normal text-amber-700/60">/month</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "Unlimited storybooks",
-                    "All story templates",
-                    "HD quality images",
-                    "Priority generation",
-                    "Multiple characters",
-                  ].map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3 text-amber-800">
-                      <Check className="w-5 h-5 text-emerald-600 shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/app" className="block">
-                  <Button className="w-full h-12 bg-gradient-to-r from-primary to-amber-500 text-amber-950 font-semibold shadow-lg shadow-primary/25">
-                    Start Free Trial
-                  </Button>
-                </Link>
+              <div className="text-left">
+                <h3 className="font-bold text-emerald-900">Try Before You Buy</h3>
+                <p className="text-emerald-700/70 text-sm">Generate a free preview to see your child in the story before purchasing</p>
               </div>
+              <Link href="/app" className="sm:ml-auto">
+                <Button variant="outline" className="border-emerald-300 text-emerald-800 hover:bg-emerald-100">
+                  Start Free Preview
+                </Button>
+              </Link>
             </div>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Single Storybook */}
+            <div className="bg-white rounded-2xl shadow-lg border border-amber-200/50 p-6 flex flex-col">
+              <h3 className="text-lg font-bold text-amber-900 mb-1">Single Storybook</h3>
+              <p className="text-amber-700/60 text-sm mb-4">One personalized adventure</p>
+              <div className="text-3xl font-bold text-amber-900 mb-4">
+                $7.99
+              </div>
+              <ul className="space-y-2 mb-6 flex-1">
+                {[
+                  "1 personalized storybook",
+                  "10 illustrated scenes",
+                  "HD quality images",
+                  "Yours forever",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-amber-800 text-sm">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/app" className="block">
+                <Button variant="outline" className="w-full border-amber-300 text-amber-900 hover:bg-amber-100">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+
+            {/* 2-Story Bundle */}
+            <div className="bg-white rounded-2xl shadow-lg border border-amber-200/50 p-6 flex flex-col">
+              <h3 className="text-lg font-bold text-amber-900 mb-1">2-Story Bundle</h3>
+              <p className="text-amber-700/60 text-sm mb-4">Two adventures to enjoy</p>
+              <div className="text-3xl font-bold text-amber-900 mb-1">
+                $13.99
+              </div>
+              <p className="text-emerald-600 text-xs font-medium mb-4">Save $2</p>
+              <ul className="space-y-2 mb-6 flex-1">
+                {[
+                  "2 personalized storybooks",
+                  "10 scenes each",
+                  "Mix & match stories",
+                  "Yours forever",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-amber-800 text-sm">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/app" className="block">
+                <Button variant="outline" className="w-full border-amber-300 text-amber-900 hover:bg-amber-100">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+
+            {/* 3-Story Bundle */}
+            <div className="bg-white rounded-2xl shadow-lg border border-amber-200/50 p-6 flex flex-col relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="px-3 py-1 bg-gradient-to-r from-primary to-amber-500 text-amber-950 text-xs font-bold rounded-full shadow-md">
+                  POPULAR
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-amber-900 mb-1 mt-2">3-Story Bundle</h3>
+              <p className="text-amber-700/60 text-sm mb-4">Perfect for bedtime variety</p>
+              <div className="text-3xl font-bold text-amber-900 mb-1">
+                $19.99
+              </div>
+              <p className="text-emerald-600 text-xs font-medium mb-4">Save $4</p>
+              <ul className="space-y-2 mb-6 flex-1">
+                {[
+                  "3 personalized storybooks",
+                  "10 scenes each",
+                  "Ideal for rotation",
+                  "Yours forever",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-amber-800 text-sm">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/app" className="block">
+                <Button className="w-full bg-gradient-to-r from-primary to-amber-500 text-amber-950 font-semibold shadow-lg shadow-primary/25">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+
+            {/* 4-Story Bundle - Best Value */}
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl shadow-lg border-2 border-primary/30 p-6 flex flex-col relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <span className="px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full shadow-md">
+                  BEST VALUE
+                </span>
+              </div>
+              <h3 className="text-lg font-bold text-amber-900 mb-1 mt-2">Complete Library</h3>
+              <p className="text-amber-700/60 text-sm mb-4">All 4 stories at launch</p>
+              <div className="text-3xl font-bold text-amber-900 mb-1">
+                $24.99
+              </div>
+              <p className="text-emerald-600 text-xs font-medium mb-4">Save $7</p>
+              <ul className="space-y-2 mb-6 flex-1">
+                {[
+                  "4 personalized storybooks",
+                  "Complete starter collection",
+                  "Maximum variety",
+                  "Yours forever",
+                ].map((feature, i) => (
+                  <li key={i} className="flex items-start gap-2 text-amber-800 text-sm">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/app" className="block">
+                <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-lg">
+                  Get Complete Library
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Trust message */}
+          <div className="text-center mt-10">
+            <p className="text-amber-700/60 text-sm">
+              One-time purchase. No subscription required. Your storybooks are yours to keep forever.
+            </p>
           </div>
         </div>
       </section>
