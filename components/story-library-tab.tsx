@@ -52,6 +52,8 @@ export function StoryLibraryTab() {
             id: t.id,
             title: t.title,
             thumbnail_url: t.thumbnail_url,
+            has_mock_story: !!(t.mock_story_data?.scenes && t.mock_story_data.scenes.length > 0),
+            mock_scene_count: t.mock_story_data?.scenes?.length || 0,
           })),
         )
         setTemplates(templatesList)
@@ -144,8 +146,8 @@ export function StoryLibraryTab() {
               const thumbnail = template.thumbnail_url
 
               return (
-                <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full">
-                  <div className="flex flex-col gap-3 p-4 md:p-6 w-full">
+                <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full flex flex-col h-full">
+                  <div className="flex flex-col gap-3 p-4 md:p-6 w-full flex-1">
                     <div className="relative shrink-0 mx-auto">
                       {thumbnail && !failedThumbnails.has(template.id) ? (
                         <img
@@ -168,24 +170,24 @@ export function StoryLibraryTab() {
                       )}
                     </div>
 
-                    <div className="flex-1 space-y-2 w-full">
-                      <div>
-                        <h3 className="font-bold text-lg md:text-xl text-center break-words">{template.title}</h3>
-                        <p className="text-sm md:text-base text-muted-foreground text-center break-words line-clamp-3 mt-1">
+                    <div className="flex-1 flex flex-col space-y-2 w-full min-h-0">
+                      <div className="flex-shrink-0">
+                        <h3 className="font-bold text-lg md:text-xl text-center break-words leading-tight">{template.title}</h3>
+                        <p className="text-sm md:text-base text-muted-foreground text-center break-words line-clamp-3 mt-1 min-h-[3rem]">
                           {template.description?.replace(/\{character_name\}/g, "your child") ||
                             "A personalized adventure story"}
                         </p>
                       </div>
 
-                      <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground flex-shrink-0">
                         <span className="flex items-center gap-1">
                           <ImageIcon className="w-3 h-3" />
                           {sceneCount} scenes
                         </span>
                       </div>
 
-                      <div className="flex gap-2 mt-2">
-                        {template.mock_story_data?.scenes && template.mock_story_data.scenes.length > 0 && (
+                      <div className="flex gap-2 mt-auto pt-2 flex-shrink-0">
+                        {template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 && (
                           <Button 
                             size="sm" 
                             variant="outline" 
@@ -198,7 +200,7 @@ export function StoryLibraryTab() {
                         )}
                         <Button 
                           size="sm" 
-                          className={template.mock_story_data?.scenes && template.mock_story_data.scenes.length > 0 ? "flex-1" : "w-full"} 
+                          className={template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 ? "flex-1" : "w-full"} 
                           onClick={() => setSelectedStory(template)}
                         >
                           <BookOpen className="w-3 h-3 mr-1" />

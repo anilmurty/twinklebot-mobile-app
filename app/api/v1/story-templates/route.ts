@@ -98,6 +98,29 @@ export async function GET(request: NextRequest) {
           result.thumbnail_url = null
         }
 
+        // Process mock_story_data image URLs if present
+        if (result.mock_story_data && result.mock_story_data.scenes) {
+          const { getStorageUrl } = await import('@/lib/supabase/storage')
+          result.mock_story_data = {
+            ...result.mock_story_data,
+            scenes: result.mock_story_data.scenes.map((scene: any) => {
+              if (scene.image_url && scene.image_url.startsWith('/') && !scene.image_url.startsWith('http')) {
+                const storagePath = scene.image_url.slice(1)
+                try {
+                  return {
+                    ...scene,
+                    image_url: getStorageUrl('story-template-assets', storagePath)
+                  }
+                } catch (err) {
+                  console.error(`Failed to get storage URL for mock scene image ${storagePath}:`, err)
+                  return scene
+                }
+              }
+              return scene
+            })
+          }
+        }
+
         return result
       })
     )
