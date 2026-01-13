@@ -71,6 +71,7 @@ export async function GET(
 
     // Process mock_story_data image URLs if present
     if (result.mock_story_data && result.mock_story_data.scenes) {
+      console.log(`[Template ${templateId}] Processing mock_story_data with ${result.mock_story_data.scenes.length} scenes`)
       result.mock_story_data = {
         ...result.mock_story_data,
         scenes: await Promise.all(
@@ -78,19 +79,24 @@ export async function GET(
             if (scene.image_url && scene.image_url.startsWith('/') && !scene.image_url.startsWith('http')) {
               const storagePath = scene.image_url.slice(1)
               try {
+                const fullUrl = getStorageUrl('story-template-assets', storagePath)
+                console.log(`[Template ${templateId}] Converted mock scene image: ${scene.image_url} -> ${fullUrl}`)
                 return {
                   ...scene,
-                  image_url: getStorageUrl('story-template-assets', storagePath)
+                  image_url: fullUrl
                 }
               } catch (err) {
-                console.error(`Failed to get storage URL for mock scene image ${storagePath}:`, err)
+                console.error(`[Template ${templateId}] Failed to get storage URL for mock scene image ${storagePath}:`, err)
                 return scene
               }
+            } else if (scene.image_url) {
+              console.log(`[Template ${templateId}] Scene ${scene.scene_number} already has full URL: ${scene.image_url}`)
             }
             return scene
           })
         )
       }
+      console.log(`[Template ${templateId}] Processed mock_story_data, first scene URL: ${result.mock_story_data.scenes[0]?.image_url}`)
     }
 
     return NextResponse.json(result)

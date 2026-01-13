@@ -47,14 +47,15 @@ export const metadata: Metadata = {
     description: "Create magical AI-generated storybooks where your child is the hero",
     images: ["/apple-icon.png"],
   },
+  generator: 'v0.app'
+}
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#8B5CF6",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
-    generator: 'v0.app'
 }
 
 export default function RootLayout({

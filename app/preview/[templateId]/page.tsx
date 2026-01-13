@@ -34,6 +34,7 @@ export default function StoryPreviewPage() {
   const [currentScene, setCurrentScene] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     if (templateId) {
@@ -46,6 +47,13 @@ export default function StoryPreviewPage() {
       setLoading(true)
       setError(null)
       const data = await templatesApi.get(parseInt(templateId))
+      console.log('Fetched template data:', {
+        id: data.id,
+        title: data.title,
+        hasMockData: !!data.mock_story_data,
+        sceneCount: data.mock_story_data?.scenes?.length || 0,
+        firstSceneImageUrl: data.mock_story_data?.scenes?.[0]?.image_url
+      })
       setTemplate(data)
       
       // Check if mock story data exists
@@ -60,16 +68,19 @@ export default function StoryPreviewPage() {
     }
   }
 
-  const handlePrevious = () => {
-    if (currentScene > 0) {
-      setCurrentScene(currentScene - 1)
-    }
-  }
 
   const handleNext = () => {
     const scenes = template?.mock_story_data?.scenes || []
     if (currentScene < scenes.length - 1) {
       setCurrentScene(currentScene + 1)
+      setImageError(false) // Reset image error when changing scenes
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentScene > 0) {
+      setCurrentScene(currentScene - 1)
+      setImageError(false) // Reset image error when changing scenes
     }
   }
 
@@ -168,19 +179,53 @@ export default function StoryPreviewPage() {
   const characterName = template.mock_story_data.character_name || "Alex"
   const scene = scenes[currentScene]
 
+  // Debug: Log scene data
+  useEffect(() => {
+    if (scene) {
+      console.log('Current scene:', {
+        scene_number: scene.scene_number,
+        headline: scene.headline,
+        image_url: scene.image_url,
+        hasImageUrl: !!scene.image_url
+      })
+    }
+  }, [scene])
+
   return (
     <div className="min-h-screen bg-black flex flex-col">
       <div className="flex-1 relative overflow-hidden">
         {scene ? (
           <>
             {/* Scene Image - Preserve aspect ratio, show full image without cropping */}
-            <div className="relative w-full flex items-center justify-center min-h-0">
-              <img
-                src={scene.image_url || "/placeholder.svg"}
-                alt={`Scene ${currentScene + 1}`}
-                className="w-full h-auto object-contain max-h-[90vh]"
-                style={{ display: 'block', maxWidth: '100%' }}
-              />
+            <div className="relative w-full flex items-center justify-center min-h-[60vh] bg-black">
+              {imageError ? (
+                <div className="flex flex-col items-center justify-center text-white p-8">
+                  <p className="text-lg mb-2">Image failed to load</p>
+                  <p className="text-sm text-gray-400 mb-4">URL: {scene.image_url}</p>
+                  <Button onClick={() => setImageError(false)} variant="outline">
+                    Retry
+                  </Button>
+                </div>
+              ) : (
+                <img
+                  src={scene.image_url || "/placeholder.svg"}
+                  alt={`Scene ${currentScene + 1}`}
+                  className="w-full h-auto object-contain max-h-[90vh]"
+                  style={{ display: 'block', maxWidth: '100%' }}
+                  onLoad={() => {
+                    console.log(`✅ Image loaded successfully: ${scene.image_url}`)
+                    setImageError(false)
+                  }}
+                  onError={(e) => {
+                    console.error(`❌ Failed to load image:`, {
+                      url: scene.image_url,
+                      scene_number: scene.scene_number,
+                      headline: scene.headline
+                    })
+                    setImageError(true)
+                  }}
+                />
+              )}
               
               {/* Overlay Container - positioned relative to image */}
               <div className="absolute inset-0 pointer-events-none">
