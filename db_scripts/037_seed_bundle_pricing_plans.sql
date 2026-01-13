@@ -15,9 +15,15 @@ SET
   description = 'One personalized storybook starring your child',
   stories_per_period = 1,
   display_order = 1,
+  is_active = true,
   features = '["One personalized storybook", "Yours to keep forever", "No subscription required"]'::jsonb,
   updated_at = NOW()
 WHERE plan_type = 'one-time' AND price_amount = 799;
+
+-- Also update any one-time plan that might not have stories_per_period set
+UPDATE subscription_plans
+SET stories_per_period = 1
+WHERE plan_type = 'one-time' AND (stories_per_period IS NULL OR stories_per_period = 0);
 
 -- Insert bundle plans
 INSERT INTO subscription_plans (
