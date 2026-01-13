@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useCharacters, useDeleteCharacter, useUpdateCharacter } from "@/lib/queries"
 
 interface Character {
   id: string
@@ -23,10 +24,24 @@ interface Character {
 export function CharactersTab() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  
+  // Use TanStack Query for data fetching with automatic caching
+  const { 
+    data: charactersData, 
+    isLoading: loading, 
+    error: charactersError,
+    refetch: refetchCharacters 
+  } = useCharacters()
+  
+  // Mutations
+  const deleteCharacterMutation = useDeleteCharacter()
+  const updateCharacterMutation = useUpdateCharacter()
+  
+  // Derive data from query results
+  const characters = charactersData?.characters || []
+  
   const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [characters, setCharacters] = useState<Character[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(charactersError?.message || null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
   const [renameCharacter, setRenameCharacter] = useState<{ id: string; name: string } | null>(null)
   const [newName, setNewName] = useState("")
@@ -36,25 +51,6 @@ export function CharactersTab() {
     name: string
     photoUrl?: string
   } | null>(null)
-
-  const fetchCharacters = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await charactersApi.list()
-      setCharacters(data.characters || [])
-    } catch (err: any) {
-      console.error("Failed to fetch characters:", err)
-      setError(err.message || "Failed to load characters")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    // Fetch characters only on mount
-    fetchCharacters()
-  }, [])
 
   useEffect(() => {
     // Handle create dialog from URL parameter separately
@@ -77,8 +73,8 @@ export function CharactersTab() {
     if (!deleteConfirm) return
 
     try {
-      await charactersApi.delete(deleteConfirm.id)
-      await fetchCharacters() // Refresh list
+      await deleteCharacterMutation.mutateAsync(deleteConfirm.id)
+      // Query cache is automatically invalidated by the mutation
     } catch (err: any) {
       alert(`Failed to delete character: ${err.message}`)
     } finally {
@@ -107,8 +103,8 @@ export function CharactersTab() {
       const formData = new FormData()
       formData.append('name', newName.trim())
       
-      await charactersApi.update(renameCharacter.id, formData)
-      await fetchCharacters() // Refresh list
+      await updateCharacterMutation.mutateAsync({ id: renameCharacter.id, data: formData })
+      // Query cache is automatically invalidated by the mutation
       setRenameCharacter(null)
       setNewName("")
     } catch (err: any) {
@@ -120,7 +116,7 @@ export function CharactersTab() {
 
   const handleCharacterCreated = async () => {
     const wasFirstCharacter = characters.length === 0
-    await fetchCharacters() // Refresh list after creation
+    await refetchCharacters() // Refresh list after creation
 
     // If this was the first character, navigate to story library
     if (wasFirstCharacter) {

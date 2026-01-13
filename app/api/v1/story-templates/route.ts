@@ -125,7 +125,17 @@ export async function GET(request: NextRequest) {
       })
     )
 
-    return NextResponse.json({ templates: templatesWithUrls || [] })
+    // Add caching headers - templates rarely change
+    // s-maxage: CDN cache for 5 minutes
+    // stale-while-revalidate: serve stale content while revalidating for 10 minutes
+    return NextResponse.json(
+      { templates: templatesWithUrls || [] },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    )
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },

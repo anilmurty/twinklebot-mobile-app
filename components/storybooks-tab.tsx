@@ -4,8 +4,8 @@ import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Cop
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useState, useEffect, useCallback, useRef } from "react"
-import { storybooksApi, charactersApi, paymentsApi, subscriptionPlansApi } from "@/lib/api-client"
+import { useState, useEffect } from "react"
+import { paymentsApi, subscriptionPlansApi, storybooksApi } from "@/lib/api-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
@@ -16,6 +16,13 @@ import { ShoppingCart, Check } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { CouponInput } from "@/components/coupon-input"
 import { Progress } from "@/components/ui/progress"
+import { 
+  useStorybooksWithPolling, 
+  useDeleteStorybook, 
+  useGenerateShare, 
+  useRevokeShare 
+} from "@/lib/queries"
+import { useCharacters } from "@/lib/queries"
 
 interface Storybook {
   id: string
@@ -38,11 +45,31 @@ interface Storybook {
 export function StorybooksTab() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [storybooks, setStorybooks] = useState<Storybook[]>([])
-  const [characters, setCharacters] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [charactersLoading, setCharactersLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  
+  // Use TanStack Query for data fetching with automatic caching and smart polling
+  const { 
+    data: storybooksData, 
+    isLoading: loading, 
+    error: storybooksError,
+    refetch: refetchStorybooks
+  } = useStorybooksWithPolling()
+  
+  const { 
+    data: charactersData, 
+    isLoading: charactersLoading,
+    refetch: refetchCharacters
+  } = useCharacters()
+  
+  // Mutations for storybook actions
+  const deleteStorybookMutation = useDeleteStorybook()
+  const generateShareMutation = useGenerateShare()
+  const revokeShareMutation = useRevokeShare()
+  
+  // Derive data from query results
+  const storybooks = storybooksData?.storybooks || []
+  const characters = charactersData?.characters || []
+  const error = storybooksError?.message || null
+  
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; title: string } | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [resumeStorybook, setResumeStorybook] = useState<Storybook | null>(null)
@@ -57,69 +84,13 @@ export function StorybooksTab() {
   const [isGeneratingShare, setIsGeneratingShare] = useState(false)
   const [copiedShareUrl, setCopiedShareUrl] = useState(false)
 
-  const isFetchingRef = useRef(false)
-
-  const fetchStorybooks = useCallback(async () => {
-    // Prevent concurrent fetches
-    if (isFetchingRef.current) return
-
-    try {
-      isFetchingRef.current = true
-      // Don't set loading to true on subsequent fetches to avoid UI flicker
-      setError(null)
-      const data = await storybooksApi.list()
-      setStorybooks(data.storybooks || [])
-    } catch (err: any) {
-      console.error("Failed to fetch storybooks:", err)
-      setError(err.message || "Failed to load storybooks")
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, []) // Empty deps - this function is stable
-
-  const fetchCharacters = async () => {
-    try {
-      setCharactersLoading(true)
-      const data = await charactersApi.list()
-      setCharacters(data.characters || [])
-    } catch (err: any) {
-      console.error("Failed to fetch characters:", err)
-    } finally {
-      setCharactersLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchStorybooks()
-    fetchCharacters()
-  }, [fetchStorybooks])
-
-  // Poll for updates every 3 seconds if there are generating storybooks
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Check if any storybooks are generating or pending preview
-      const hasGenerating = storybooks.some((sb) => 
-        sb.status === "generating" || 
-        sb.status === "pending" || 
-        sb.status === "preview_pending"
-      )
-
-      if (hasGenerating && !isFetchingRef.current) {
-        fetchStorybooks()
-      }
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [storybooks, fetchStorybooks]) // Add dependencies for proper polling
-
   // Refresh when tab becomes active (in case user navigated from story creation)
   useEffect(() => {
     const tab = searchParams.get("tab")
     if (tab === "storybooks") {
-      fetchStorybooks()
+      refetchStorybooks()
     }
-  }, [searchParams, fetchStorybooks])
+  }, [searchParams, refetchStorybooks])
 
   const handleCreateCharacter = () => {
     router.push("/?tab=characters&create=true")
@@ -130,7 +101,7 @@ export function StorybooksTab() {
   }
 
   const handleCharacterCreated = () => {
-    fetchCharacters()
+    refetchCharacters()
   }
 
   const formatDate = (dateString: string) => {
@@ -169,11 +140,10 @@ export function StorybooksTab() {
     try {
       setIsGeneratingShare(true)
       setCopiedShareUrl(false)
-      const result = await storybooksApi.generateShare(shareModalStorybook.id)
+      const result = await generateShareMutation.mutateAsync(shareModalStorybook.id)
       setShareUrl({ storybookId: shareModalStorybook.id, url: result.share_url })
-      // Refresh storybooks to get updated share_token
-      await fetchStorybooks()
-      // Update the modal storybook state
+      // Query cache is automatically invalidated by the mutation
+      // Update the modal storybook state from fresh data
       const updatedStorybooksData = await storybooksApi.list()
       const updatedStorybook = updatedStorybooksData.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
       if (updatedStorybook) {
@@ -181,7 +151,6 @@ export function StorybooksTab() {
       }
     } catch (err: any) {
       console.error("Failed to generate share link:", err)
-      setError(err.message || "Failed to generate share link")
     } finally {
       setIsGeneratingShare(false)
     }
@@ -201,12 +170,11 @@ export function StorybooksTab() {
   const handleRevokeShare = async () => {
     if (!shareModalStorybook) return
     try {
-      await storybooksApi.revokeShare(shareModalStorybook.id)
+      await revokeShareMutation.mutateAsync(shareModalStorybook.id)
       setShareUrl(null)
       setCopiedShareUrl(false)
-      // Refresh storybooks to reflect the change
-      await fetchStorybooks()
-      // Update the modal storybook state
+      // Query cache is automatically invalidated by the mutation
+      // Update the modal storybook state from fresh data
       const updatedStorybooksData = await storybooksApi.list()
       const updatedStorybook = updatedStorybooksData.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
       if (updatedStorybook) {
@@ -214,7 +182,6 @@ export function StorybooksTab() {
       }
     } catch (err: any) {
       console.error("Failed to revoke share link:", err)
-      setError(err.message || "Failed to revoke share link")
     }
   }
 
@@ -226,8 +193,8 @@ export function StorybooksTab() {
     if (!deleteConfirm) return
 
     try {
-      await storybooksApi.delete(deleteConfirm.id)
-      await fetchStorybooks()
+      await deleteStorybookMutation.mutateAsync(deleteConfirm.id)
+      // Query cache is automatically invalidated by the mutation
     } catch (err: any) {
       alert(`Failed to delete storybook: ${err.message}`)
     } finally {

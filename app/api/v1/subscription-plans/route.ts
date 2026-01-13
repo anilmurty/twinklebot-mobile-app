@@ -33,7 +33,15 @@ export async function GET(request: NextRequest) {
       return acc
     }, [])
 
-    return NextResponse.json({ plans: deduplicatedPlans })
+    // Add caching headers - subscription plans rarely change
+    return NextResponse.json(
+      { plans: deduplicatedPlans },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    )
   } catch (error: any) {
     return NextResponse.json(
       { error: 'Internal server error' },

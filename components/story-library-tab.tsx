@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { BookOpen, ImageIcon, Loader2, Lightbulb, Eye } from "lucide-react"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
-import { templatesApi } from "@/lib/api-client"
 import {
   Dialog,
   DialogContent,
@@ -16,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
+import { useTemplates } from "@/lib/queries"
 
 interface Template {
   id: number
@@ -30,42 +30,23 @@ interface Template {
 }
 
 export function StoryLibraryTab() {
-  const [templates, setTemplates] = useState<Template[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // Use TanStack Query for data fetching with automatic caching
+  // Templates are cached for 30 minutes since they rarely change
+  const { 
+    data: templatesData, 
+    isLoading: loading, 
+    error: templatesError 
+  } = useTemplates()
+  
+  // Derive data from query results
+  const templates = templatesData?.templates || []
+  const error = templatesError?.message || null
+  
   const [selectedStory, setSelectedStory] = useState<Template | null>(null)
   const [failedThumbnails, setFailedThumbnails] = useState<Set<number>>(new Set())
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
   const [feedbackText, setFeedbackText] = useState("")
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
-
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await templatesApi.list()
-        const templatesList = data.templates || []
-        console.log(
-          "Fetched templates:",
-          templatesList.map((t: Template) => ({
-            id: t.id,
-            title: t.title,
-            thumbnail_url: t.thumbnail_url,
-            has_mock_story: !!(t.mock_story_data?.scenes && t.mock_story_data.scenes.length > 0),
-            mock_scene_count: t.mock_story_data?.scenes?.length || 0,
-          })),
-        )
-        setTemplates(templatesList)
-      } catch (err: any) {
-        console.error("Failed to fetch templates:", err)
-        setError(err.message || "Failed to load story templates")
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchTemplates()
-  }, [])
 
   const getCoverLabel = (title: string) => {
     if (title.includes("Counting")) return "1-10"

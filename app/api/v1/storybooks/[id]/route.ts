@@ -37,42 +37,40 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Generate signed URLs for scene images (bucket is private)
+    // Generate proxy URLs for scene images (enables browser caching)
+    // Proxy URLs are stable (unlike signed URLs that change every request)
     if (storybook.scenes && Array.isArray(storybook.scenes)) {
-      const { getSignedUrl } = await import('@/lib/supabase/storage')
-      const { supabaseAdmin } = await import('@/lib/supabase/server')
+      const { getImageProxyUrl } = await import('@/lib/utils/image-proxy')
       
       // Sort scenes by scene_number to ensure correct order
       const sortedScenes = [...storybook.scenes].sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
       
-      const scenesWithSignedUrls = await Promise.all(
-        sortedScenes.map(async (scene: any) => {
-          if (scene.image_url) {
-            try {
-              // Extract path from URL
-              // URL format: https://xxx.supabase.co/storage/v1/object/public/storybook-scenes/{storybook_id}/scene-{number}.jpg
-              const urlMatch = scene.image_url.match(/storybook-scenes\/(.+)$/)
-              if (urlMatch) {
-                const path = urlMatch[1]
-                // Generate signed URL (valid for 1 hour)
-                const signedUrl = await getSignedUrl('storybook-scenes', path, 3600)
-                return {
-                  ...scene,
-                  image_url: signedUrl,
-                }
+      const scenesWithProxyUrls = sortedScenes.map((scene: any) => {
+        if (scene.image_url) {
+          try {
+            // Extract path from URL
+            // URL format: https://xxx.supabase.co/storage/v1/object/public/storybook-scenes/{storybook_id}/scene-{number}.jpg
+            const urlMatch = scene.image_url.match(/storybook-scenes\/(.+)$/)
+            if (urlMatch) {
+              const path = urlMatch[1]
+              // Generate proxy URL (browser can cache this)
+              const proxyUrl = getImageProxyUrl('storybook-scenes', path)
+              return {
+                ...scene,
+                image_url: proxyUrl,
               }
-            } catch (err) {
-              console.error(`Failed to generate signed URL for scene ${scene.scene_number}:`, err)
-              // Return original URL if signed URL generation fails
             }
+          } catch (err) {
+            console.error(`Failed to generate proxy URL for scene ${scene.scene_number}:`, err)
+            // Return original URL if proxy URL generation fails
           }
-          return scene
-        })
-      )
+        }
+        return scene
+      })
       
       return NextResponse.json({
         ...storybook,
-        scenes: scenesWithSignedUrls,
+        scenes: scenesWithProxyUrls,
       })
     }
 

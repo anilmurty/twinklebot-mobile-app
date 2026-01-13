@@ -1,13 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { User, Mail, CreditCard, Bell, LogOut, Crown, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { profileApi } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
+import { useProfile } from "@/lib/queries"
 
 interface Profile {
   full_name?: string
@@ -25,27 +24,16 @@ interface Profile {
 export function ProfileTab() {
   const router = useRouter()
   const { user, signOut } = useAuth()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await profileApi.get()
-      setProfile(data)
-    } catch (err: any) {
-      console.error('Failed to fetch profile:', err)
-      setError(err.message || 'Failed to load profile')
-    } finally {
-      setLoading(false)
-    }
-  }
+  
+  // Use TanStack Query for data fetching with automatic caching
+  const { 
+    data: profile, 
+    isLoading: loading, 
+    error: profileError,
+    refetch: refetchProfile 
+  } = useProfile()
+  
+  const error = profileError?.message || null
 
   const handleSignOut = async () => {
     try {
@@ -73,7 +61,7 @@ export function ProfileTab() {
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">
             <p className="text-destructive">{error}</p>
-            <Button onClick={fetchProfile} size="sm" className="mt-2">
+            <Button onClick={() => refetchProfile()} size="sm" className="mt-2">
               Retry
             </Button>
           </Card>

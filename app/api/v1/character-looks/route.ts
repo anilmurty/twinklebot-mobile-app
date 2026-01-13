@@ -86,7 +86,15 @@ export async function GET(request: NextRequest) {
       return result
     })
 
-    return NextResponse.json({ looks: looksWithUrls })
+    // Add caching headers - character looks rarely change
+    return NextResponse.json(
+      { looks: looksWithUrls },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      }
+    )
   } catch (error: any) {
     console.error('Error fetching character looks:', error)
     return NextResponse.json(
