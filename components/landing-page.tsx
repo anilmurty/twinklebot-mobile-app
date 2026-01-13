@@ -62,21 +62,18 @@ export function LandingPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Logo/Brand at top */}
-        <div className="pt-8 px-6 text-center">
+      <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
+        {/* Logo/Brand at top - absolute positioned */}
+        <div className="absolute top-0 left-0 right-0 pt-8 px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
             <Sparkles className="w-5 h-5 text-[#F5C563]" />
             <span className="text-white font-semibold text-lg">Twinklebot</span>
           </div>
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Login Card - Always visible */}
-        <div className="px-4 pb-6 sm:px-6 sm:pb-8">
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 w-full max-w-md mx-auto shadow-2xl">
+        {/* Login Card - Centered */}
+        <div className="w-full max-w-md">
+          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 w-full shadow-2xl">
             <h2 className="text-xl font-bold text-center mb-1">Welcome to Twinklebot</h2>
             <p className="text-sm text-muted-foreground text-center mb-5">
               Create personalized storybooks for your child
