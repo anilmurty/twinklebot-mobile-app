@@ -73,9 +73,9 @@ export function LandingPage() {
 
         {/* Login Card - Centered */}
         <div className="w-full max-w-md">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 w-full shadow-2xl">
-            <h2 className="text-xl font-bold text-center mb-1">Welcome to Twinklebot</h2>
-            <p className="text-sm text-muted-foreground text-center mb-5">
+          <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-6 w-full shadow-2xl">
+            <h2 className="text-xl font-bold text-center mb-1 text-white drop-shadow-md">Welcome to Twinklebot</h2>
+            <p className="text-sm text-white/80 text-center mb-5">
               Create personalized storybooks for your child
             </p>
 
@@ -103,33 +103,33 @@ export function LandingPage() {
                     variant="outline"
                     size="lg"
                     disabled={isLoading}
-                    className="w-full rounded-full h-12 text-base font-medium border-gray-300"
+                    className="w-full rounded-full h-12 text-base font-medium border-white/50 bg-white/10 text-white hover:bg-white/20"
                   >
                     Continue with Email
                   </Button>
                 </div>
 
                 {/* How It Works - compact version */}
-                <div className="mt-6 pt-5 border-t border-gray-200">
-                  <p className="text-xs text-muted-foreground text-center mb-3 uppercase tracking-wide font-medium">How it works</p>
+                <div className="mt-6 pt-5 border-t border-white/30">
+                  <p className="text-xs text-white/70 text-center mb-3 uppercase tracking-wide font-medium">How it works</p>
                   <div className="flex justify-between gap-2">
                     <div className="flex-1 text-center">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-1.5">
-                        <Users className="w-5 h-5 text-primary" />
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
+                        <Users className="w-5 h-5 text-[#F5C563]" />
                       </div>
-                      <p className="text-xs font-medium text-foreground">Upload Photo</p>
+                      <p className="text-xs font-medium text-white">Upload Photo</p>
                     </div>
                     <div className="flex-1 text-center">
-                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-1.5">
-                        <BookOpen className="w-5 h-5 text-emerald-600" />
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
+                        <BookOpen className="w-5 h-5 text-emerald-400" />
                       </div>
-                      <p className="text-xs font-medium text-foreground">Choose Story</p>
+                      <p className="text-xs font-medium text-white">Choose Story</p>
                     </div>
                     <div className="flex-1 text-center">
-                      <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center mx-auto mb-1.5">
-                        <Sparkles className="w-5 h-5 text-amber-600" />
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
+                        <Sparkles className="w-5 h-5 text-amber-400" />
                       </div>
-                      <p className="text-xs font-medium text-foreground">Generate</p>
+                      <p className="text-xs font-medium text-white">Generate</p>
                     </div>
                   </div>
                 </div>
@@ -143,7 +143,7 @@ export function LandingPage() {
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary text-base"
+                    className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 placeholder:text-gray-500"
                   />
 
                   <input
@@ -151,7 +151,7 @@ export function LandingPage() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-primary text-base"
+                    className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 placeholder:text-gray-500"
                   />
 
                   <Button 
@@ -164,7 +164,7 @@ export function LandingPage() {
 
                   <button
                     onClick={() => setIsSignUp(!isSignUp)}
-                    className="w-full text-center text-sm text-primary hover:underline"
+                    className="w-full text-center text-sm text-[#F5C563] hover:underline"
                   >
                     {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
                   </button>
@@ -174,7 +174,7 @@ export function LandingPage() {
                       setShowEmailForm(false)
                       setError(null)
                     }}
-                    className="w-full text-center text-sm text-muted-foreground hover:text-foreground"
+                    className="w-full text-center text-sm text-white/70 hover:text-white"
                   >
                     ← Back to login options
                   </button>
