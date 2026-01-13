@@ -36,12 +36,6 @@ export default function StoryPreviewPage() {
   const [error, setError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
 
-  useEffect(() => {
-    if (templateId) {
-      fetchTemplate()
-    }
-  }, [templateId])
-
   const fetchTemplate = async () => {
     try {
       setLoading(true)
@@ -68,9 +62,32 @@ export default function StoryPreviewPage() {
     }
   }
 
+  // Fetch template on mount
+  useEffect(() => {
+    if (templateId) {
+      fetchTemplate()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateId])
+
+  // Get current scene data (safe to use even if template is null)
+  const scenes = template?.mock_story_data?.scenes || []
+  const characterName = template?.mock_story_data?.character_name || "Alex"
+  const scene = scenes[currentScene] || null
+
+  // Debug: Log scene data when it changes
+  useEffect(() => {
+    if (scene) {
+      console.log('Current scene:', {
+        scene_number: scene.scene_number,
+        headline: scene.headline,
+        image_url: scene.image_url,
+        hasImageUrl: !!scene.image_url
+      })
+    }
+  }, [scene, currentScene])
 
   const handleNext = () => {
-    const scenes = template?.mock_story_data?.scenes || []
     if (currentScene < scenes.length - 1) {
       setCurrentScene(currentScene + 1)
       setImageError(false) // Reset image error when changing scenes
@@ -174,22 +191,6 @@ export default function StoryPreviewPage() {
       </div>
     )
   }
-
-  const scenes = template.mock_story_data.scenes
-  const characterName = template.mock_story_data.character_name || "Alex"
-  const scene = scenes[currentScene]
-
-  // Debug: Log scene data
-  useEffect(() => {
-    if (scene) {
-      console.log('Current scene:', {
-        scene_number: scene.scene_number,
-        headline: scene.headline,
-        image_url: scene.image_url,
-        hasImageUrl: !!scene.image_url
-      })
-    }
-  }, [scene])
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
