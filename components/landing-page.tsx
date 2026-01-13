@@ -73,7 +73,7 @@ export function LandingPage() {
 
         {/* Login Card - Centered */}
         <div className="w-full max-w-md">
-          <div className="bg-white/95 backdrop-blur-md rounded-3xl p-6 w-full shadow-2xl">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-6 w-full shadow-2xl">
             <h2 className="text-xl font-bold text-center mb-1">Welcome to Twinklebot</h2>
             <p className="text-sm text-muted-foreground text-center mb-5">
               Create personalized storybooks for your child

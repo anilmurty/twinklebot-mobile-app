@@ -591,14 +591,16 @@ export function CreateStoryDialog({
 
             <div className="space-y-4 py-4">
               {/* Compact preview */}
-              <div className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg">
+              <div 
+                className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => previewSceneUrl && setShowFullImage(true)}
+              >
                 <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
                   {previewSceneUrl ? (
                     <img
                       src={previewSceneUrl}
                       alt="Preview"
-                      className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => setShowFullImage(true)}
+                      className="w-full h-full object-cover"
                     />
                   ) : characterPhotoUrl ? (
                     <img
@@ -610,14 +612,11 @@ export function CreateStoryDialog({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold truncate">{selectedTemplateData?.title}</h3>
-                  <p className="text-xs text-muted-foreground">Starring {characterName}</p>
+                  <p className="text-xs text-muted-foreground">Starring {characterName || 'your child'}</p>
                   {previewSceneUrl && (
-                    <button
-                      onClick={() => setShowFullImage(true)}
-                      className="text-xs text-primary hover:underline mt-1"
-                    >
+                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">
                       View full preview
-                    </button>
+                    </span>
                   )}
                 </div>
               </div>

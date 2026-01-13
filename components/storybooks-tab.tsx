@@ -576,7 +576,7 @@ export function StorybooksTab() {
             <DialogDescription>
               {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
                 ? "Creating a magical preview just for you"
-                : `A personalized keepsake starring ${resumeStorybook?.character_name}`}
+                : `A personalized keepsake starring ${resumeStorybook?.character_name || 'your child'}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -610,27 +610,26 @@ export function StorybooksTab() {
                   // Show preview and payment options when ready
                   <>
                     {/* Compact preview */}
-                    <div className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg">
+                    <div 
+                      className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
+                      onClick={() => resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && setShowFullImage(true)}
+                    >
                       <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
                         {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
                           <img
                             src={resumeStorybook.scenes[0].image_url}
                             alt="Preview"
-                            className="w-full h-full object-cover cursor-pointer"
-                            onClick={() => setShowFullImage(true)}
+                            className="w-full h-full object-cover"
                           />
                         ) : null}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold truncate">{resumeStorybook.title}</h3>
-                        <p className="text-xs text-muted-foreground">Starring {resumeStorybook.character_name}</p>
+                        <p className="text-xs text-muted-foreground">Starring {resumeStorybook.character_name || 'your child'}</p>
                         {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
-                          <button
-                            onClick={() => setShowFullImage(true)}
-                            className="text-xs text-primary hover:underline mt-1"
-                          >
+                          <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">
                             View full preview
-                          </button>
+                          </span>
                         )}
                       </div>
                     </div>
