@@ -6,13 +6,13 @@ export async function GET(request: NextRequest) {
   // Auth callback shouldn't be called in design mode, but handle gracefully
   if (isDesignMode()) {
     const requestUrl = new URL(request.url)
-    const next = requestUrl.searchParams.get('next') || '/'
+    const next = requestUrl.searchParams.get('next') || '/app'
     return NextResponse.redirect(new URL(next, requestUrl.origin))
   }
 
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const next = requestUrl.searchParams.get('next') || '/'
+  const next = requestUrl.searchParams.get('next') || '/app'
 
   // Check for custom domain via environment variable or use request origin
   // Vercel sets x-forwarded-host header when using custom domains
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.redirect(new URL(`/?error=auth_failed&message=${encodeURIComponent('Missing Supabase configuration')}`, requestUrl.origin))
+      return NextResponse.redirect(new URL(`/app?error=auth_failed&message=${encodeURIComponent('Missing Supabase configuration')}`, requestUrl.origin))
     }
 
     const supabase = createServerClient(
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (error) {
       console.error('Auth callback error:', error)
-      return NextResponse.redirect(new URL(`/?error=auth_failed&message=${encodeURIComponent(error.message)}`, requestUrl.origin))
+      return NextResponse.redirect(new URL(`/app?error=auth_failed&message=${encodeURIComponent(error.message)}`, requestUrl.origin))
     }
   }
 

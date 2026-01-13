@@ -1,71 +1,44 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
-import { MobileLayout } from "@/components/mobile-layout"
-import { DesktopLayout } from "@/components/desktop-layout"
-import { LandingPage } from "@/components/landing-page"
+import { Suspense } from "react"
+import { WebLandingPage } from "@/components/web-landing-page"
 import { useAuth } from "@/lib/auth-context"
-import { useSearchParams } from "next/navigation"
-import { useIsMobile } from "@/lib/utils/device-detection"
-import { isDesignMode } from "@/lib/designMode"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 function HomeContent() {
   const { user, loading } = useAuth()
-  const searchParams = useSearchParams()
-  const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "profile">("storybooks")
+  const router = useRouter()
 
-  // ✅ DESIGN_MODE: Use centralized design mode check
-  const designMode = isDesignMode()
-
+  // If user is authenticated, redirect to /app
   useEffect(() => {
-    const tab = searchParams.get('tab')
-    if (tab && ['storybooks', 'characters', 'library', 'profile'].includes(tab)) {
-      setActiveTab(tab as typeof activeTab)
+    if (!loading && user) {
+      router.replace("/app")
     }
-  }, [searchParams])
+  }, [user, loading, router])
 
-  // ✅ DESIGN_MODE: In design mode, always show app UI (bypass auth check)
-  // This allows v0.dev to preview the app without requiring authentication
-  if (designMode) {
-    // Render mobile or desktop layout based on device detection
-    if (isMobile) {
-      return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
-    } else {
-      return <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
-    }
-  }
-
-  if (loading) {
+  // Show loading while checking auth or redirecting
+  if (loading || user) {
     return (
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-amber-50 to-orange-50/30">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-amber-800/60">Loading...</p>
         </div>
       </div>
     )
   }
 
-  if (!user) {
-    return <LandingPage />
-  }
-
-  // Render mobile or desktop layout based on device detection
-  if (isMobile) {
-    return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
-  } else {
-    return <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
-  }
+  return <WebLandingPage />
 }
 
 export default function Home() {
   return (
     <Suspense fallback={
-      <div className="h-screen flex items-center justify-center">
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-amber-50 to-orange-50/30">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-amber-800/60">Loading...</p>
         </div>
       </div>
     }>

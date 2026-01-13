@@ -175,7 +175,7 @@ export default function StorybookViewerPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center p-6">
         <p className="text-destructive mb-4">{error || 'Storybook not found'}</p>
-        <Button onClick={() => router.push('/')}>Go Home</Button>
+        <Button onClick={() => router.push('/app')}>Go Home</Button>
       </div>
     )
   }
@@ -214,7 +214,7 @@ export default function StorybookViewerPage() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => router.push('/')}
+                    onClick={() => router.push('/app')}
                     className="text-white hover:bg-white/20 shrink-0"
                   >
                     <ArrowLeft className="w-4 h-4 mr-1 md:mr-2" />

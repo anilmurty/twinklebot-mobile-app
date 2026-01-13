@@ -137,7 +137,6 @@ export async function GET(request: NextRequest) {
         result.thumbnail_url = thumbnailUrl
         
         // Generate thumbnail from first scene if available (even during generation)
-        // Use proxy URLs instead of signed URLs for better browser caching
         if (sb.scenes && Array.isArray(sb.scenes) && sb.scenes.length > 0) {
           // Find first scene with an image_url (scenes may not be in order)
           const scenesWithImages = sb.scenes.filter((s: any) => s.image_url)
@@ -149,12 +148,10 @@ export async function GET(request: NextRequest) {
               try {
                 const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
                 if (urlMatch) {
-                  // Use proxy URL instead of signed URL for browser caching
-                  const { getImageProxyUrl } = await import('@/lib/utils/image-proxy')
-                  const proxyUrl = getImageProxyUrl('storybook-scenes', urlMatch[1])
+                  const signedUrl = await getSignedUrl('storybook-scenes', urlMatch[1], 3600)
                   // Replace template thumbnail with first scene image
-                  result.thumbnail_url = proxyUrl
-                  result.first_scene_image = proxyUrl
+                  result.thumbnail_url = signedUrl
+                  result.first_scene_image = signedUrl
                 }
               } catch (err) {
                 console.error(`Failed to generate thumbnail for storybook ${sb.id}:`, err)

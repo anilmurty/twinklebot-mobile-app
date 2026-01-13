@@ -183,7 +183,7 @@ export default function StoryPreviewPage() {
         <Card className="p-6 max-w-md w-full">
           <h2 className="text-xl font-bold mb-2">Preview Not Available</h2>
           <p className="text-muted-foreground mb-4">{error || "This story doesn't have a preview yet."}</p>
-          <Button onClick={() => router.push('/?tab=library')} className="w-full">
+          <Button onClick={() => router.push('/app?tab=library')} className="w-full">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Story Library
           </Button>
@@ -236,7 +236,7 @@ export default function StoryPreviewPage() {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      onClick={() => router.push('/?tab=library')}
+                      onClick={() => router.push('/app?tab=library')}
                       className="text-white hover:bg-white/20 shrink-0"
                     >
                       <ArrowLeft className="w-4 h-4 mr-1 md:mr-2" />

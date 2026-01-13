@@ -172,7 +172,7 @@ export default function SharedStorybookPage() {
     return (
       <div className="h-screen flex flex-col items-center justify-center p-6 bg-background">
         <p className="text-destructive mb-4 text-center">{error || 'Storybook not found'}</p>
-        <Button onClick={() => router.push('/')}>
+        <Button onClick={() => router.push('/app')}>
           <Home className="w-4 h-4 mr-2" />
           Go Home
         </Button>
@@ -198,9 +198,9 @@ export default function SharedStorybookPage() {
             <p className="text-xs md:text-sm text-muted-foreground">Starring {characterName}</p>
           )}
         </div>
-        <Button variant="outline" size="sm" onClick={() => router.push('/')} className="shrink-0 ml-4">
+        <Button variant="outline" size="sm" onClick={() => router.push('/app')} className="shrink-0 ml-4">
           <Home className="w-4 h-4 mr-2" />
-          <span className="hidden sm:inline">Home</span>
+          <span className="hidden sm:inline">Create Your Own</span>
         </Button>
       </div>
 

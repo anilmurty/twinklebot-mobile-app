@@ -32,42 +32,43 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Generate proxy URLs for character photos (enables browser caching)
-    // Proxy URLs are stable (unlike signed URLs that change every request)
-    const { getImageProxyUrl } = await import('@/lib/utils/image-proxy')
-    const formatted = (characters || []).map((char: any) => {
-      let photoUrl = char.front_photo_url
-      
-      // Generate proxy URL for character photos (browser can cache these)
-      if (photoUrl) {
-        try {
-          // Extract path from URL (handles both public and signed URLs)
-          const urlMatch = photoUrl.match(/character-photos\/(.+)$/)
-          if (urlMatch) {
-            const path = urlMatch[1]
-            photoUrl = getImageProxyUrl('character-photos', path)
-          } else if (photoUrl.includes('character-photos')) {
-            // Fallback: try to extract path from full URL
-            const urlObj = new URL(photoUrl)
-            const pathParts = urlObj.pathname.split('/character-photos/')
-            if (pathParts.length > 1) {
-              photoUrl = getImageProxyUrl('character-photos', pathParts[1])
+    // Generate signed URLs for character photos (always generate signed URLs for consistency)
+    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    const formatted = await Promise.all(
+      (characters || []).map(async (char: any) => {
+        let photoUrl = char.front_photo_url
+        
+        // Always generate signed URL for character photos to ensure they're accessible
+        if (photoUrl) {
+          try {
+            // Extract path from URL (handles both public and signed URLs)
+            const urlMatch = photoUrl.match(/character-photos\/(.+)$/)
+            if (urlMatch) {
+              const path = urlMatch[1]
+              photoUrl = await getSignedUrl('character-photos', path, 3600)
+            } else if (photoUrl.includes('character-photos')) {
+              // Fallback: try to extract path from full URL
+              const urlObj = new URL(photoUrl)
+              const pathParts = urlObj.pathname.split('/character-photos/')
+              if (pathParts.length > 1) {
+                photoUrl = await getSignedUrl('character-photos', pathParts[1], 3600)
+              }
             }
+          } catch (err) {
+            console.error(`Failed to generate signed URL for character ${char.id}:`, err)
+            // Keep original URL if signed URL generation fails
           }
-        } catch (err) {
-          console.error(`Failed to generate proxy URL for character ${char.id}:`, err)
-          // Keep original URL if proxy URL generation fails
         }
-      }
 
-      return {
-        id: char.id,
-        name: char.name,
-        front_photo_url: photoUrl,
-        stories_count: char.storybooks?.[0]?.count || 0,
-        created_at: char.created_at,
-      }
-    })
+        return {
+          id: char.id,
+          name: char.name,
+          front_photo_url: photoUrl,
+          stories_count: char.storybooks?.[0]?.count || 0,
+          created_at: char.created_at,
+        }
+      })
+    )
 
     return NextResponse.json({ characters: formatted || [] })
   } catch (error: any) {

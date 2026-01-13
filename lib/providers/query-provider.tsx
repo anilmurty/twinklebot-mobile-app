@@ -109,8 +109,9 @@ export function QueryProvider({ children }: QueryProviderProps) {
         persister,
         // Max age of persisted cache: 24 hours
         maxAge: 1000 * 60 * 60 * 24,
-        // Persist mutations that are still pending
-        buster: '', // Cache buster (empty = no busting)
+        // Cache buster - increment this to invalidate all cached data
+        // v2: Fixed image URLs (reverted proxy URLs to signed URLs)
+        buster: 'v2',
       }}
     >
       {children}
