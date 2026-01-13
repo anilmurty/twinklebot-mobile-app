@@ -309,6 +309,10 @@ export const storybooksApi = {
     apiRequest<{ message: string; revoked: boolean }>(`/storybooks/${id}/revoke-share`, {
       method: 'POST',
     }),
+  useCredit: (id: string) =>
+    apiRequest<{ success: boolean; remaining_credits: number; storybook_id: string }>(`/storybooks/${id}/use-credit`, {
+      method: 'POST',
+    }),
 }
 
 // Character Looks API

@@ -5,17 +5,13 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useState, useEffect } from "react"
-import { paymentsApi, subscriptionPlansApi, storybooksApi } from "@/lib/api-client"
+import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ShoppingCart, Check } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { CouponInput } from "@/components/coupon-input"
 import { Progress } from "@/components/ui/progress"
+import { CompactPricing } from "@/components/compact-pricing"
 import { 
   useStorybooksWithPolling, 
   useDeleteStorybook, 
@@ -75,9 +71,9 @@ export function StorybooksTab() {
   const [resumeStorybook, setResumeStorybook] = useState<Storybook | null>(null)
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
-  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [storyCredits, setStoryCredits] = useState(0)
   const [showFullImage, setShowFullImage] = useState(false)
   const [shareModalStorybook, setShareModalStorybook] = useState<Storybook | null>(null)
   const [shareUrl, setShareUrl] = useState<{ storybookId: string; url: string } | null>(null)
@@ -204,12 +200,18 @@ export function StorybooksTab() {
 
   const fetchSubscriptionPlans = async () => {
     try {
+      // Fetch profile for story credits
+      const profile = await profileApi.get()
+      setStoryCredits(profile?.story_credits || 0)
+
+      // Fetch subscription plans (one-time only for Phase 1)
       const plansData = await subscriptionPlansApi.list()
-      setSubscriptionPlans(plansData.plans || [])
-      if (plansData.plans && plansData.plans.length > 0) {
-        const subscriptionPlan = plansData.plans.find((p: any) => p.plan_type === 'subscription')
-        const oneTimePlan = plansData.plans.find((p: any) => p.plan_type === 'one-time')
-        setSelectedPlanId(subscriptionPlan?.id || oneTimePlan?.id || plansData.plans[0].id)
+      const oneTimePlans = (plansData.plans || []).filter((p: any) => p.plan_type === 'one-time')
+      setSubscriptionPlans(oneTimePlans)
+      if (oneTimePlans.length > 0) {
+        // Default to single storybook (1 credit) plan
+        const singlePlan = oneTimePlans.find((p: any) => p.stories_per_period === 1)
+        setSelectedPlanId(singlePlan?.id || oneTimePlans[0].id)
       }
     } catch (err: any) {
       console.error("Failed to fetch subscription plans:", err)
@@ -228,8 +230,7 @@ export function StorybooksTab() {
 
       const checkout = await paymentsApi.createCheckout(
         resumeStorybook.id,
-        planId,
-        appliedCoupon?.id
+        planId
       )
 
       if (checkout.checkout_url) {
@@ -244,10 +245,31 @@ export function StorybooksTab() {
     }
   }
 
+  const handleUseCredit = async () => {
+    if (!resumeStorybook) {
+      setPaymentError("Missing storybook information")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setPaymentError(null)
+
+      await storybooksApi.useCredit(resumeStorybook.id)
+      
+      // Close dialog and refresh
+      setResumeStorybook(null)
+      refetchStorybooks()
+    } catch (err: any) {
+      console.error("Failed to use credit:", err)
+      setPaymentError(err.message || "Failed to use credit")
+      setIsSubmitting(false)
+    }
+  }
+
   const handleResumeMaybeLater = () => {
     setResumeStorybook(null)
     setSelectedPlanId(null)
-    setAppliedCoupon(null)
     setPaymentError(null)
   }
 
@@ -544,17 +566,17 @@ export function StorybooksTab() {
 
       {/* Resume Story Creation Dialog */}
       <Dialog open={!!resumeStorybook} onOpenChange={(open) => !open && handleResumeMaybeLater()}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl">
+            <DialogTitle className="text-xl">
               {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
                 ? "Generating Preview"
-                : "Complete Your Story"}
+                : "Unlock Your Story"}
             </DialogTitle>
             <DialogDescription>
               {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
                 ? "Creating a magical preview just for you"
-                : "Choose how you'd like to continue your adventure"}
+                : `A personalized keepsake starring ${resumeStorybook?.character_name}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -587,178 +609,80 @@ export function StorybooksTab() {
                 ) : (
                   // Show preview and payment options when ready
                   <>
-                    <div className="flex flex-col items-center gap-4">
-                      <div className="relative w-full max-w-xs mx-auto aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group shadow-lg">
+                    {/* Compact preview */}
+                    <div className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg">
+                      <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
                         {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
                           <img
                             src={resumeStorybook.scenes[0].image_url}
-                            alt="Story preview"
+                            alt="Preview"
                             className="w-full h-full object-cover cursor-pointer"
                             onClick={() => setShowFullImage(true)}
                           />
                         ) : null}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                          <div className="text-white">
-                            <h3 className="text-xl font-bold mb-1">{resumeStorybook.title}</h3>
-                            <p className="text-xs opacity-90">Starring {resumeStorybook.character_name}</p>
-                          </div>
-                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">{resumeStorybook.title}</h3>
+                        <p className="text-xs text-muted-foreground">Starring {resumeStorybook.character_name}</p>
                         {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
                           <button
                             onClick={() => setShowFullImage(true)}
-                            className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm text-sm"
+                            className="text-xs text-primary hover:underline mt-1"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                          </svg>
-                            View Full
+                            View full preview
                           </button>
                         )}
                       </div>
                     </div>
 
-                {/* Full Image Modal */}
-                <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
-                  <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-black/95">
-                    <div className="relative w-full h-[90vh] flex items-center justify-center">
-                      {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
-                        <img
-                          src={resumeStorybook.scenes[0].image_url}
-                          alt="Story preview - full view"
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      )}
-                      <button
-                        onClick={() => setShowFullImage(false)}
-                        className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
-                        aria-label="Close"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => setShowFullImage(false)}
-                        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-colors"
-                      >
-                        Back to Purchase
-                      </button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    {/* Full Image Modal */}
+                    <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
+                      <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-black/95">
+                        <div className="relative w-full h-[90vh] flex items-center justify-center">
+                          {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
+                            <img
+                              src={resumeStorybook.scenes[0].image_url}
+                              alt="Story preview - full view"
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          )}
+                          <button
+                            onClick={() => setShowFullImage(false)}
+                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
+                            aria-label="Close"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
 
-                    <div className="space-y-3">
-                      <Label className="text-base font-semibold">Choose Your Plan</Label>
-
-                      {subscriptionPlans.length === 0 ? (
-                        <Card className="p-4 text-center">
-                          <p className="text-sm text-muted-foreground">Loading payment plans...</p>
-                        </Card>
-                      ) : (
-                        <RadioGroup
-                          value={selectedPlanId?.toString() || ""}
-                          onValueChange={(value) => setSelectedPlanId(Number.parseInt(value))}
-                        >
-                          <div className="space-y-3">
-                            {subscriptionPlans.map((plan) => {
-                              const isSelected = selectedPlanId === plan.id
-                              const isSubscription = plan.plan_type === 'subscription'
-                              const price = (plan.price_amount / 100).toFixed(2)
-                              const features = plan.features || []
-
-                              return (
-                                <Card
-                                  key={plan.id}
-                                  className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                                    isSelected ? 'border-2 border-primary bg-primary/5' : ''
-                                  } ${isSubscription && !isSelected ? 'border-2 border-primary/50 bg-primary/5' : ''}`}
-                                >
-                                  <label className="flex items-start gap-4 cursor-pointer w-full">
-                                    <RadioGroupItem
-                                      value={plan.id.toString()}
-                                      id={`resume-plan-${plan.id}`}
-                                      className="mt-1"
-                                    />
-                                    <div className="flex-1 space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <h4 className="font-bold text-lg">{plan.name}</h4>
-                                        {isSubscription && (
-                                          <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                                            Best Value
-                                          </span>
-                                        )}
-                                      </div>
-                                      {plan.description && (
-                                        <p className="text-sm text-muted-foreground">{plan.description}</p>
-                                      )}
-                                      {features.length > 0 && (
-                                        <ul className="text-sm space-y-1 text-muted-foreground">
-                                          {features.map((feature: string, idx: number) => (
-                                            <li key={idx} className="flex items-start gap-2">
-                                              <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                                              <span>{feature}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      )}
-                                      <div className="pt-2">
-                                        <span className="text-2xl font-bold text-primary">${price}</span>
-                                        {plan.billing_interval && (
-                                          <span className="text-sm text-muted-foreground ml-1">
-                                            /{plan.billing_interval}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </label>
-                                  <Button
-                                    className={`w-full mt-4 ${
-                                      isSubscription
-                                        ? 'bg-primary hover:bg-primary/90'
-                                        : 'hover:bg-accent hover:border-primary'
-                                    }`}
-                                    variant={isSubscription ? 'default' : 'outline'}
-                                    size="lg"
-                                    onClick={() => handleResumePurchase(plan.id)}
-                                    disabled={isSubmitting || !isSelected}
-                                  >
-                                    {isSubmitting ? (
-                                      <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Processing...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <ShoppingCart className="w-4 h-4 mr-2" />
-                                        {isSubscription
-                                          ? 'Subscribe & Generate Full Story'
-                                          : 'Purchase & Generate Full Story'}
-                                      </>
-                                    )}
-                                  </Button>
-                                </Card>
-                              )
-                            })}
-                          </div>
-                        </RadioGroup>
-                      )}
-
-                      <div className="pt-2">
-                        <CouponInput
-                          onCouponApplied={(coupon) => setAppliedCoupon(coupon)}
-                          onCouponRemoved={() => setAppliedCoupon(null)}
-                          disabled={isSubmitting}
-                        />
+                    {/* Compact Pricing */}
+                    {subscriptionPlans.length === 0 ? (
+                      <div className="flex items-center justify-center py-6">
+                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
                       </div>
-                    </div>
+                    ) : (
+                      <CompactPricing
+                        plans={subscriptionPlans}
+                        selectedPlanId={selectedPlanId}
+                        onPlanSelect={setSelectedPlanId}
+                        onPurchase={handleResumePurchase}
+                        isSubmitting={isSubmitting}
+                        storyCredits={storyCredits}
+                        onUseCredit={handleUseCredit}
+                      />
+                    )}
 
                     {paymentError && (
-                      <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
-                        <p className="text-sm text-destructive">{paymentError}</p>
+                      <div className="p-2 bg-destructive/10 border border-destructive rounded-lg">
+                        <p className="text-xs text-destructive">{paymentError}</p>
                       </div>
                     )}
 
-                    <Button variant="ghost" className="w-full" onClick={handleResumeMaybeLater} disabled={isSubmitting}>
+                    <Button variant="ghost" size="sm" className="w-full" onClick={handleResumeMaybeLater} disabled={isSubmitting}>
                       Maybe Later
                     </Button>
                   </>

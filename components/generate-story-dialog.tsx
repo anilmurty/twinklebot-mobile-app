@@ -5,12 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Sparkles, Loader2, ShoppingCart, Check } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { charactersApi, storybooksApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
-import { CouponInput } from "@/components/coupon-input"
+import { CompactPricing } from "@/components/compact-pricing"
 
 interface Character {
   id: string
@@ -46,9 +46,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
   const [hasPaymentOverride, setHasPaymentOverride] = useState(false)
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
-  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; discount: { formatted: string } } | null>(null)
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [showFullImage, setShowFullImage] = useState(false)
+  const [storyCredits, setStoryCredits] = useState(0)
   const [characterGender, setCharacterGender] = useState<'male' | 'female' | null>(null)
   const [looks, setLooks] = useState<any[]>([])
   const [selectedLookId, setSelectedLookId] = useState<number | null>(null)
@@ -63,8 +63,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setStorybookId(null)
       setPreviewSceneUrl(null)
       setSelectedPlanId(null)
-      setAppliedCoupon(null)
       setSelectedLookId(null)
+      setStoryCredits(0)
       setLooks([])
       setCharacterGender(null)
     }
@@ -123,19 +123,21 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const subscriptionStatus = await subscriptionsApi.getStatus()
       setHasActiveSubscription(subscriptionStatus.has_subscription || false)
 
-      // Check payment override
+      // Check payment override and story credits
       const profile = await profileApi.get()
       setHasPaymentOverride(profile?.payment_override === true)
+      setStoryCredits(profile?.story_credits || 0)
 
-      // Fetch subscription plans
+      // Fetch subscription plans (one-time only for Phase 1)
       setLoadingPlans(true)
       const plansData = await subscriptionPlansApi.list()
-      setSubscriptionPlans(plansData.plans || [])
-      if (plansData.plans && plansData.plans.length > 0) {
-        // Set default to first subscription plan, or first one-time if no subscriptions
-        const subscriptionPlan = plansData.plans.find((p: any) => p.plan_type === 'subscription')
-        const oneTimePlan = plansData.plans.find((p: any) => p.plan_type === 'one-time')
-        setSelectedPlanId(subscriptionPlan?.id || oneTimePlan?.id || plansData.plans[0].id)
+      // Filter to only show one-time plans
+      const oneTimePlans = (plansData.plans || []).filter((p: any) => p.plan_type === 'one-time')
+      setSubscriptionPlans(oneTimePlans)
+      if (oneTimePlans.length > 0) {
+        // Default to single storybook (1 credit) plan
+        const singlePlan = oneTimePlans.find((p: any) => p.stories_per_period === 1)
+        setSelectedPlanId(singlePlan?.id || oneTimePlans[0].id)
       }
     } catch (err: any) {
       console.error("Failed to check payment status:", err)
@@ -217,8 +219,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       // Create checkout session
       const checkout = await paymentsApi.createCheckout(
         storybookId,
-        planId,
-        appliedCoupon?.id
+        planId
       )
 
       // Redirect to Stripe checkout
@@ -230,6 +231,28 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     } catch (err: any) {
       console.error("Failed to create checkout:", err)
       setError(err.message || "Failed to create checkout session. Please try again.")
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUseCredit = async () => {
+    if (!storybookId) {
+      setError("Missing storybook information")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setError(null)
+
+      await storybooksApi.useCredit(storybookId)
+      
+      // Navigate to storybooks tab
+      onOpenChange(false)
+      router.push("/?tab=storybooks")
+    } catch (err: any) {
+      console.error("Failed to use credit:", err)
+      setError(err.message || "Failed to use credit. Please try again.")
       setIsSubmitting(false)
     }
   }
@@ -506,49 +529,40 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
         {currentStep === "payment" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-2xl">Complete Your Story</DialogTitle>
-              <DialogDescription>Choose how you'd like to continue your adventure</DialogDescription>
+              <DialogTitle className="text-xl">Unlock Your Story</DialogTitle>
+              <DialogDescription>
+                A personalized keepsake starring {selectedCharacterData?.name}
+              </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-6">
-              {/* Preview complete indicator */}
-              <div className="flex items-center justify-center gap-2 mb-4">
-                <div className="h-1.5 flex-1 bg-primary rounded-full" />
-                <div className="h-1.5 flex-1 bg-primary rounded-full" />
-                <div className="h-1.5 flex-1 bg-muted rounded-full" />
-              </div>
-
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative w-full max-w-xs mx-auto aspect-[9/16] bg-gradient-to-br from-accent/50 to-secondary/50 rounded-xl overflow-hidden group shadow-lg">
+            <div className="space-y-4 py-4">
+              {/* Compact preview */}
+              <div className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg">
+                <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
                   {previewSceneUrl ? (
                     <img
                       src={previewSceneUrl}
-                      alt="Story preview"
+                      alt="Preview"
                       className="w-full h-full object-cover cursor-pointer"
                       onClick={() => setShowFullImage(true)}
                     />
-                  ) : selectedCharacterData ? (
-                  <img
-                    src={selectedCharacterData.front_photo_url || "/placeholder.svg"}
-                    alt="Story preview"
-                    className="w-full h-full object-cover opacity-80"
-                  />
+                  ) : selectedCharacterData?.front_photo_url ? (
+                    <img
+                      src={selectedCharacterData.front_photo_url}
+                      alt="Preview"
+                      className="w-full h-full object-cover opacity-80"
+                    />
                   ) : null}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
-                  <div className="text-white">
-                      <h3 className="text-xl font-bold mb-1">{story.title}</h3>
-                      <p className="text-xs opacity-90">Starring {selectedCharacterData?.name}</p>
-                    </div>
-                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold truncate">{story.title}</h3>
+                  <p className="text-xs text-muted-foreground">Starring {selectedCharacterData?.name}</p>
                   {previewSceneUrl && (
                     <button
                       onClick={() => setShowFullImage(true)}
-                      className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 text-white px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors backdrop-blur-sm text-sm"
+                      className="text-xs text-primary hover:underline mt-1"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                      </svg>
-                      View Full
+                      View full preview
                     </button>
                   )}
                 </div>
@@ -574,132 +588,34 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-                    <button
-                      onClick={() => setShowFullImage(false)}
-                      className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 rounded-lg font-semibold transition-colors"
-                    >
-                      Back to Purchase
-                    </button>
                   </div>
                 </DialogContent>
               </Dialog>
 
-              <div className="space-y-3">
-                <Label className="text-base font-semibold">Choose Your Plan</Label>
-
-                {loadingPlans ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                  </div>
-                ) : subscriptionPlans.length === 0 ? (
-                  <Card className="p-4 text-center">
-                    <p className="text-sm text-muted-foreground">No payment plans available.</p>
-                  </Card>
-                ) : (
-                  <RadioGroup
-                    value={selectedPlanId?.toString() || ""}
-                    onValueChange={(value) => setSelectedPlanId(Number.parseInt(value))}
-                  >
-                    <div className="space-y-3">
-                      {subscriptionPlans.map((plan) => {
-                        const isSelected = selectedPlanId === plan.id
-                        const isSubscription = plan.plan_type === 'subscription'
-                        const price = (plan.price_amount / 100).toFixed(2)
-                        const features = plan.features || []
-
-                        return (
-                          <Card
-                            key={plan.id}
-                            className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                              isSelected ? 'border-2 border-primary bg-primary/5' : ''
-                            } ${isSubscription && !isSelected ? 'border-2 border-primary/50 bg-primary/5' : ''}`}
-                          >
-                            <label className="flex items-start gap-4 cursor-pointer w-full">
-                              <RadioGroupItem
-                                value={plan.id.toString()}
-                                id={`plan-${plan.id}`}
-                                className="mt-1"
-                              />
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                                  <h4 className="font-bold text-lg">{plan.name}</h4>
-                                  {isSubscription && (
-                        <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
-                          Best Value
-                        </span>
-                                  )}
-                      </div>
-                                {plan.description && (
-                                  <p className="text-sm text-muted-foreground">{plan.description}</p>
-                                )}
-                                {features.length > 0 && (
-                      <ul className="text-sm space-y-1 text-muted-foreground">
-                                    {features.map((feature: string, idx: number) => (
-                                      <li key={idx} className="flex items-start gap-2">
-                          <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                                        <span>{feature}</span>
-                        </li>
-                                    ))}
-                      </ul>
-                                )}
-                      <div className="pt-2">
-                                  <span className="text-2xl font-bold text-primary">${price}</span>
-                                  {plan.billing_interval && (
-                                    <span className="text-sm text-muted-foreground ml-1">
-                                      /{plan.billing_interval}
-                                    </span>
-                                  )}
-                      </div>
-                    </div>
-                            </label>
-                  <Button
-                              className={`w-full mt-4 ${
-                                isSubscription
-                                  ? 'bg-primary hover:bg-primary/90'
-                                  : 'hover:bg-accent hover:border-primary'
-                              }`}
-                              variant={isSubscription ? 'default' : 'outline'}
-                    size="lg"
-                              onClick={() => handleCompletePurchase(plan.id)}
-                              disabled={isSubmitting || !isSelected}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                                  {isSubscription
-                                    ? 'Subscribe & Generate Full Story'
-                                    : 'Purchase & Generate Full Story'}
-                      </>
-                    )}
-                  </Button>
-                </Card>
-                        )
-                      })}
-                    </div>
-                  </RadioGroup>
-                )}
-
-                <div className="pt-2">
-                  <CouponInput
-                    onCouponApplied={(coupon) => setAppliedCoupon(coupon)}
-                    onCouponRemoved={() => setAppliedCoupon(null)}
-                    disabled={isSubmitting}
-                  />
+              {/* Compact Pricing */}
+              {loadingPlans ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
-              </div>
+              ) : (
+                <CompactPricing
+                  plans={subscriptionPlans}
+                  selectedPlanId={selectedPlanId}
+                  onPlanSelect={setSelectedPlanId}
+                  onPurchase={handleCompletePurchase}
+                  isSubmitting={isSubmitting}
+                  storyCredits={storyCredits}
+                  onUseCredit={handleUseCredit}
+                />
+              )}
 
               {error && (
-                <div className="p-3 bg-destructive/10 border border-destructive rounded-lg">
-                  <p className="text-sm text-destructive">{error}</p>
+                <div className="p-2 bg-destructive/10 border border-destructive rounded-lg">
+                  <p className="text-xs text-destructive">{error}</p>
                 </div>
               )}
 
-              <Button variant="ghost" className="w-full" onClick={handleMaybeLater} disabled={isSubmitting}>
+              <Button variant="ghost" size="sm" className="w-full" onClick={handleMaybeLater} disabled={isSubmitting}>
                 Maybe Later
               </Button>
             </div>

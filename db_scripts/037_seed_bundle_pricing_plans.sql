@@ -37,8 +37,8 @@ INSERT INTO subscription_plans (
   (
     '2-Story Bundle',
     'Two personalized storybooks for your child',
-    'price_bundle_2_REPLACE_ME', -- Replace with actual Stripe price ID
-    'prod_bundle_2_REPLACE_ME', -- Replace with actual Stripe product ID
+    'price_1SpGwLDbYKJXeWqLwRlN2O6y', -- Replace with actual Stripe price ID
+    'prod_TmqdyT30v2Lh3y', -- Replace with actual Stripe product ID
     'one-time',
     1399, -- $13.99 in cents
     'usd',
@@ -51,8 +51,8 @@ INSERT INTO subscription_plans (
   (
     '3-Story Bundle',
     'Three personalized storybooks for your child',
-    'price_bundle_3_REPLACE_ME', -- Replace with actual Stripe price ID
-    'prod_bundle_3_REPLACE_ME', -- Replace with actual Stripe product ID
+    'price_1SpGy5DbYKJXeWqLL8T7X7yn', -- Replace with actual Stripe price ID
+    'prod_TmqfcczyVZ9uIZ', -- Replace with actual Stripe product ID
     'one-time',
     1999, -- $19.99 in cents
     'usd',
@@ -65,8 +65,8 @@ INSERT INTO subscription_plans (
   (
     '4-Story Bundle',
     'Complete Starter Library - All four personalized storybooks',
-    'price_bundle_4_REPLACE_ME', -- Replace with actual Stripe price ID
-    'prod_bundle_4_REPLACE_ME', -- Replace with actual Stripe product ID
+    'price_1SpGyvDbYKJXeWqLNHMQqhgE', -- Replace with actual Stripe price ID
+    'prod_Tmqgj8Vy6t0Ten', -- Replace with actual Stripe product ID
     'one-time',
     2499, -- $24.99 in cents
     'usd',

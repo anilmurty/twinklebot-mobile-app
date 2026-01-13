@@ -20,6 +20,7 @@ CREATE TABLE profiles (
   stories_per_month INTEGER DEFAULT 3,
   stories_generated_this_month INTEGER DEFAULT 0,
   custom_stories_per_month INTEGER DEFAULT NULL,
+  story_credits INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -34,6 +35,7 @@ CREATE TABLE profiles (
 - `stories_per_month`: Number of stories allowed per month based on plan
 - `stories_generated_this_month`: Counter for current month's story generation
 - `custom_stories_per_month`: Custom monthly limit override (NULL = use plan limit). Set to a number to override the plan limit for specific users (e.g., early users, coupons, promotions)
+- `story_credits`: Number of story credits available for the user. Each credit unlocks one full storybook. Purchased via bundle pricing.
 - `created_at`: Timestamp when profile was created
 - `updated_at`: Timestamp when profile was last updated
 
