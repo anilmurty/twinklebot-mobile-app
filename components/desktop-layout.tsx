@@ -7,7 +7,7 @@ import { ProfileTab } from "@/components/profile-tab"
 import { BookOpen, Users, Library, User, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 
 interface DesktopLayoutProps {
   activeTab: "storybooks" | "characters" | "library" | "profile"
@@ -17,6 +17,7 @@ interface DesktopLayoutProps {
 export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -27,7 +28,8 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
 
   const handleTabChange = (tab: "storybooks" | "characters" | "library" | "profile") => {
     onTabChange(tab)
-    router.push(`/?tab=${tab}`, { scroll: false })
+    // Use current pathname to preserve /app vs / route
+    router.push(`${pathname}?tab=${tab}`, { scroll: false })
   }
 
   const tabs = [
