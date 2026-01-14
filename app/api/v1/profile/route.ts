@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get counts
-    const [charactersResult, storybooksResult] = await Promise.all([
+    const [charactersResult, storybooksResult, purchasedStorybooksResult] = await Promise.all([
       supabase
         .from('characters')
         .select('id', { count: 'exact', head: true })
@@ -57,6 +57,11 @@ export async function GET(request: NextRequest) {
         .from('storybooks')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.data.user?.id),
+      supabase
+        .from('storybooks')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.data.user?.id)
+        .eq('payment_status', 'completed'),
     ])
 
     // Calculate effective limit (custom override or plan limit, default is 1)
@@ -66,6 +71,7 @@ export async function GET(request: NextRequest) {
       ...profile,
       characters_count: charactersResult.count || 0,
       stories_generated_total: storybooksResult.count || 0,
+      storybooks_purchased: purchasedStorybooksResult.count || 0,
       effective_stories_per_month: effectiveLimit,
       remaining_stories_this_month: Math.max(0, effectiveLimit - (profile?.stories_generated_this_month || 0)),
       story_credits: profile?.story_credits || 0,
