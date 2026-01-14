@@ -141,7 +141,7 @@ export function CompactPricing({
                   <p className="text-xs text-muted-foreground">
                     {plan.stories_per_period === 1
                       ? "One personalized keepsake"
-                      : `${plan.stories_per_period} personalized keepsakes`}
+                      : `Pick any ${plan.stories_per_period} from the library`}
                   </p>
                 </div>
               </div>
