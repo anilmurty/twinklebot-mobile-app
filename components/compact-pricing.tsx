@@ -127,14 +127,14 @@ export function CompactPricing({
                         ? "Single Storybook"
                         : `${plan.stories_per_period}-Story Bundle`}
                     </span>
+                    {savings > 0 && (
+                      <span className="text-[10px] font-medium text-primary">
+                        Save {savings}%
+                      </span>
+                    )}
                     {isBestValue && (
                       <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
                         BEST VALUE
-                      </span>
-                    )}
-                    {savings > 0 && !isBestValue && (
-                      <span className="text-[10px] font-medium text-primary">
-                        Save {savings}%
                       </span>
                     )}
                   </div>
