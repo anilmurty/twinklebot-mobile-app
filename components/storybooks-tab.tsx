@@ -286,7 +286,7 @@ export function StorybooksTab() {
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">My Storybooks</h1>
-          <p className="text-muted-foreground text-base md:text-lg">Your personalized adventure library</p>
+          <p className="text-muted-foreground text-base md:text-lg">Your personalized home library</p>
         </div>
 
         {loading ? (
