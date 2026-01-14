@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -30,6 +31,9 @@ interface Template {
 }
 
 export function StoryLibraryTab() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  
   // Use TanStack Query for data fetching with automatic caching
   // Templates are cached for 30 minutes since they rarely change
   const { 
@@ -47,6 +51,19 @@ export function StoryLibraryTab() {
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
   const [feedbackText, setFeedbackText] = useState("")
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
+  
+  // Check for templateId in URL params to auto-open generate modal (from preview page)
+  useEffect(() => {
+    const templateId = searchParams.get('templateId')
+    if (templateId && templates.length > 0 && !selectedStory) {
+      const template = templates.find(t => t.id === parseInt(templateId))
+      if (template) {
+        setSelectedStory(template)
+        // Clear the URL param after opening the modal
+        router.replace('/app?tab=library', { scroll: false })
+      }
+    }
+  }, [searchParams, templates, selectedStory, router])
 
   const getCoverLabel = (title: string) => {
     if (title.includes("Counting")) return "1-10"
