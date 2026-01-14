@@ -100,6 +100,10 @@ export function ProfileTab() {
 
           <Card className="p-4 md:p-6 space-y-3 md:space-y-4">
             <div className="flex items-center justify-between">
+              <span className="text-sm md:text-base font-medium">Storybooks Created</span>
+              <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary">{profile?.stories_generated_total || 0}</span>
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-sm md:text-base font-medium">Storybooks Purchased</span>
               <span className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary">{profile?.storybooks_purchased || 0}</span>
             </div>
