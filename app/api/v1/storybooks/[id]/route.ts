@@ -71,11 +71,15 @@ export async function GET(
       
       return NextResponse.json({
         ...storybook,
+        character_name: storybook.character?.name || '',
         scenes: scenesWithSignedUrls,
       })
     }
 
-    return NextResponse.json(storybook)
+    return NextResponse.json({
+      ...storybook,
+      character_name: storybook.character?.name || '',
+    })
   } catch (error: any) {
     return NextResponse.json(
       { error: error.message || 'Internal server error' },

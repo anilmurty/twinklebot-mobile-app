@@ -215,9 +215,11 @@ export default function StorybookViewerPage() {
   const coverImage = scenes[0]?.image_url || "/placeholder.svg"
 
   // Format character name: first letter uppercase, rest lowercase
-  const characterName = storybook.character_name 
-    ? storybook.character_name.charAt(0).toUpperCase() + storybook.character_name.slice(1).toLowerCase()
-    : storybook.character_name
+  // Also check nested character object as fallback
+  const rawCharacterName = storybook.character_name || (storybook as any).character?.name || ''
+  const characterName = rawCharacterName 
+    ? rawCharacterName.charAt(0).toUpperCase() + rawCharacterName.slice(1).toLowerCase()
+    : 'Your Child'
 
   return (
     <div className="min-h-screen flex flex-col bg-background p-4 md:p-6 lg:p-8">
