@@ -26,6 +26,9 @@ export function WebLandingPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  
+  // Toggle to show/hide pricing section (for A/B testing)
+  const showPricing = false
 
   const handleSignInWithGoogle = async () => {
     try {
@@ -107,9 +110,11 @@ export function WebLandingPage() {
               <a href="#stories" className="text-amber-900/70 hover:text-amber-900 transition-colors font-medium">
                 Stories
               </a>
-              <a href="#pricing" className="text-amber-900/70 hover:text-amber-900 transition-colors font-medium">
-                Pricing
-              </a>
+              {showPricing && (
+                <a href="#pricing" className="text-amber-900/70 hover:text-amber-900 transition-colors font-medium">
+                  Pricing
+                </a>
+              )}
             </nav>
 
             {/* Auth buttons */}
@@ -146,9 +151,11 @@ export function WebLandingPage() {
               <a href="#stories" className="block py-2 text-amber-900/70 hover:text-amber-900 font-medium">
                 Stories
               </a>
-              <a href="#pricing" className="block py-2 text-amber-900/70 hover:text-amber-900 font-medium">
-                Pricing
-              </a>
+              {showPricing && (
+                <a href="#pricing" className="block py-2 text-amber-900/70 hover:text-amber-900 font-medium">
+                  Pricing
+                </a>
+              )}
               <div className="pt-3 border-t border-amber-200/50 space-y-2">
                 <Link href="/app" className="block">
                   <Button variant="outline" className="w-full">Sign In</Button>
@@ -370,6 +377,7 @@ export function WebLandingPage() {
       </section>
 
       {/* Pricing Section */}
+      {showPricing && (
       <section id="pricing" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-emerald-50/50 to-white/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
@@ -531,6 +539,7 @@ export function WebLandingPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Final CTA */}
       <section className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
