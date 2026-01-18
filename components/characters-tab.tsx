@@ -60,7 +60,7 @@ export function CharactersTab() {
       // Use window.history.replaceState to avoid triggering navigation
       const params = new URLSearchParams(searchParams.toString())
       params.delete("create")
-      const newUrl = `/?tab=characters${params.toString() ? "&" + params.toString() : ""}`
+      const newUrl = `/app?tab=characters${params.toString() ? "&" + params.toString() : ""}`
       window.history.replaceState({}, "", newUrl)
     }
   }, [searchParams])
@@ -121,7 +121,7 @@ export function CharactersTab() {
     // If this was the first character, navigate to story library
     if (wasFirstCharacter) {
       setTimeout(() => {
-        router.push("/?tab=library")
+        router.push("/app?tab=library")
       }, 500)
     }
   }

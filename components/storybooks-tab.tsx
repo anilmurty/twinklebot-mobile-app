@@ -89,11 +89,11 @@ export function StorybooksTab() {
   }, [searchParams, refetchStorybooks])
 
   const handleCreateCharacter = () => {
-    router.push("/?tab=characters&create=true")
+    router.push("/app?tab=characters&create=true")
   }
 
   const handleCreateStorybook = () => {
-    router.push("/?tab=library")
+    router.push("/app?tab=library")
   }
 
   const handleCharacterCreated = () => {

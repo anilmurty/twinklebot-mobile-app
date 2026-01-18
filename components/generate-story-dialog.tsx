@@ -188,7 +188,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       if (hasPaymentOverride || hasActiveSubscription) {
         // Generation will start automatically via the API
         onOpenChange(false)
-        router.push("/?tab=storybooks")
+        router.push("/app?tab=storybooks")
         return
       }
 
@@ -249,7 +249,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       
       // Navigate to storybooks tab
       onOpenChange(false)
-      router.push("/?tab=storybooks")
+      router.push("/app?tab=storybooks")
     } catch (err: any) {
       console.error("Failed to use credit:", err)
       setError(err.message || "Failed to use credit. Please try again.")
@@ -260,7 +260,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const handleMaybeLater = () => {
     // Storybook is already saved as preview_pending, just close the dialog
     onOpenChange(false)
-    router.push("/?tab=storybooks")
+    router.push("/app?tab=storybooks")
   }
 
   const selectedCharacterData = characters.find((c) => c.id === selectedCharacter)
@@ -515,7 +515,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                     className="flex-1"
                     onClick={() => {
                       onOpenChange(false)
-                      router.push("/?tab=storybooks")
+                      router.push("/app?tab=storybooks")
                     }}
                   >
                     Close
