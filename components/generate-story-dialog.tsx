@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { charactersApi, storybooksApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
+import { useCharacters } from "@/lib/queries/use-characters"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
@@ -33,11 +34,11 @@ type GenerationStep = "character-selection" | "look-selection" | "generating-pre
 
 export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
   const router = useRouter()
-  const [characters, setCharacters] = useState<Character[]>([])
+  const { data: charactersData, isLoading: loadingCharacters } = useCharacters()
+  const characters = charactersData?.characters || []
   const [selectedCharacter, setSelectedCharacter] = useState<string>("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<GenerationStep>("character-selection")
   const [previewProgress, setPreviewProgress] = useState(0)
   const [storybookId, setStorybookId] = useState<string | null>(null)
@@ -56,7 +57,6 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
   useEffect(() => {
     if (open) {
-      fetchCharacters()
       checkPaymentStatus()
       setCurrentStep("character-selection")
       setPreviewProgress(0)
@@ -69,6 +69,13 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setCharacterGender(null)
     }
   }, [open, story.id])
+
+  // Auto-select first character when characters are loaded
+  useEffect(() => {
+    if (characters.length > 0 && !selectedCharacter) {
+      setSelectedCharacter(characters[0].id)
+    }
+  }, [characters, selectedCharacter])
 
   const fetchCharacterGender = async (characterId: string) => {
     try {
@@ -143,23 +150,6 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       console.error("Failed to check payment status:", err)
     } finally {
       setLoadingPlans(false)
-    }
-  }
-
-  const fetchCharacters = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await charactersApi.list()
-      setCharacters(data.characters || [])
-      if (data.characters && data.characters.length > 0) {
-        setSelectedCharacter(data.characters[0].id)
-      }
-    } catch (err: any) {
-      console.error("Failed to fetch characters:", err)
-      setError(err.message || "Failed to load characters")
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -289,7 +279,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
               <div className="space-y-3">
                 <Label>Select Character</Label>
-                {loading ? (
+                {loadingCharacters ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>
