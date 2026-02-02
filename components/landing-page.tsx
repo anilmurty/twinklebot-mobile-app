@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { Users, BookOpen, Sparkles } from "lucide-react"
+import Image from "next/image"
 
 export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
@@ -64,10 +65,16 @@ export function LandingPage() {
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
         {/* Logo/Brand at top - absolute positioned */}
-        <div className="absolute top-0 left-0 right-0 pt-8 px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
-            <Sparkles className="w-5 h-5 text-[#F5C563]" />
-            <span className="text-white font-semibold text-lg">Twinklebot</span>
+        <div className="absolute top-0 left-0 right-0 pt-6 px-6 text-center">
+          <div className="inline-block px-3 py-2 rounded-2xl bg-white/20 backdrop-blur-sm">
+            <Image
+              src="/logo.svg"
+              alt="Twinklebot"
+              width={180}
+              height={96}
+              className="h-10 w-auto"
+              priority
+            />
           </div>
         </div>
 

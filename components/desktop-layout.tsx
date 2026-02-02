@@ -4,7 +4,8 @@ import { StorybooksTab } from "@/components/storybooks-tab"
 import { CharactersTab } from "@/components/characters-tab"
 import { StoryLibraryTab } from "@/components/story-library-tab"
 import { ProfileTab } from "@/components/profile-tab"
-import { BookOpen, Users, Library, User, Sparkles } from "lucide-react"
+import { BookOpen, Users, Library, User } from "lucide-react"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
@@ -44,11 +45,15 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
       {/* Sidebar Navigation */}
       <aside className="w-64 lg:w-72 bg-card border-r border-border flex flex-col shadow-sm">
         {/* Logo/Brand */}
-        <div className="p-6 lg:p-8 border-b border-border">
-          <div className="flex items-center gap-2 lg:gap-3">
-            <Sparkles className="w-6 h-6 lg:w-7 lg:h-7 text-primary" />
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground">Twinklebot</h1>
-          </div>
+        <div className="p-4 lg:p-6 border-b border-border flex justify-center">
+          <Image
+            src="/logo.svg"
+            alt="Twinklebot"
+            width={180}
+            height={96}
+            className="h-12 lg:h-14 w-auto"
+            priority
+          />
         </div>
 
         {/* Navigation */}

@@ -15,19 +15,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/icon-light-32x32.png",
-        media: "(prefers-color-scheme: light)",
-      },
-      {
-        url: "/icon-dark-32x32.png",
-        media: "(prefers-color-scheme: dark)",
-      },
-      {
-        url: "/icon.svg",
+        url: "/favicon.svg",
         type: "image/svg+xml",
       },
     ],
-    apple: "/apple-icon.png",
+    apple: "/favicon.svg",
   },
   openGraph: {
     title: "Twinklebot - Personalized Storybooks for Kids",
@@ -35,7 +27,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/apple-icon.png",
+        url: "/logo.png",
         width: 180,
         height: 180,
         alt: "Twinklebot Logo",
@@ -46,7 +38,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Twinklebot - Personalized Storybooks for Kids",
     description: "Create magical AI-generated storybooks where your child is the hero",
-    images: ["/apple-icon.png"],
+    images: ["/logo.png"],
   },
   generator: 'v0.app'
 }
