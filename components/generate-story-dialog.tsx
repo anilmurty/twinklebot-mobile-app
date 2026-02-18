@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { charactersApi, storybooksApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
+import { charactersApi, storybooksApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
 import { useCharacters } from "@/lib/queries/use-characters"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
@@ -45,8 +45,6 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [storybookId, setStorybookId] = useState<string | null>(null)
   const [previewSceneUrl, setPreviewSceneUrl] = useState<string | null>(null)
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
-  const [hasPaymentOverride, setHasPaymentOverride] = useState(false)
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [showFullImage, setShowFullImage] = useState(false)
@@ -160,13 +158,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
   const checkPaymentStatus = async () => {
     try {
-      // Check subscription status
-      const subscriptionStatus = await subscriptionsApi.getStatus()
-      setHasActiveSubscription(subscriptionStatus.has_subscription || false)
-
       // Check payment override and story credits
       const profile = await profileApi.get()
-      setHasPaymentOverride(profile?.payment_override === true)
       setStoryCredits(profile?.story_credits || 0)
 
       // Fetch subscription plans (one-time only for Phase 1)
@@ -208,9 +201,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId)
       setStorybookId(storybook.id)
 
-      // If user has payment override or subscription, skip preview and go straight to generation
-      if (hasPaymentOverride || hasActiveSubscription) {
-        // Generation will start automatically via the API
+      // If the API started generation (status=pending), skip preview and navigate away
+      if (storybook.status === 'pending') {
         onOpenChange(false)
         router.push("/app?tab=storybooks")
         return

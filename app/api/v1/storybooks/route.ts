@@ -257,25 +257,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
     }
 
-    // Check monthly limit (with custom override support)
+    // Fetch profile for monthly limit info
     const { data: profile } = await supabase
       .from('profiles')
       .select('stories_generated_this_month, stories_per_month, custom_stories_per_month')
       .eq('id', userId)
       .single()
 
-    // Use custom limit if set, otherwise use plan limit (default is 1)
     const effectiveLimit = profile?.custom_stories_per_month ?? profile?.stories_per_month ?? 1
 
-    if (profile && profile.stories_generated_this_month >= effectiveLimit) {
-      // Provide helpful error message based on limit
-      const limitMessage = effectiveLimit === 1 
-        ? 'You have already created your story for this month. Deleting stories does not allow you to create more.'
-        : `Monthly story limit reached (${effectiveLimit} stories). Deleting stories does not allow you to create more.`
-      
+    // Prevent preview abuse - limit concurrent preview_pending storybooks
+    const { count: pendingPreviews } = await supabase
+      .from('storybooks')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'preview_pending')
+
+    const MAX_CONCURRENT_PREVIEWS = 5
+    if ((pendingPreviews || 0) >= MAX_CONCURRENT_PREVIEWS) {
       return NextResponse.json(
-        { error: limitMessage },
-        { status: 403 }
+        { error: 'You have too many previews pending. Please complete or delete existing previews before creating new ones.' },
+        { status: 429 }
       )
     }
 
@@ -296,11 +298,11 @@ export async function POST(request: NextRequest) {
     const hasPaymentOverride = profileWithOverride?.payment_override === true
     const hasActiveSubscription = !!activeSubscription
 
-    // If user has payment override or active subscription, skip preview and go straight to generation
-    const shouldSkipPreview = hasPaymentOverride || hasActiveSubscription
+    // Subscription/override users can skip preview IF within their monthly limit
+    const shouldSkipPreview = (hasPaymentOverride || hasActiveSubscription)
+    const withinFreeLimit = !profile || profile.stories_generated_this_month < effectiveLimit
 
-    // Create storybook with preview_pending status initially
-    // Status will be updated after preview generation or if skipping preview
+    // Always create as preview_pending initially
     const { data: storybook, error: createError } = await supabase
       .from('storybooks')
       .insert({
@@ -308,7 +310,7 @@ export async function POST(request: NextRequest) {
         character_id,
         template_id,
         title: template.title,
-        status: shouldSkipPreview ? 'pending' : 'preview_pending',
+        status: 'preview_pending',
         progress: 0,
         look_id: look_id || null, // Store selected look, null means original
       })
@@ -319,16 +321,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: createError.message }, { status: 500 })
     }
 
-    // Increment monthly counter
-    await supabase
-      .from('profiles')
-      .update({
-        stories_generated_this_month: (profile?.stories_generated_this_month || 0) + 1,
-      })
-      .eq('id', userId)
+    // If user can skip preview AND is within their free monthly limit,
+    // upgrade to pending and start full generation immediately
+    if (shouldSkipPreview && withinFreeLimit) {
+      await supabase
+        .from('storybooks')
+        .update({ status: 'pending' })
+        .eq('id', storybook.id)
+      storybook.status = 'pending'
 
-    // If skipping preview, start full generation immediately
-    if (shouldSkipPreview) {
+      // Increment monthly counter only for free generations
+      await supabase
+        .from('profiles')
+        .update({
+          stories_generated_this_month: (profile?.stories_generated_this_month || 0) + 1,
+        })
+        .eq('id', userId)
+
       // Create generation job
       await supabaseAdmin
         .from('generation_jobs')
@@ -362,7 +371,7 @@ export async function POST(request: NextRequest) {
           title: template.title,
         },
         created_at: storybook.created_at,
-        message: shouldSkipPreview
+        message: storybook.status === 'pending'
           ? 'Storybook created and generation started'
           : 'Storybook created. Preview generation will start.',
       },

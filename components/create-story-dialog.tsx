@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
-import { storybooksApi, templatesApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi, characterLooksApi, charactersApi } from "@/lib/api-client"
+import { storybooksApi, templatesApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi, charactersApi } from "@/lib/api-client"
+import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
@@ -49,8 +50,6 @@ export function CreateStoryDialog({
   const [storybookId, setStorybookId] = useState<string | null>(null)
   const [previewSceneUrl, setPreviewSceneUrl] = useState<string | null>(null)
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false)
-  const [hasPaymentOverride, setHasPaymentOverride] = useState(false)
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
   const [loadingPlans, setLoadingPlans] = useState(false)
   const [showFullImage, setShowFullImage] = useState(false)
@@ -59,6 +58,39 @@ export function CreateStoryDialog({
   const [looks, setLooks] = useState<any[]>([])
   const [selectedLookId, setSelectedLookId] = useState<number | null>(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
+
+  // Poll for preview status while generating
+  const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
+  const { data: previewStatusData } = useStorybookStatus(storybookId || '', shouldPollPreview)
+
+  // React to preview status updates
+  useEffect(() => {
+    if (!previewStatusData || currentStep !== "generating-preview") return
+
+    // Update progress from server (only increase, never decrease)
+    if (previewStatusData.progress > previewProgress) {
+      setPreviewProgress(previewStatusData.progress)
+    }
+
+    // When preview is complete, fetch the scene URL and transition to payment
+    if (previewStatusData.progress >= 100 && previewStatusData.current_scene > 0 && storybookId) {
+      storybooksApi.get(storybookId).then((storybook: any) => {
+        const scenes = storybook.scenes || []
+        if (scenes.length > 0) {
+          setPreviewSceneUrl(scenes[0].image_url)
+          setCurrentStep("payment")
+        }
+      }).catch((err: any) => {
+        console.error("Failed to fetch preview scene:", err)
+      })
+    }
+
+    // Handle failure
+    if (previewStatusData.status === 'failed') {
+      setError("Preview generation failed. Please try again.")
+      setCurrentStep("look-selection")
+    }
+  }, [previewStatusData])
 
   useEffect(() => {
     if (open) {
@@ -139,13 +171,8 @@ export function CreateStoryDialog({
 
   const checkPaymentStatus = async () => {
     try {
-      // Check subscription status
-      const subscriptionStatus = await subscriptionsApi.getStatus()
-      setHasActiveSubscription(subscriptionStatus.has_subscription || false)
-
-      // Check payment override and story credits
+      // Check story credits
       const profile = await profileApi.get()
-      setHasPaymentOverride(profile?.payment_override === true)
       setStoryCredits(profile?.story_credits || 0)
 
       // Fetch subscription plans (one-time only for Phase 1)
@@ -204,9 +231,8 @@ export function CreateStoryDialog({
       const storybook = await storybooksApi.create(characterId, selectedTemplate, selectedLookId)
       setStorybookId(storybook.id)
 
-      // If user has payment override or subscription, skip preview and go straight to generation
-      if (hasPaymentOverride || hasActiveSubscription) {
-        // Generation will start automatically via the API
+      // If the API started generation (status=pending), skip preview and navigate away
+      if (storybook.status === 'pending') {
         onOpenChange(false)
         router.push("/app?tab=storybooks")
         return
