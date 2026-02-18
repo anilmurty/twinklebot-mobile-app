@@ -9,6 +9,7 @@ import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { charactersApi, storybooksApi, subscriptionPlansApi, subscriptionsApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
 import { useCharacters } from "@/lib/queries/use-characters"
+import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
@@ -54,6 +55,39 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [looks, setLooks] = useState<any[]>([])
   const [selectedLookId, setSelectedLookId] = useState<number | null>(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
+
+  // Poll for preview status while generating
+  const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
+  const { data: previewStatusData } = useStorybookStatus(storybookId || '', shouldPollPreview)
+
+  // React to preview status updates
+  useEffect(() => {
+    if (!previewStatusData || currentStep !== "generating-preview") return
+
+    // Update progress from server (only increase, never decrease)
+    if (previewStatusData.progress > previewProgress) {
+      setPreviewProgress(previewStatusData.progress)
+    }
+
+    // When preview is complete, fetch the scene URL and transition to payment
+    if (previewStatusData.progress >= 100 && previewStatusData.current_scene > 0 && storybookId) {
+      storybooksApi.get(storybookId).then((storybook: any) => {
+        const scenes = storybook.scenes || []
+        if (scenes.length > 0) {
+          setPreviewSceneUrl(scenes[0].image_url)
+          setCurrentStep("payment")
+        }
+      }).catch((err: any) => {
+        console.error("Failed to fetch preview scene:", err)
+      })
+    }
+
+    // Handle failure
+    if (previewStatusData.status === 'failed') {
+      setError("Preview generation failed. Please try again.")
+      setCurrentStep("look-selection")
+    }
+  }, [previewStatusData])
 
   useEffect(() => {
     if (open) {
