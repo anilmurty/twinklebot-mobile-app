@@ -49,9 +49,9 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
           <Image
             src="/logo.svg"
             alt="Twinklebot"
-            width={180}
-            height={96}
-            className="h-12 lg:h-14 w-auto"
+            width={240}
+            height={128}
+            className="h-16 lg:h-20 w-auto"
             priority
           />
         </div>

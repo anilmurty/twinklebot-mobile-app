@@ -66,13 +66,13 @@ export function LandingPage() {
       <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
         {/* Logo/Brand at top - absolute positioned */}
         <div className="absolute top-0 left-0 right-0 pt-6 px-6 text-center">
-          <div className="inline-block px-3 py-2 rounded-2xl bg-white/20 backdrop-blur-sm">
+          <div className="inline-block px-4 py-3 rounded-2xl bg-white/20 backdrop-blur-sm">
             <Image
               src="/logo.svg"
               alt="Twinklebot"
-              width={180}
-              height={96}
-              className="h-10 w-auto"
+              width={220}
+              height={117}
+              className="h-14 w-auto"
               priority
             />
           </div>

@@ -3,6 +3,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client-browser'
 import { isDesignMode } from '@/lib/designMode'
+import { useQueryClient } from '@tanstack/react-query'
+import { del } from 'idb-keyval'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -20,7 +22,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  
+  const queryClient = useQueryClient()
+
   // ✅ DESIGN_MODE: Use centralized design mode check
   const designMode = isDesignMode()
   
@@ -159,6 +162,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       return
     }
+
+    // Clear React Query cache to prevent data leaking between users
+    queryClient.clear()
+    // Also clear IndexedDB persisted cache
+    try {
+      await del('twinklebot-query-cache')
+    } catch (e) {
+      console.warn('Failed to clear IndexedDB cache:', e)
+    }
+
     // Clear session and sign out
     const { error } = await supabase?.auth.signOut()
     if (error) {

@@ -96,9 +96,9 @@ export function WebLandingPage() {
             <Image
               src="/logo.svg"
               alt="Twinklebot"
-              width={180}
-              height={96}
-              className="h-12 sm:h-14 w-auto"
+              width={240}
+              height={128}
+              className="h-14 sm:h-16 w-auto"
               priority
             />
 
@@ -569,9 +569,9 @@ export function WebLandingPage() {
             <Image
               src="/logo.svg"
               alt="Twinklebot"
-              width={150}
-              height={80}
-              className="h-10 w-auto"
+              width={180}
+              height={96}
+              className="h-12 w-auto"
             />
             
             <div className="flex items-center gap-6 text-sm text-amber-800/60">
