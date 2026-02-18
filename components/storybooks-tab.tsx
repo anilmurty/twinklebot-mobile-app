@@ -508,31 +508,34 @@ export function StorybooksTab() {
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-muted-foreground break-words line-clamp-2 flex-1">
                                 {progress < 100
-                                  ? progress <= 10
-                                    ? "Starting character creation..."
-                                    : progress <= 40
-                                      ? "Generating character 1..."
-                                      : progress <= 70
-                                        ? "Generating character 2..."
-                                        : "Generating character 3..."
+                                  ? "Preparing character..."
                                   : (() => {
-                                      const sceneProgress = progress - 100
-                                      if (sceneProgress <= 10) {
+                                      const completedScenes = storybook.scenes?.filter((s: any) => s.image_url)?.length || 0
+                                      const totalScenes = storybook.total_scenes || 10
+                                      if (completedScenes === 0) {
                                         return "Starting storybook generation..."
                                       }
-                                      const totalScenes = storybook.total_scenes || storybook.scenes?.length || 10
-                                      const sceneNumber = Math.ceil(((sceneProgress - 10) / 90) * totalScenes)
-                                      return `Scene ${sceneNumber} of ${totalScenes}...`
+                                      return `${completedScenes} of ${totalScenes} scenes...`
                                     })()}
                               </span>
                               <span className="font-medium ml-2 shrink-0">
-                                {progress < 100 ? progress : progress - 100}%
+                                {(() => {
+                                  if (progress < 100) return `${progress}%`
+                                  const completed = storybook.scenes?.filter((s: any) => s.image_url)?.length || 0
+                                  const total = storybook.total_scenes || 10
+                                  return `${Math.round((completed / total) * 100)}%`
+                                })()}
                               </span>
                             </div>
                             <div className="w-full bg-secondary rounded-full h-2">
                               <div
                                 className="bg-primary h-2 rounded-full transition-all"
-                                style={{ width: `${Math.max(progress < 100 ? progress : progress - 100, 10)}%` }}
+                                style={{ width: `${(() => {
+                                  if (progress < 100) return Math.max(progress, 10)
+                                  const completed = storybook.scenes?.filter((s: any) => s.image_url)?.length || 0
+                                  const total = storybook.total_scenes || 10
+                                  return Math.max(Math.round((completed / total) * 100), 10)
+                                })()}%` }}
                               />
                             </div>
                           </div>

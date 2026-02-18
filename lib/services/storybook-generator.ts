@@ -271,14 +271,8 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       
       console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)
 
-      // Update progress when prediction is created
-      // Scene progress: 10% base + (scene_number / totalScenes) * 90% = 10% to 100%
-      // Add 100 to indicate scene generation phase
-      const sceneProgress = Math.round(10 + ((sceneTemplate.scene_number) / totalScenes) * 90)
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 100 + sceneProgress, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
+      // Progress is updated after scene is saved to DB (below), not here.
+      // This avoids backwards jumps when scenes complete out of order.
 
       // Poll for the result
       const generatedImageUrl = await pollPrediction(predictionId)
@@ -437,6 +431,14 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           updateSuccess = true
           generatedScenes = verifyScenes
           console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully (update attempt ${updateAttempts})`)
+          // Update progress based on completed scene count (monotonically increasing)
+          const completedCount = verifyScenes.filter((s: any) => s.image_url).length
+          const newProgress = 100 + Math.round(10 + (completedCount / totalScenes) * 90)
+          await supabaseAdmin
+            .from('storybooks')
+            .update({ progress: newProgress, updated_at: new Date().toISOString() })
+            .eq('id', storybookId)
+            .lt('progress', newProgress) // Only update if current progress is lower (prevents backwards jumps)
         } else if (verifyScene?.image_url && verifyScene.image_url !== sceneData.image_url) {
           // Scene exists but with different URL - might be from another process
           console.log(`⚠️ Scene ${sceneTemplate.scene_number} exists with different image_url. Expected: ${sceneData.image_url}, Found: ${verifyScene.image_url}`)
