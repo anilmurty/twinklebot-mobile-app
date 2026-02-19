@@ -139,10 +139,9 @@ export function StorybooksTab() {
       setCopiedShareUrl(false)
       const result = await generateShareMutation.mutateAsync(shareModalStorybook.id)
       setShareUrl({ storybookId: shareModalStorybook.id, url: result.share_url })
-      // Query cache is automatically invalidated by the mutation
-      // Update the modal storybook state from fresh data
-      const updatedStorybooksData = await storybooksApi.list()
-      const updatedStorybook = updatedStorybooksData.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
+      // Refresh storybooks list so card button updates to "Unshare"
+      const { data: refreshedData } = await refetchStorybooks()
+      const updatedStorybook = refreshedData?.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
       if (updatedStorybook) {
         setShareModalStorybook(updatedStorybook)
       }
@@ -171,10 +170,9 @@ export function StorybooksTab() {
       await revokeShareMutation.mutateAsync(shareModalStorybook.id)
       setShareUrl(null)
       setCopiedShareUrl(false)
-      // Query cache is automatically invalidated by the mutation
-      // Update the modal storybook state from fresh data
-      const updatedStorybooksData = await storybooksApi.list()
-      const updatedStorybook = updatedStorybooksData.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
+      // Refresh storybooks list so card button updates back to "Share"
+      const { data: refreshedData } = await refetchStorybooks()
+      const updatedStorybook = refreshedData?.storybooks?.find((sb: Storybook) => sb.id === shareModalStorybook.id)
       if (updatedStorybook) {
         setShareModalStorybook(updatedStorybook)
       }
@@ -299,7 +297,7 @@ export function StorybooksTab() {
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">
             <p className="text-destructive">{error}</p>
-            <Button onClick={fetchStorybooks} size="sm" className="mt-2">
+            <Button onClick={() => refetchStorybooks()} size="sm" className="mt-2">
               Retry
             </Button>
           </Card>
@@ -434,21 +432,7 @@ export function StorybooksTab() {
                               <Button
                                 size="sm"
                                 variant={storybook.share_token ? "destructive" : "outline"}
-                                onClick={async () => {
-                                  if (storybook.share_token) {
-                                    // Directly revoke if link exists
-                                    try {
-                                      await storybooksApi.revokeShare(storybook.id)
-                                      await fetchStorybooks()
-                                    } catch (err: any) {
-                                      console.error("Failed to revoke share link:", err)
-                                      setError(err.message || "Failed to revoke share link")
-                                    }
-                                  } else {
-                                    // Open modal to create link
-                                    handleOpenShareModal(storybook)
-                                  }
-                                }}
+                                onClick={() => handleOpenShareModal(storybook)}
                                 className="flex-1"
                               >
                                 <Share2 className="w-4 h-4" />
