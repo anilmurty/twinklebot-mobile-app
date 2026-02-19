@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { charactersApi, storybooksApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
+import { navigateToUrl } from "@/lib/utils/navigation"
 import { useCharacters } from "@/lib/queries/use-characters"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
@@ -240,7 +241,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
       // Redirect to Stripe checkout
       if (checkout.checkout_url) {
-        window.location.href = checkout.checkout_url
+        await navigateToUrl(checkout.checkout_url)
       } else {
         setError("Failed to create checkout session")
       }

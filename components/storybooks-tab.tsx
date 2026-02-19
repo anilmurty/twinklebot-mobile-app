@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
 import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
+import { navigateToUrl } from "@/lib/utils/navigation"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
@@ -235,7 +236,7 @@ export function StorybooksTab() {
       )
 
       if (checkout.checkout_url) {
-        window.location.href = checkout.checkout_url
+        await navigateToUrl(checkout.checkout_url)
       } else {
         setPaymentError("Failed to create checkout session")
       }

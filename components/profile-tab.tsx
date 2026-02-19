@@ -6,6 +6,7 @@ import { User, Mail, LogOut, Sparkles, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useProfile } from "@/lib/queries"
+import { navigateToUrl } from "@/lib/utils/navigation"
 
 interface Profile {
   full_name?: string
@@ -119,13 +120,13 @@ export function ProfileTab() {
         </div>
 
         <div className="space-y-3 pt-4">
-          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg">
+          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/privacy')}>
             Privacy Policy
           </Button>
-          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg">
+          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/terms')}>
             Terms of Service
           </Button>
-          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg">
+          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/help')}>
             Help & Support
           </Button>
         </div>
