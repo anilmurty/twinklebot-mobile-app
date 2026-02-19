@@ -5,6 +5,8 @@ import { createClient } from '@/lib/supabase/client-browser'
 import { isDesignMode } from '@/lib/designMode'
 import { useQueryClient } from '@tanstack/react-query'
 import { del } from 'idb-keyval'
+import { Capacitor } from '@capacitor/core'
+import { setupDeepLinkHandler } from '@/lib/utils/deep-link-handler'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -106,6 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     }) || { data: { subscription: { unsubscribe: () => {} } } }
 
+    // Set up deep link handler for native OAuth callback
+    if (supabase) {
+      setupDeepLinkHandler(supabase)
+    }
+
     return () => {
       mounted = false
       subscription?.unsubscribe()
@@ -118,16 +125,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn('Design mode: signInWithGoogle skipped')
       return
     }
-    // Use window.location.origin which will be the custom domain if accessed via custom domain
-    // Supabase will respect the redirectTo parameter, but the Site URL in Supabase config
-    // determines the final redirect domain
-    const { error } = await supabase?.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-    if (error) throw error
+
+    if (Capacitor.isNativePlatform()) {
+      // Native: open OAuth in system browser, redirect back via deep link
+      const { data, error } = await supabase?.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: 'twinklebot://auth/callback',
+          skipBrowserRedirect: true,
+        },
+      })
+      if (error) throw error
+      if (data?.url) {
+        const { Browser } = await import('@capacitor/browser')
+        await Browser.open({ url: data.url })
+      }
+    } else {
+      // Web: standard OAuth redirect
+      const { error } = await supabase?.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+      if (error) throw error
+    }
   }
 
   const signInWithEmail = async (email: string, password: string) => {
