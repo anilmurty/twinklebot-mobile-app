@@ -1,9 +1,10 @@
 "use client"
 
-import { BookOpen, Clock, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X } from "lucide-react"
+import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
 import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -179,6 +180,7 @@ export function StorybooksTab() {
       }
     } catch (err: any) {
       console.error("Failed to revoke share link:", err)
+      setError(err.message || "Failed to revoke share link")
     }
   }
 
