@@ -431,13 +431,13 @@ export function StorybooksTab() {
                               </Button>
                               <Button
                                 size="sm"
-                                variant={storybook.share_token ? "destructive" : "outline"}
+                                variant="outline"
                                 onClick={() => handleOpenShareModal(storybook)}
-                                className="flex-1"
+                                className={`flex-1 ${storybook.share_token ? 'border-green-500 text-green-600 hover:bg-green-50' : ''}`}
                               >
                                 <Share2 className="w-4 h-4" />
                                 <span className="hidden sm:inline ml-1">
-                                  {storybook.share_token ? 'Unshare' : 'Share'}
+                                  {storybook.share_token ? 'Edit Share' : 'Share'}
                                 </span>
                               </Button>
                             </div>
