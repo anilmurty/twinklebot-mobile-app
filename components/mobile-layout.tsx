@@ -24,7 +24,7 @@ export function MobileLayout({ activeTab, onTabChange }: MobileLayoutProps) {
   }, [searchParams, onTabChange])
 
   return (
-    <main className="h-screen flex flex-col bg-background pb-16 overflow-hidden">
+    <main className="h-screen flex flex-col bg-background overflow-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'calc(4rem + env(safe-area-inset-bottom, 0px))' }}>
       <div className="flex-1 overflow-auto">
         {activeTab === "storybooks" && <StorybooksTab />}
         {activeTab === "characters" && <CharactersTab />}

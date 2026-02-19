@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
 import { QueryProvider } from "@/lib/providers/query-provider"
+import { CapacitorInitializer } from "@/components/capacitor-initializer"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -48,6 +49,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover" as const,
   themeColor: "#8B5CF6",
 }
 
@@ -59,6 +61,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans antialiased`}>
+        <CapacitorInitializer />
         <QueryProvider>
           <AuthProvider>
             {children}

@@ -65,7 +65,7 @@ export function LandingPage() {
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
         {/* Logo/Brand at top - absolute positioned */}
-        <div className="absolute top-0 left-0 right-0 pt-6 px-6 text-center">
+        <div className="absolute top-0 left-0 right-0 px-6 text-center" style={{ paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}>
           <div className="inline-block px-4 py-3 rounded-2xl bg-white/20 backdrop-blur-sm">
             <Image
               src="/logo.svg"

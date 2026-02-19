@@ -1,15 +1,25 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
 
 /**
  * Hook to detect if the user is on a mobile device
- * Uses both user agent and window width for accurate detection
+ * Uses Capacitor detection, user agent, and window width for accurate detection
  */
 export function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState<boolean>(false)
 
   useEffect(() => {
+    // If running inside Capacitor native shell, always mobile
+    const checkCapacitor = () => {
+      try {
+        return Capacitor.isNativePlatform()
+      } catch {
+        return false
+      }
+    }
+
     // Check user agent for mobile devices
     const checkUserAgent = () => {
       const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
@@ -23,7 +33,7 @@ export function useIsMobile(): boolean {
     }
 
     const updateIsMobile = () => {
-      setIsMobile(checkUserAgent() || checkWidth())
+      setIsMobile(checkCapacitor() || checkUserAgent() || checkWidth())
     }
 
     // Set initial value
@@ -49,4 +59,3 @@ export function isMobileDevice(userAgent: string | null): boolean {
   const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
   return mobileRegex.test(userAgent)
 }
-
