@@ -2,11 +2,14 @@
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { User, Mail, LogOut, Sparkles, Loader2 } from "lucide-react"
+import { User, Mail, LogOut, Sparkles, Loader2, RotateCcw } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
 import { useProfile } from "@/lib/queries"
 import { navigateToUrl } from "@/lib/utils/navigation"
+import { isNativeApp } from "@/lib/utils/platform"
+import { restorePurchases } from "@/lib/services/iap-service"
 
 interface Profile {
   full_name?: string
@@ -38,6 +41,27 @@ export function ProfileTab() {
     } catch (err: any) {
       console.error('Sign out error:', err)
       alert(`Sign out failed: ${err.message}`)
+    }
+  }
+
+  const [showRestore, setShowRestore] = useState(false)
+  const [isRestoring, setIsRestoring] = useState(false)
+
+  useEffect(() => {
+    setShowRestore(isNativeApp())
+  }, [])
+
+  const handleRestorePurchases = async () => {
+    try {
+      setIsRestoring(true)
+      await restorePurchases()
+      await refetchProfile()
+      alert('Purchases restored successfully!')
+    } catch (err: any) {
+      console.error('Restore purchases error:', err)
+      alert(`Failed to restore purchases: ${err.message}`)
+    } finally {
+      setIsRestoring(false)
     }
   }
 
@@ -130,6 +154,28 @@ export function ProfileTab() {
             Help & Support
           </Button>
         </div>
+
+        {showRestore && (
+          <Button
+            variant="outline"
+            className="w-full justify-start text-muted-foreground bg-transparent"
+            size="lg"
+            onClick={handleRestorePurchases}
+            disabled={isRestoring}
+          >
+            {isRestoring ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Restoring...
+              </>
+            ) : (
+              <>
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Restore Purchases
+              </>
+            )}
+          </Button>
+        )}
 
         <Button
           variant="outline"

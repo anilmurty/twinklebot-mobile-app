@@ -22,6 +22,8 @@ interface CompactPricingProps {
   isSubmitting?: boolean
   storyCredits?: number
   onUseCredit?: () => void
+  /** Map of plan credits → localized price string from RevenueCat (e.g. "$7.99") */
+  iapPriceMap?: Record<number, string>
 }
 
 export function CompactPricing({
@@ -32,6 +34,7 @@ export function CompactPricing({
   isSubmitting = false,
   storyCredits = 0,
   onUseCredit,
+  iapPriceMap,
 }: CompactPricingProps) {
   // Sort plans by stories_per_period (1, 2, 3, 4)
   const sortedPlans = [...plans]
@@ -146,8 +149,10 @@ export function CompactPricing({
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-lg font-bold">${price}</span>
-                {plan.stories_per_period > 1 && (
+                <span className="text-lg font-bold">
+                  {iapPriceMap?.[plan.stories_per_period] || `$${price}`}
+                </span>
+                {plan.stories_per_period > 1 && !iapPriceMap?.[plan.stories_per_period] && (
                   <p className="text-[10px] text-muted-foreground">
                     ${(plan.price_amount / plan.stories_per_period / 100).toFixed(2)}/story
                   </p>

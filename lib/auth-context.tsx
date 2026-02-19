@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { del } from 'idb-keyval'
 import { Capacitor } from '@capacitor/core'
 import { setupDeepLinkHandler } from '@/lib/utils/deep-link-handler'
+import { identifyUser as identifyRevenueCatUser, logoutUser as logoutRevenueCatUser } from '@/lib/services/iap-service'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -100,8 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null)
       } else if (event === 'SIGNED_OUT') {
         setUser(null)
+        logoutRevenueCatUser()
       } else if (event === 'SIGNED_IN') {
         setUser(session?.user ?? null)
+        if (session?.user?.id) {
+          identifyRevenueCatUser(session.user.id)
+        }
       } else {
         setUser(session?.user ?? null)
       }
@@ -184,6 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       return
     }
+
+    // Logout from RevenueCat
+    await logoutRevenueCatUser()
 
     // Clear React Query cache to prevent data leaking between users
     queryClient.clear()

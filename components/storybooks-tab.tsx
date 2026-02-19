@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
 import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
 import { navigateToUrl } from "@/lib/utils/navigation"
+import { isNativeApp } from "@/lib/utils/platform"
+import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { CreateCharacterDialog } from "@/components/create-character-dialog"
@@ -81,6 +83,7 @@ export function StorybooksTab() {
   const [shareUrl, setShareUrl] = useState<{ storybookId: string; url: string } | null>(null)
   const [isGeneratingShare, setIsGeneratingShare] = useState(false)
   const [copiedShareUrl, setCopiedShareUrl] = useState(false)
+  const [iapPackages, setIapPackages] = useState<IAPPackage[]>([])
 
   // Refresh when tab becomes active (in case user navigated from story creation)
   useEffect(() => {
@@ -215,6 +218,12 @@ export function StorybooksTab() {
         const singlePlan = oneTimePlans.find((p: any) => p.stories_per_period === 1)
         setSelectedPlanId(singlePlan?.id || oneTimePlans[0].id)
       }
+
+      // Load IAP packages on native
+      if (isNativeApp()) {
+        const packages = await getIAPPackages()
+        setIapPackages(packages)
+      }
     } catch (err: any) {
       console.error("Failed to fetch subscription plans:", err)
     }
@@ -230,15 +239,39 @@ export function StorybooksTab() {
       setIsSubmitting(true)
       setPaymentError(null)
 
-      const checkout = await paymentsApi.createCheckout(
-        resumeStorybook.id,
-        planId
-      )
+      if (isNativeApp()) {
+        // Native IAP flow via RevenueCat
+        const plan = subscriptionPlans.find((p: any) => p.id === planId)
+        const credits = plan?.stories_per_period || 1
+        const pkg = iapPackages.find((p) => p.credits === credits)
 
-      if (checkout.checkout_url) {
-        await navigateToUrl(checkout.checkout_url)
+        if (!pkg) {
+          setPaymentError("This package is not available for in-app purchase")
+          setIsSubmitting(false)
+          return
+        }
+
+        const success = await purchasePackage(pkg.identifier)
+        if (success) {
+          // Purchase succeeded — webhook will credit user server-side
+          // Use a credit for this storybook
+          await storybooksApi.useCredit(resumeStorybook.id)
+          setResumeStorybook(null)
+          refetchStorybooks()
+        }
+        setIsSubmitting(false)
       } else {
-        setPaymentError("Failed to create checkout session")
+        // Web Stripe checkout flow
+        const checkout = await paymentsApi.createCheckout(
+          resumeStorybook.id,
+          planId
+        )
+
+        if (checkout.checkout_url) {
+          await navigateToUrl(checkout.checkout_url)
+        } else {
+          setPaymentError("Failed to create checkout session")
+        }
       }
     } catch (err: any) {
       console.error("Failed to create checkout:", err)
@@ -663,6 +696,7 @@ export function StorybooksTab() {
                         isSubmitting={isSubmitting}
                         storyCredits={storyCredits}
                         onUseCredit={handleUseCredit}
+                        iapPriceMap={iapPackages.length > 0 ? Object.fromEntries(iapPackages.map(p => [p.credits, p.priceString])) : undefined}
                       />
                     )}
 

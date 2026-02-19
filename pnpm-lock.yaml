@@ -113,6 +113,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.1.6
         version: 1.1.6(@types/react-dom@19.0.0)(@types/react@19.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@revenuecat/purchases-capacitor':
+        specifier: ^12.1.2
+        version: 12.1.2(@capacitor/core@8.1.0)
       '@stripe/stripe-js':
         specifier: ^4.10.0
         version: 4.10.0
@@ -1194,6 +1197,14 @@ packages:
 
   '@radix-ui/rect@1.1.0':
     resolution: {integrity: sha512-A9+lCBZoaMJlVKcRBz2YByCG+Cp2t6nAnMnNba+XiWxnj6r4JUFqfsgwocMBZU9LPtdxC6wB56ySYpc7LQIoJg==}
+
+  '@revenuecat/purchases-capacitor@12.1.2':
+    resolution: {integrity: sha512-OgTP8EguIqqdStjzkUutObIVSJCSVT1Zg9GujuV7650V0mfuE6Zg9XdGN0O4vrQVNqFIlxmWZozF4VXJaLDQUQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
+  '@revenuecat/purchases-typescript-internal-esm@17.33.1':
+    resolution: {integrity: sha512-calfKKITb1CWFSfaUuBfXbPffFN5AP1hdx5/fGLOM+21j9R+2RgfmJe3fSY195upekiVKOLE/bk6GyeVfz1lIQ==}
 
   '@stripe/stripe-js@4.10.0':
     resolution: {integrity: sha512-KrMOL+sH69htCIXCaZ4JluJ35bchuCCznyPyrbN8JXSGQfwBI1SuIEMZNwvy8L8ykj29t6sa5BAAiL7fNoLZ8A==}
@@ -3280,6 +3291,13 @@ snapshots:
       '@types/react-dom': 19.0.0
 
   '@radix-ui/rect@1.1.0': {}
+
+  '@revenuecat/purchases-capacitor@12.1.2(@capacitor/core@8.1.0)':
+    dependencies:
+      '@capacitor/core': 8.1.0
+      '@revenuecat/purchases-typescript-internal-esm': 17.33.1
+
+  '@revenuecat/purchases-typescript-internal-esm@17.33.1': {}
 
   '@stripe/stripe-js@4.10.0': {}
 

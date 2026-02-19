@@ -9,6 +9,8 @@ import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { storybooksApi, templatesApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi, charactersApi } from "@/lib/api-client"
 import { navigateToUrl } from "@/lib/utils/navigation"
+import { isNativeApp } from "@/lib/utils/platform"
+import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
@@ -59,6 +61,7 @@ export function CreateStoryDialog({
   const [looks, setLooks] = useState<any[]>([])
   const [selectedLookId, setSelectedLookId] = useState<number | null>(null)
   const [loadingLooks, setLoadingLooks] = useState(false)
+  const [iapPackages, setIapPackages] = useState<IAPPackage[]>([])
 
   // Poll for preview status while generating
   const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
@@ -187,6 +190,11 @@ export function CreateStoryDialog({
         const singlePlan = oneTimePlans.find((p: any) => p.stories_per_period === 1)
         setSelectedPlanId(singlePlan?.id || oneTimePlans[0].id)
       }
+      // Load IAP packages on native
+      if (isNativeApp()) {
+        const packages = await getIAPPackages()
+        setIapPackages(packages)
+      }
     } catch (err: any) {
       console.error("Failed to check payment status:", err)
     } finally {
@@ -263,17 +271,39 @@ export function CreateStoryDialog({
       setIsSubmitting(true)
       setError(null)
 
-      // Create checkout session
-      const checkout = await paymentsApi.createCheckout(
-        storybookId,
-        planId
-      )
+      if (isNativeApp()) {
+        // Native IAP flow via RevenueCat
+        const plan = subscriptionPlans.find((p: any) => p.id === planId)
+        const credits = plan?.stories_per_period || 1
+        const pkg = iapPackages.find((p) => p.credits === credits)
 
-      // Redirect to Stripe checkout
-      if (checkout.checkout_url) {
-        await navigateToUrl(checkout.checkout_url)
+        if (!pkg) {
+          setError("This package is not available for in-app purchase")
+          setIsSubmitting(false)
+          return
+        }
+
+        const success = await purchasePackage(pkg.identifier)
+        if (success) {
+          // Purchase succeeded — webhook will credit user server-side
+          // Use a credit for this storybook
+          await storybooksApi.useCredit(storybookId)
+          onOpenChange(false)
+          router.push("/app?tab=storybooks")
+        }
+        setIsSubmitting(false)
       } else {
-        setError("Failed to create checkout session")
+        // Web Stripe checkout flow
+        const checkout = await paymentsApi.createCheckout(
+          storybookId,
+          planId
+        )
+
+        if (checkout.checkout_url) {
+          await navigateToUrl(checkout.checkout_url)
+        } else {
+          setError("Failed to create checkout session")
+        }
       }
     } catch (err: any) {
       console.error("Failed to create checkout:", err)
@@ -686,6 +716,7 @@ export function CreateStoryDialog({
                   isSubmitting={isSubmitting}
                   storyCredits={storyCredits}
                   onUseCredit={handleUseCredit}
+                  iapPriceMap={iapPackages.length > 0 ? Object.fromEntries(iapPackages.map(p => [p.credits, p.priceString])) : undefined}
                 />
               )}
 
