@@ -15,7 +15,7 @@ pnpm add @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
 ### Create `capacitor.config.ts` (new file)
 - `appId`: `com.twinklebot.app`
 - `appName`: `Twinklebot`
-- `server.url`: production Vercel URL (e.g. `https://www.twinklebot.com`)
+- `server.url`: production Vercel URL (e.g. `https://www.twinklebot.app`)
 - `webDir`: `public` (required by CLI but unused in live URL mode)
 
 ### Initialize platforms
@@ -113,7 +113,7 @@ pnpm add @capacitor/browser @capacitor/app
    - `com.twinklebot.story.bundle3` — 3 credits
    - `com.twinklebot.story.bundle4` — 4 credits
 3. Create Offerings + Packages in RevenueCat mapping to the above
-4. Configure RevenueCat webhook → `https://www.twinklebot.com/api/v1/payments/revenuecat-webhook`
+4. Configure RevenueCat webhook → `https://www.twinklebot.app/api/v1/payments/revenuecat-webhook`
 
 ### Install
 ```

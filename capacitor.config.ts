@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Twinklebot',
   webDir: 'public',
   server: {
-    url: 'https://www.twinklebot.com/app',
+    url: 'https://www.twinklebot.app/app',
     cleartext: false,
   },
 }
