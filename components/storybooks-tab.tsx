@@ -147,6 +147,7 @@ export function StorybooksTab() {
       }
     } catch (err: any) {
       console.error("Failed to generate share link:", err)
+      setError(err.message || "Failed to generate share link")
     } finally {
       setIsGeneratingShare(false)
     }

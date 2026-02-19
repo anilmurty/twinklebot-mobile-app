@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { randomBytes } from 'crypto'
 
 /**
  * POST /api/v1/storybooks/:id/generate-share
@@ -54,15 +53,15 @@ export async function POST(
       })
     }
 
-    // Generate a unique share token (32 bytes = 64 hex characters)
-    let shareToken: string
+    // Generate a unique share token using Web Crypto API (works in all runtimes)
+    let shareToken = ''
     let isUnique = false
     let attempts = 0
     const maxAttempts = 10
 
     while (!isUnique && attempts < maxAttempts) {
-      shareToken = randomBytes(32).toString('hex')
-      
+      shareToken = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '')
+
       // Check if token already exists
       const { data: existing } = await supabaseAdmin
         .from('storybooks')
