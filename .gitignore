@@ -32,3 +32,9 @@ ios/DerivedData/
 android/.gradle/
 android/build/
 android/app/build/
+
+# macOS
+.DS_Store
+
+# Xcode SPM
+ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/

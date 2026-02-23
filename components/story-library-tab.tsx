@@ -121,8 +121,8 @@ export function StoryLibraryTab() {
     <div className="min-h-full bg-gradient-to-b from-accent/20 to-background">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
-          <p className="text-muted-foreground text-base md:text-lg">
+          <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
+          <p className="text-muted-foreground text-sm md:text-lg">
             Choose a template for your personalized storybook
           </p>
         </div>
@@ -214,25 +214,23 @@ export function StoryLibraryTab() {
         )}
 
         <Card className="p-4 md:p-6 bg-muted/50">
-          <div className="flex items-start gap-3 md:gap-4">
-            <BookOpen className="w-5 h-5 text-primary mt-1 shrink-0" />
-            <div className="flex-1 space-y-3">
-              <div className="space-y-1">
-                <h4 className="font-semibold text-sm md:text-base">More stories coming soon!</h4>
-                <p className="text-xs md:text-sm text-muted-foreground">
-                  Stay tuned as we add many more adventures and educational stories.
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFeedbackDialog(true)}
-                className="w-full md:w-auto"
-              >
-                <Lightbulb className="w-4 h-4 mr-2" />
-                Submit an idea for a story you'd like us to add
-              </Button>
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary shrink-0" />
+              <h4 className="font-semibold text-sm md:text-base">More stories coming soon!</h4>
             </div>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              Stay tuned as we add many more adventures and educational stories.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFeedbackDialog(true)}
+              className="w-full md:w-auto"
+            >
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Submit a story idea
+            </Button>
           </div>
         </Card>
       </div>

@@ -130,8 +130,8 @@ export function CharactersTab() {
     <div className="min-h-full bg-gradient-to-b from-secondary/20 to-background">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
-          <p className="text-muted-foreground text-base md:text-lg">Your storybook heroes</p>
+          <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
+          <p className="text-muted-foreground text-sm md:text-lg">Your storybook heroes</p>
         </div>
 
         <Button
