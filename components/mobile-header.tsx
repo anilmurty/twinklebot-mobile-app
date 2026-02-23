@@ -18,15 +18,15 @@ export function MobileHeader({ activeTab }: MobileHeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="flex items-center gap-3 px-4 h-12">
+      <div className="flex items-center justify-between px-4 h-12">
         <Image
           src="/logo.png"
           alt="Twinklebot"
-          width={28}
-          height={28}
-          className="shrink-0"
+          width={120}
+          height={24}
+          className="shrink-0 h-6 w-auto"
         />
-        <h1 className="text-lg font-bold text-foreground truncate">{title}</h1>
+        <span className="text-sm font-semibold text-muted-foreground">{title}</span>
       </div>
     </header>
   )
