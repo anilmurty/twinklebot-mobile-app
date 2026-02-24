@@ -319,10 +319,7 @@ export function StorybooksTab() {
   return (
     <div className="min-h-full bg-gradient-to-b from-primary/5 to-background">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
-        <div className="space-y-2">
-          <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">My Storybooks</h1>
-          <p className="text-muted-foreground text-sm md:text-lg">Your personalized home library</p>
-        </div>
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">My Storybooks</h1>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -369,7 +366,17 @@ export function StorybooksTab() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
+          <>
+            <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-3">
+              <Button
+                onClick={handleCreateStorybook}
+                className="w-full h-auto py-3 flex items-center justify-center gap-2 bg-primary/85 hover:bg-primary/95 backdrop-blur-sm rounded-full shadow-lg"
+              >
+                <Plus className="w-5 h-5" />
+                <span className="font-semibold">Create New Storybook</span>
+              </Button>
+            </div>
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
             {storybooks.map((storybook) => {
               const sceneCount = storybook.scenes?.length || 0
               const progress = storybook.progress || 0
@@ -568,6 +575,7 @@ export function StorybooksTab() {
               )
             })}
           </div>
+          </>
         )}
       </div>
 

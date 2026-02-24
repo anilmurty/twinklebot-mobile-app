@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { Users, BookOpen, Sparkles } from "lucide-react"
-import Image from "next/image"
 
 export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
@@ -64,27 +63,10 @@ export function LandingPage() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
-        {/* Logo/Brand at top - absolute positioned */}
-        <div className="absolute top-0 left-0 right-0 px-6 text-center" style={{ paddingTop: 'calc(1.5rem + env(safe-area-inset-top, 0px))' }}>
-          <div className="inline-block px-4 py-3 rounded-2xl bg-white/20 backdrop-blur-sm">
-            <Image
-              src="/logo.svg"
-              alt="Twinklebot"
-              width={220}
-              height={117}
-              className="h-14 w-auto"
-              priority
-            />
-          </div>
-        </div>
 
         {/* Login Card - Centered */}
         <div className="w-full max-w-md">
-          <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-6 w-full shadow-2xl">
-            <h2 className="text-xl font-bold text-center mb-1 text-white drop-shadow-md">Welcome to Twinklebot</h2>
-            <p className="text-sm text-white/80 text-center mb-5">
-              Create personalized storybooks for your child
-            </p>
+          <div className="p-6 w-full">
 
             {error && (
               <div className="mb-4 p-3 bg-red-500/90 rounded-2xl">
@@ -117,7 +99,7 @@ export function LandingPage() {
                 </div>
 
                 {/* How It Works - compact version */}
-                <div className="mt-6 pt-5 border-t border-white/30">
+                <div className="mt-6 bg-white/20 backdrop-blur-sm rounded-3xl p-5 shadow-2xl">
                   <p className="text-xs text-white/70 text-center mb-3 uppercase tracking-wide font-medium">How it works</p>
                   <div className="flex justify-between gap-2">
                     <div className="flex-1 text-center">
@@ -161,9 +143,9 @@ export function LandingPage() {
                     className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 placeholder:text-gray-500"
                   />
 
-                  <Button 
-                    onClick={handleEmailAuth} 
-                    disabled={isLoading} 
+                  <Button
+                    onClick={handleEmailAuth}
+                    disabled={isLoading}
                     className="w-full rounded-full h-12 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900"
                   >
                     {isLoading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}

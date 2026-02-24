@@ -129,18 +129,17 @@ export function CharactersTab() {
   return (
     <div className="min-h-full bg-gradient-to-b from-secondary/20 to-background">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
-        <div className="space-y-2">
-          <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
-          <p className="text-muted-foreground text-sm md:text-lg">Your storybook heroes</p>
-        </div>
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
 
-        <Button
-          onClick={() => setShowCreateDialog(true)}
-          className="w-full md:w-auto md:max-w-xs h-auto py-4 md:py-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="font-semibold">Create New Character</span>
-        </Button>
+        <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-3">
+          <Button
+            onClick={() => setShowCreateDialog(true)}
+            className="w-full h-auto py-3 flex items-center justify-center gap-2 bg-primary/85 hover:bg-primary/95 backdrop-blur-sm rounded-full shadow-lg"
+          >
+            <Plus className="w-5 h-5" />
+            <span className="font-semibold">Create New Character</span>
+          </Button>
+        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">

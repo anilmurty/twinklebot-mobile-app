@@ -120,12 +120,7 @@ export function StoryLibraryTab() {
   return (
     <div className="min-h-full bg-gradient-to-b from-accent/20 to-background">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
-        <div className="space-y-2">
-          <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
-          <p className="text-muted-foreground text-sm md:text-lg">
-            Choose a template for your personalized storybook
-          </p>
-        </div>
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -190,7 +185,7 @@ export function StoryLibraryTab() {
                             size="sm" 
                             variant="outline" 
                             className="flex-1" 
-                            onClick={() => window.location.href = `/preview/${template.id}`}
+                            onClick={() => router.push(`/preview/${template.id}`)}
                           >
                             <Eye className="w-3 h-3 mr-1" />
                             Preview
