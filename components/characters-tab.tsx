@@ -235,10 +235,11 @@ export function CharactersTab() {
       >
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="w-full max-w-md h-auto py-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg shadow-primary/25"
+          className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0"
+          style={{ backgroundColor: 'rgba(120, 53, 15, 0.85)', color: 'white' }}
         >
-          <Plus className="w-5 h-5" />
-          <span className="font-semibold">Create New Character</span>
+          <Plus className="w-4 h-4" />
+          <span className="font-semibold text-sm">Add a Character</span>
         </Button>
       </div>
 
