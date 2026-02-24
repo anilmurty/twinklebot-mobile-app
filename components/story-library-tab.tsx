@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { BookOpen, ImageIcon, Loader2, Lightbulb, Eye } from "lucide-react"
+import { BookOpen, ImageIcon, Loader2, Lightbulb, Eye, Sparkles } from "lucide-react"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
 import {
   Dialog,
@@ -33,25 +33,26 @@ interface Template {
 export function StoryLibraryTab() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  
+
   // Use TanStack Query for data fetching with automatic caching
   // Templates are cached for 30 minutes since they rarely change
-  const { 
-    data: templatesData, 
-    isLoading: loading, 
-    error: templatesError 
+  const {
+    data: templatesData,
+    isLoading: loading,
+    error: templatesError
   } = useTemplates()
-  
+
   // Derive data from query results
   const templates = templatesData?.templates || []
   const error = templatesError?.message || null
-  
+
   const [selectedStory, setSelectedStory] = useState<Template | null>(null)
   const [failedThumbnails, setFailedThumbnails] = useState<Set<number>>(new Set())
   const [showFeedbackDialog, setShowFeedbackDialog] = useState(false)
   const [feedbackText, setFeedbackText] = useState("")
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
-  
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+
   // Check for templateId in URL params to auto-open generate modal (from preview page)
   useEffect(() => {
     const templateId = searchParams.get('templateId')
@@ -119,7 +120,7 @@ export function StoryLibraryTab() {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-accent/20 to-background">
-      <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+      <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-6 md:space-y-8">
         <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
 
         {loading ? (
@@ -181,19 +182,19 @@ export function StoryLibraryTab() {
 
                       <div className="flex gap-2 mt-auto pt-2 flex-shrink-0">
                         {template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 && (
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1" 
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
                             onClick={() => router.push(`/preview/${template.id}`)}
                           >
                             <Eye className="w-3 h-3 mr-1" />
                             Preview
                           </Button>
                         )}
-                        <Button 
-                          size="sm" 
-                          className={template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 ? "flex-1" : "w-full"} 
+                        <Button
+                          size="sm"
+                          className={template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 ? "flex-1" : "w-full"}
                           onClick={() => setSelectedStory(template)}
                         >
                           <BookOpen className="w-3 h-3 mr-1" />
@@ -229,6 +230,62 @@ export function StoryLibraryTab() {
           </div>
         </Card>
       </div>
+
+      {/* Floating Action Button */}
+      {templates.length > 0 && (
+        <div
+          className="fixed left-4 right-4 z-20 flex justify-center"
+          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
+        >
+          <Button
+            onClick={() => setShowTemplatePicker(true)}
+            className="w-full max-w-md h-auto py-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg shadow-primary/25"
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="font-semibold">Create New Storybook</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Template Picker Dialog */}
+      <Dialog open={showTemplatePicker} onOpenChange={setShowTemplatePicker}>
+        <DialogContent className="max-w-sm max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Choose a Story</DialogTitle>
+            <DialogDescription>Select a story template to personalize</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-4 overflow-y-auto max-h-[50vh]">
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => {
+                  setShowTemplatePicker(false)
+                  setSelectedStory(template)
+                }}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors text-left w-full"
+              >
+                {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
+                  <img
+                    src={template.thumbnail_url}
+                    alt={template.title}
+                    className="w-12 h-16 object-cover rounded shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-16 bg-secondary rounded flex items-center justify-center shrink-0">
+                    <BookOpen className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-semibold text-sm truncate">{template.title}</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {template.description?.replace(/\{character_name\}/g, 'your child') || 'A personalized adventure'}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {selectedStory && (
         <GenerateStoryDialog

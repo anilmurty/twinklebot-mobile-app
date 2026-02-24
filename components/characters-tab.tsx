@@ -24,22 +24,22 @@ interface Character {
 export function CharactersTab() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // Use TanStack Query for data fetching with automatic caching
-  const { 
-    data: charactersData, 
-    isLoading: loading, 
+  const {
+    data: charactersData,
+    isLoading: loading,
     error: charactersError,
-    refetch: refetchCharacters 
+    refetch: refetchCharacters
   } = useCharacters()
-  
+
   // Mutations
   const deleteCharacterMutation = useDeleteCharacter()
   const updateCharacterMutation = useUpdateCharacter()
-  
+
   // Derive data from query results
   const characters = charactersData?.characters || []
-  
+
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [error, setError] = useState<string | null>(charactersError?.message || null)
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
@@ -102,7 +102,7 @@ export function CharactersTab() {
     try {
       const formData = new FormData()
       formData.append('name', newName.trim())
-      
+
       await updateCharacterMutation.mutateAsync({ id: renameCharacter.id, data: formData })
       // Query cache is automatically invalidated by the mutation
       setRenameCharacter(null)
@@ -128,18 +128,8 @@ export function CharactersTab() {
 
   return (
     <div className="min-h-full bg-gradient-to-b from-secondary/20 to-background">
-      <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+      <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-6 md:space-y-8">
         <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
-
-        <div className="sticky top-0 z-10 -mx-6 px-6 pt-0 pb-3">
-          <Button
-            onClick={() => setShowCreateDialog(true)}
-            className="w-full h-auto py-3 flex items-center justify-center gap-2 bg-primary/85 hover:bg-primary/95 backdrop-blur-sm rounded-full shadow-lg"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="font-semibold">Create New Character</span>
-          </Button>
-        </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -236,6 +226,20 @@ export function CharactersTab() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Floating Action Button */}
+      <div
+        className="fixed left-4 right-4 z-20 flex justify-center"
+        style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
+      >
+        <Button
+          onClick={() => setShowCreateDialog(true)}
+          className="w-full max-w-md h-auto py-3 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 rounded-full shadow-lg shadow-primary/25"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="font-semibold">Create New Character</span>
+        </Button>
       </div>
 
       <CreateCharacterDialog

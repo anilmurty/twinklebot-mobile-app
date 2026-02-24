@@ -348,20 +348,50 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   </Card>
                 ) : (
                   <RadioGroup value={selectedCharacter} onValueChange={setSelectedCharacter}>
-                    <div className="space-y-2">
-                      {characters.map((character) => (
-                        <Card key={character.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
-                          <label className="flex items-center gap-3 cursor-pointer w-full">
-                            <RadioGroupItem value={character.id} id={`char-${character.id}`} />
-                            <img
-                              src={character.front_photo_url || "/placeholder.svg"}
-                              alt={character.name}
-                              className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                            />
-                            <span className="font-medium">{character.name}</span>
-                          </label>
-                        </Card>
-                      ))}
+                    <div className={
+                      characters.length > 9
+                        ? "grid grid-cols-3 gap-2"
+                        : characters.length > 4
+                          ? "grid grid-cols-2 gap-2"
+                          : "space-y-2"
+                    }>
+                      {characters.map((character) => {
+                        const isCompact = characters.length > 4
+                        const isSelected = selectedCharacter === character.id
+                        return (
+                          <Card
+                            key={character.id}
+                            className={`p-3 cursor-pointer transition-all ${
+                              isSelected
+                                ? "border-primary border-2 bg-primary/5"
+                                : "hover:border-primary/50"
+                            }`}
+                            onClick={() => setSelectedCharacter(character.id)}
+                          >
+                            <label className={`flex cursor-pointer w-full ${
+                              isCompact
+                                ? "flex-col items-center gap-2 text-center"
+                                : "items-center gap-3"
+                            }`}>
+                              <RadioGroupItem
+                                value={character.id}
+                                id={`char-${character.id}`}
+                                className={isCompact ? "sr-only" : ""}
+                              />
+                              <img
+                                src={character.front_photo_url || "/placeholder.svg"}
+                                alt={character.name}
+                                className={`rounded-full object-cover border-2 ${
+                                  isSelected ? "border-primary" : "border-primary/20"
+                                } ${characters.length > 9 ? "w-10 h-10" : "w-12 h-12"}`}
+                              />
+                              <span className={`font-medium ${isCompact ? "text-xs truncate w-full" : ""}`}>
+                                {character.name}
+                              </span>
+                            </label>
+                          </Card>
+                        )
+                      })}
                     </div>
                   </RadioGroup>
                 )}

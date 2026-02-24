@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, BookOpen } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, BookOpen, X } from "lucide-react"
 import { storybooksApi } from "@/lib/api-client"
 
 interface Scene {
@@ -34,7 +34,7 @@ export default function StorybookViewerPage() {
   const params = useParams()
   const router = useRouter()
   const storybookId = params.id as string
-  
+
   const [storybook, setStorybook] = useState<Storybook | null>(null)
   const [currentScene, setCurrentScene] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -78,7 +78,7 @@ export default function StorybookViewerPage() {
       setCurrentScene(currentScene + 1)
     }
   }
-  
+
   // Get story-specific intro text based on template
   const getStoryIntro = (templateTitle: string | undefined, charName: string) => {
     const title = templateTitle?.toLowerCase() || ''
@@ -102,23 +102,15 @@ export default function StorybookViewerPage() {
   }
 
   // Check if this is the counting story
-  const isCountingStory = storybook?.template?.title?.includes('Learning to Count') || 
+  const isCountingStory = storybook?.template?.title?.includes('Learning to Count') ||
                           storybook?.template?.title?.includes('Counting') ||
                           storybook?.title?.includes('Learning to Count') ||
                           storybook?.title?.includes('Counting')
 
   // Color palette for number highlighting (different color per scene)
   const numberColors = [
-    '#FF6B6B', // Red
-    '#4ECDC4', // Teal
-    '#45B7D1', // Blue
-    '#FFA07A', // Light Salmon
-    '#98D8C8', // Mint
-    '#F7DC6F', // Yellow
-    '#BB8FCE', // Purple
-    '#85C1E2', // Sky Blue
-    '#F8B739', // Orange
-    '#95A5A6', // Gray
+    '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
+    '#F7DC6F', '#BB8FCE', '#85C1E2', '#F8B739', '#95A5A6',
   ]
 
   // Function to highlight numbers in text for counting story
@@ -148,13 +140,13 @@ export default function StorybookViewerPage() {
     if (!targetNumberWord) return text
 
     const color = numberColors[sceneNumber - 1] || numberColors[0]
-    
+
     // Split text by the target number word only and highlight it
     const parts: React.ReactNode[] = []
     let lastIndex = 0
     // Case-insensitive regex for the target number word only
     const regex = new RegExp(`\\b(${targetNumberWord})\\b`, 'gi')
-    
+
     let match
     let keyCounter = 0
     while ((match = regex.exec(text)) !== null) {
@@ -162,16 +154,16 @@ export default function StorybookViewerPage() {
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index))
       }
-      
+
       // Add highlighted number (only the target number word)
       const numberWord = match[1]
       const numericValue = numberWords[targetNumberWord]
-      
+
       parts.push(
-        <span 
+        <span
           key={`highlight-${keyCounter++}`}
-          style={{ 
-            color, 
+          style={{
+            color,
             fontSize: '1.2em',
             fontWeight: 'bold',
             textShadow: `0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)`
@@ -180,15 +172,15 @@ export default function StorybookViewerPage() {
           {numberWord} ({numericValue})
         </span>
       )
-      
+
       lastIndex = regex.lastIndex
     }
-    
+
     // Add remaining text
     if (lastIndex < text.length) {
       parts.push(text.substring(lastIndex))
     }
-    
+
     return parts.length > 0 ? <>{parts}</> : text
   }
 
@@ -210,28 +202,28 @@ export default function StorybookViewerPage() {
   }
 
   const scene = !isTitlePage && !isEndPage ? scenes[sceneIndex] : null
-  
+
   // Get first scene image for cover
   const coverImage = scenes[0]?.image_url || "/placeholder.svg"
 
   // Format character name: first letter uppercase, rest lowercase
   // Also check nested character object as fallback
   const rawCharacterName = storybook.character_name || (storybook as any).character?.name || ''
-  const characterName = rawCharacterName 
+  const characterName = rawCharacterName
     ? rawCharacterName.charAt(0).toUpperCase() + rawCharacterName.slice(1).toLowerCase()
     : 'Your Child'
 
   return (
-    <div className="min-h-screen flex flex-col bg-background p-4 md:p-6 lg:p-8">
-      {/* Contained Frame */}
-      <div 
+    <div className="min-h-screen flex flex-col bg-black md:bg-background md:p-6 lg:p-8">
+      {/* Contained Frame - full-bleed on mobile, framed on desktop */}
+      <div
         id="storybook-container"
-        className="mx-auto w-full max-w-4xl relative rounded-lg shadow-2xl bg-black overflow-visible"
+        className="mx-auto w-full max-w-4xl relative md:rounded-lg md:shadow-2xl bg-black overflow-visible"
       >
         {/* Title Page */}
         {isTitlePage && (
           <>
-            <div className="relative w-full flex items-center justify-center min-h-[70vh] bg-black rounded-lg overflow-hidden">
+            <div className="relative w-full flex items-center justify-center min-h-screen md:min-h-[70vh] bg-black md:rounded-lg overflow-hidden">
               {/* Background Image with Overlay */}
               <img
                 src={coverImage}
@@ -239,14 +231,14 @@ export default function StorybookViewerPage() {
                 className="absolute inset-0 w-full h-full object-cover opacity-40"
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
-              
+
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
                 {/* Back Button */}
                 <div className="absolute top-4 left-4">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => router.push('/app')}
                     className="text-white hover:bg-white/20"
                   >
@@ -254,12 +246,12 @@ export default function StorybookViewerPage() {
                     Back
                   </Button>
                 </div>
-                
+
                 {/* Story Title */}
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-serif mb-6 drop-shadow-lg">
                   {storybook.title}
                 </h1>
-                
+
                 {/* Starring */}
                 <div className="flex items-center gap-2 mb-8">
                   <Sparkles className="w-5 h-5 text-primary" />
@@ -267,55 +259,55 @@ export default function StorybookViewerPage() {
                   <span className="text-white text-xl font-bold">{characterName}</span>
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
-                
+
                 {/* Story Intro */}
                 <p className="text-white/90 text-lg md:text-xl font-serif italic leading-relaxed mb-8 drop-shadow-md">
                   "{getStoryIntro(storybook.template?.title, characterName || 'your child')}"
                 </p>
-                
+
                 {/* Page Indicator */}
                 <div className="text-white/60 text-sm">
                   Tap the arrow to start reading →
                 </div>
               </div>
             </div>
-            
+
             {/* Next Arrow for Title Page */}
             <button
               onClick={handleNext}
-              className="cursor-pointer absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 p-3 md:p-4 rounded-full bg-white/20 hover:bg-white/30 transition-all backdrop-blur-sm shadow-lg"
+              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/30 hover:bg-white/50 transition-all backdrop-blur-md shadow-lg border border-white/20"
               aria-label="Start reading"
             >
-              <ArrowRight className="w-6 h-6 md:w-8 md:h-8 text-white" />
+              <ArrowRight className="w-7 h-7 text-white drop-shadow-lg" />
             </button>
           </>
         )}
-        
+
         {/* End Page */}
         {isEndPage && (
           <>
-            <div className="relative w-full flex items-center justify-center min-h-[70vh] bg-black rounded-lg overflow-hidden">
+            <div className="relative w-full flex items-center justify-center min-h-screen md:min-h-[70vh] bg-black md:rounded-lg overflow-hidden">
               {/* Background with gradient */}
               <div className="absolute inset-0 bg-gradient-to-b from-amber-900/30 via-black to-black" />
-              
+
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
                 {/* The End Title */}
                 <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white font-serif mb-4 drop-shadow-lg">
                   The End
                 </h1>
-                
+
                 <p className="text-white/70 text-lg md:text-xl mb-8 font-serif italic">
                   of {characterName}'s adventure
                 </p>
-                
+
                 {/* Decorative Divider */}
                 <div className="flex items-center gap-4 mb-10">
                   <div className="w-16 h-px bg-white/30" />
                   <Sparkles className="w-6 h-6 text-primary" />
                   <div className="w-16 h-px bg-white/30" />
                 </div>
-                
+
                 {/* CTA Section */}
                 <Card className="bg-white/95 backdrop-blur-sm p-6 md:p-8 mb-6 shadow-2xl">
                   <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-3">
@@ -324,7 +316,7 @@ export default function StorybookViewerPage() {
                   <p className="text-amber-800/70 mb-6">
                     Explore more stories in our library and create new magical memories.
                   </p>
-                  <Button 
+                  <Button
                     size="lg"
                     onClick={() => router.push('/app?tab=library')}
                     className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-amber-950 font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
@@ -333,9 +325,9 @@ export default function StorybookViewerPage() {
                     Generate Your Next Story
                   </Button>
                 </Card>
-                
+
                 {/* Back to Home Link */}
-                <Button 
+                <Button
                   variant="ghost"
                   onClick={() => router.push('/app')}
                   className="text-white/60 hover:text-white hover:bg-white/10"
@@ -345,113 +337,125 @@ export default function StorybookViewerPage() {
                 </Button>
               </div>
             </div>
-            
+
             {/* Previous Arrow for End Page */}
             <button
               onClick={handlePrevious}
-              className="cursor-pointer absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 p-3 md:p-4 rounded-full bg-white/20 hover:bg-white/30 transition-all backdrop-blur-sm shadow-lg"
+              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/30 hover:bg-white/50 transition-all backdrop-blur-md shadow-lg border border-white/20"
               aria-label="Go back"
             >
-              <ArrowLeft className="w-6 h-6 md:w-8 md:h-8 text-white" />
+              <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
             </button>
           </>
         )}
-        
+
         {/* Scene Pages */}
         {scene && !isTitlePage && !isEndPage && (
           <>
-            {/* Scene Image - Preserve aspect ratio, show full image without cropping */}
-            <div className="relative w-full flex items-center justify-center min-h-0">
+            {/* Full-screen scene container */}
+            <div className="relative w-full min-h-screen bg-black">
               <img
                 src={scene.image_url || "/placeholder.svg"}
                 alt={`Scene ${sceneIndex + 1}`}
-                className="w-full h-auto object-contain max-h-[90vh]"
-                style={{ display: 'block', maxWidth: '100%' }}
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{ display: 'block' }}
               />
-              
-              {/* Overlay Container - positioned relative to image */}
-              <div className="absolute inset-0 pointer-events-none">
+
               {/* Top Header with Headline */}
-              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent p-4 pb-6 z-10 pointer-events-auto">
-                <div className="flex items-center justify-between gap-2 md:gap-4">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+              <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent px-4 pt-10 pb-8 z-10">
+                <div className="flex items-start justify-between gap-2">
+                  {/* Close button */}
+                  <button
                     onClick={() => router.push('/app')}
-                    className="text-white hover:bg-white/20 shrink-0"
+                    className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors backdrop-blur-sm shrink-0"
+                    aria-label="Exit"
                   >
-                    <ArrowLeft className="w-4 h-4 mr-1 md:mr-2" />
-                    <span className="hidden sm:inline">Back</span>
-                  </Button>
+                    <X className="w-5 h-5 text-white" />
+                  </button>
                   {scene.headline ? (
-                    <h1 className="text-white text-lg md:text-xl lg:text-2xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0">
+                    <h1 className="text-white text-xl md:text-2xl lg:text-3xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0 pt-1">
                       {highlightNumbers(scene.headline, scene.scene_number || sceneIndex + 1)}
                     </h1>
                   ) : (
                     <div className="flex-1" />
                   )}
-                  <div className="text-white text-xs md:text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0">
-                    {sceneIndex + 1} / {scenes.length}
+                  <div className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0 bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                    {sceneIndex + 1}/{scenes.length}
                   </div>
                 </div>
               </div>
 
-              {/* Text Overlay - Centered */}
-              {(scene.text || scene.script_text) && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-4 md:p-6 lg:p-8 pb-6 md:pb-8 lg:pb-10">
-                  <div className="text-center max-w-3xl mx-auto">
-                    {(scene.text || scene.script_text || '')
-                      .split('\n\n')
-                      .map((stanza, stanzaIdx) => (
-                        <div key={stanzaIdx} className={stanzaIdx > 0 ? 'mt-3 md:mt-4' : ''}>
-                          {stanza
-                            .split('\n')
-                            .filter(line => line.trim())
-                            .map((line, lineIdx) => (
-                              <p 
-                                key={lineIdx} 
-                                className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose font-serif drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
-                                style={{ 
-                                  textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
-                                  letterSpacing: '0.01em'
-                                }}
-                              >
-                                {highlightNumbers(line, scene.scene_number || sceneIndex + 1)}
-                              </p>
-                            ))}
-                        </div>
-                      ))}
+              {/* Bottom section: story text + action button */}
+              <div className="absolute bottom-0 left-0 right-0 z-10">
+                {/* Text Overlay */}
+                {(scene.text || scene.script_text) && (
+                  <div className="bg-gradient-to-t from-black/95 via-black/85 to-transparent px-4 md:px-6 lg:px-8 pt-10 pb-2">
+                    <div className="text-center max-w-3xl mx-auto">
+                      {(scene.text || scene.script_text || '')
+                        .split('\n\n')
+                        .map((stanza, stanzaIdx) => (
+                          <div key={stanzaIdx} className={stanzaIdx > 0 ? 'mt-3 md:mt-4' : ''}>
+                            {stanza
+                              .split('\n')
+                              .filter(line => line.trim())
+                              .map((line, lineIdx) => (
+                                <p
+                                  key={lineIdx}
+                                  className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose font-serif drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
+                                  style={{
+                                    textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
+                                    letterSpacing: '0.01em'
+                                  }}
+                                >
+                                  {highlightNumbers(line, scene.scene_number || sceneIndex + 1)}
+                                </p>
+                              ))}
+                          </div>
+                        ))}
+                    </div>
                   </div>
+                )}
+
+                {/* Action Button */}
+                <div className="bg-black/90 px-4 pb-8 pt-3 flex justify-center">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => router.push('/app?tab=library')}
+                    className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 mr-1.5" />
+                    Browse More Stories
+                  </Button>
                 </div>
-              )}
               </div>
             </div>
 
-            {/* Navigation Arrows */}
+            {/* Navigation Arrows - larger and more visible */}
             <>
               {/* Left Arrow */}
               <button
                 onClick={handlePrevious}
                 disabled={currentScene === 0}
-                className="cursor-pointer absolute left-0 md:left-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
+                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/25 hover:bg-white/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-white/20 pointer-events-auto"
                 aria-label="Previous scene"
               >
-                <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                <ArrowLeft className="w-6 h-6 text-white drop-shadow-lg" />
               </button>
 
               {/* Right Arrow */}
               <button
                 onClick={handleNext}
                 disabled={currentScene === totalPages - 1}
-                className="cursor-pointer absolute right-0 md:right-2 top-1/2 -translate-y-1/2 z-20 p-2 md:p-3 rounded-full bg-black/60 hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed transition-all backdrop-blur-sm shadow-lg pointer-events-auto"
+                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/25 hover:bg-white/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-white/20 pointer-events-auto"
                 aria-label="Next scene"
               >
-                <ArrowRight className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                <ArrowRight className="w-6 h-6 text-white drop-shadow-lg" />
               </button>
             </>
           </>
         )}
-        
+
         {/* Fallback if no content */}
         {!isTitlePage && !isEndPage && !scene && (
           <div className="h-full flex items-center justify-center min-h-[50vh]">
