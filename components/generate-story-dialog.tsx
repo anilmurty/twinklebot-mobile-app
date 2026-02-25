@@ -673,7 +673,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                         <h1 className="text-white text-xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 pt-1">
                           {story.title}
                         </h1>
-                        <div className="text-white text-xs font-medium shrink-0 bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                        <div className="text-white text-xs font-medium shrink-0 bg-amber-600 px-2.5 py-1 rounded-full">
                           Preview
                         </div>
                       </div>
@@ -702,9 +702,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                       )}
                       <div className="bg-black/90 px-4 pb-6 pt-2 flex justify-center">
                         <Button
-                          variant="ghost"
                           size="sm"
-                          className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+                          className="bg-amber-800 hover:bg-amber-700 text-white text-xs px-6"
                           onClick={() => setShowFullImage(false)}
                         >
                           Back to Purchase
