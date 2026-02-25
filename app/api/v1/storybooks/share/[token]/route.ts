@@ -21,7 +21,7 @@ export async function GET(
         status,
         scenes,
         character:characters(id, name),
-        template:story_templates(id, title)
+        template:story_templates(id, title, script_data)
       `)
       .eq('share_token', token)
       .eq('status', 'completed')
@@ -37,6 +37,16 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Build a map of scene_number → headline from template script_data
+    const templateHeadlines: Record<number, string> = {}
+    if (storybook.template?.script_data?.scenes) {
+      for (const ts of storybook.template.script_data.scenes) {
+        if (ts.scene_number && ts.headline) {
+          templateHeadlines[ts.scene_number] = ts.headline
+        }
+      }
+    }
+
     // Generate signed URLs for scene images (bucket is private)
     if (storybook.scenes && Array.isArray(storybook.scenes) && storybook.scenes.length > 0) {
       const { getSignedUrl } = await import('@/lib/supabase/storage')
@@ -46,38 +56,36 @@ export async function GET(
       
       const scenesWithSignedUrls = await Promise.all(
         sortedScenes.map(async (scene: any) => {
+          const headline = scene.headline || templateHeadlines[scene.scene_number] || null
           if (scene.image_url) {
             try {
-              // Extract path from URL
-              // URL format: https://xxx.supabase.co/storage/v1/object/public/storybook-scenes/{storybook_id}/scene-{number}.jpg
               const urlMatch = scene.image_url.match(/storybook-scenes\/(.+)$/)
               if (urlMatch) {
                 const path = urlMatch[1]
-                // Generate signed URL (valid for 1 hour)
                 const signedUrl = await getSignedUrl('storybook-scenes', path, 3600)
-                return {
-                  ...scene,
-                  image_url: signedUrl,
-                }
+                return { ...scene, headline, image_url: signedUrl }
               }
             } catch (err) {
               console.error(`Failed to generate signed URL for scene ${scene.scene_number}:`, err)
-              // Return original URL if signed URL generation fails
             }
           }
-          return scene
+          return { ...scene, headline }
         })
       )
-      
+
+      const { template: _tpl, ...storybookWithoutTemplate } = storybook
       return NextResponse.json({
-        ...storybook,
+        ...storybookWithoutTemplate,
+        template: { id: storybook.template?.id, title: storybook.template?.title },
         character_name: storybook.character?.name || '',
         scenes: scenesWithSignedUrls,
       })
     }
 
+    const { template: _tpl2, ...storybookWithoutTemplate2 } = storybook
     return NextResponse.json({
-      ...storybook,
+      ...storybookWithoutTemplate2,
+      template: { id: storybook.template?.id, title: storybook.template?.title },
       character_name: storybook.character?.name || '',
     })
   } catch (error: any) {
