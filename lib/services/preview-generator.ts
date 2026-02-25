@@ -289,6 +289,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     
     const scene = {
       scene_number: firstScene.scene_number,
+      headline: firstScene.headline,
       image_url: uploadedSceneUrl,
       text: scriptText,
       number: firstScene.scene_number,

@@ -184,6 +184,40 @@ export default function StorybookViewerPage() {
     return parts.length > 0 ? <>{parts}</> : text
   }
 
+  // Highlight character name in text with orange color and slightly larger font
+  // Handles both plain strings and React nodes (from highlightNumbers)
+  const highlightCharacterName = (content: React.ReactNode): React.ReactNode => {
+    if (!characterName) return content
+    if (typeof content === 'string') {
+      const regex = new RegExp(`(${characterName})`, 'gi')
+      const parts = content.split(regex)
+      if (parts.length <= 1) return content
+      return (
+        <>
+          {parts.map((part, i) =>
+            part.toLowerCase() === characterName.toLowerCase() ? (
+              <span key={i} className="text-amber-500" style={{ fontSize: '1.1em', fontWeight: 700 }}>{part}</span>
+            ) : (
+              part
+            )
+          )}
+        </>
+      )
+    }
+    // If it's a React element with children (e.g. from highlightNumbers), process children
+    if (content && typeof content === 'object' && 'props' in (content as any)) {
+      const element = content as React.ReactElement
+      const children = (element.props as any).children
+      if (Array.isArray(children)) {
+        return <>{children.map((child: React.ReactNode, i: number) => {
+          if (typeof child === 'string') return <span key={`cn-${i}`}>{highlightCharacterName(child)}</span>
+          return child
+        })}</>
+      }
+    }
+    return content
+  }
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -237,10 +271,9 @@ export default function StorybookViewerPage() {
                 {/* Back Button */}
                 <div className="absolute top-4 left-4">
                   <Button
-                    variant="ghost"
                     size="sm"
                     onClick={() => router.push('/app')}
-                    className="text-white hover:bg-white/20"
+                    className="bg-amber-800 hover:bg-amber-700 text-white shadow-lg"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
@@ -256,13 +289,13 @@ export default function StorybookViewerPage() {
                 <div className="flex items-center gap-2 mb-8">
                   <Sparkles className="w-5 h-5 text-primary" />
                   <span className="text-white/80 text-lg">Starring</span>
-                  <span className="text-white text-xl font-bold">{characterName}</span>
+                  <span className="text-amber-500 text-xl font-bold">{characterName}</span>
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
 
                 {/* Story Intro */}
                 <p className="text-white/90 text-lg md:text-xl font-serif italic leading-relaxed mb-8 drop-shadow-md">
-                  "{getStoryIntro(storybook.template?.title, characterName || 'your child')}"
+                  {getStoryIntro(storybook.template?.title, characterName || 'your child')}
                 </p>
 
                 {/* Page Indicator */}
@@ -275,7 +308,7 @@ export default function StorybookViewerPage() {
             {/* Next Arrow for Title Page */}
             <button
               onClick={handleNext}
-              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/30 hover:bg-white/50 transition-all backdrop-blur-md shadow-lg border border-white/20"
+              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
               aria-label="Start reading"
             >
               <ArrowRight className="w-7 h-7 text-white drop-shadow-lg" />
@@ -341,7 +374,7 @@ export default function StorybookViewerPage() {
             {/* Previous Arrow for End Page */}
             <button
               onClick={handlePrevious}
-              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/30 hover:bg-white/50 transition-all backdrop-blur-md shadow-lg border border-white/20"
+              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
               aria-label="Go back"
             >
               <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
@@ -367,19 +400,19 @@ export default function StorybookViewerPage() {
                   {/* Close button */}
                   <button
                     onClick={() => router.push('/app')}
-                    className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors backdrop-blur-sm shrink-0"
+                    className="p-2 rounded-full bg-amber-800/70 hover:bg-amber-700/80 transition-colors backdrop-blur-sm shrink-0"
                     aria-label="Exit"
                   >
                     <X className="w-5 h-5 text-white" />
                   </button>
                   {scene.headline ? (
                     <h1 className="text-white text-xl md:text-2xl lg:text-3xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0 pt-1">
-                      {highlightNumbers(scene.headline, scene.scene_number || sceneIndex + 1)}
+                      {highlightCharacterName(highlightNumbers(scene.headline, scene.scene_number || sceneIndex + 1))}
                     </h1>
                   ) : (
                     <div className="flex-1" />
                   )}
-                  <div className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] shrink-0 bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                  <div className="text-white text-sm font-medium shrink-0 bg-amber-800/70 px-2.5 py-1 rounded-full backdrop-blur-sm">
                     {sceneIndex + 1}/{scenes.length}
                   </div>
                 </div>
@@ -407,7 +440,7 @@ export default function StorybookViewerPage() {
                                     letterSpacing: '0.01em'
                                   }}
                                 >
-                                  {highlightNumbers(line, scene.scene_number || sceneIndex + 1)}
+                                  {highlightCharacterName(highlightNumbers(line, scene.scene_number || sceneIndex + 1))}
                                 </p>
                               ))}
                           </div>
@@ -422,7 +455,7 @@ export default function StorybookViewerPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => router.push('/app?tab=library')}
-                    className="text-white/60 hover:text-white hover:bg-white/10 text-xs"
+                    className="text-amber-400/80 hover:text-amber-300 hover:bg-amber-900/30 text-xs"
                   >
                     <BookOpen className="w-3.5 h-3.5 mr-1.5" />
                     Browse More Stories
@@ -437,7 +470,7 @@ export default function StorybookViewerPage() {
               <button
                 onClick={handlePrevious}
                 disabled={currentScene === 0}
-                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/25 hover:bg-white/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-white/20 pointer-events-auto"
+                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/70 hover:bg-amber-700/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-amber-700/30 pointer-events-auto"
                 aria-label="Previous scene"
               >
                 <ArrowLeft className="w-6 h-6 text-white drop-shadow-lg" />
@@ -447,7 +480,7 @@ export default function StorybookViewerPage() {
               <button
                 onClick={handleNext}
                 disabled={currentScene === totalPages - 1}
-                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/25 hover:bg-white/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-white/20 pointer-events-auto"
+                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/70 hover:bg-amber-700/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-amber-700/30 pointer-events-auto"
                 aria-label="Next scene"
               >
                 <ArrowRight className="w-6 h-6 text-white drop-shadow-lg" />
