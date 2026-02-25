@@ -462,7 +462,7 @@ export function CreateStoryDialog({
                 Choose Character Look
               </DialogTitle>
               <DialogDescription>
-                Select how {characterName} should appear in this story
+                We will dress {characterName} in an attire you choose
               </DialogDescription>
             </DialogHeader>
 

@@ -440,7 +440,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                 Choose Character Look
               </DialogTitle>
               <DialogDescription>
-                Select how {selectedCharacterData?.name} should appear in this story
+                We will dress {selectedCharacterData?.name} in an attire you choose
               </DialogDescription>
             </DialogHeader>
 
