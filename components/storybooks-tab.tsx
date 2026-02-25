@@ -128,7 +128,7 @@ export function StorybooksTab() {
   }
 
   const handleCreateStorybook = () => {
-    router.push("/app?tab=library")
+    router.push("/app?tab=library&create=true")
   }
 
   const handleCharacterCreated = () => {

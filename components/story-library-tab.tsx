@@ -66,6 +66,16 @@ export function StoryLibraryTab() {
     }
   }, [searchParams, templates, selectedStory, router])
 
+  // Auto-open template picker when navigated with create=true (from storybooks tab FAB)
+  useEffect(() => {
+    const shouldCreate = searchParams.get('create')
+    if (shouldCreate === 'true' && templates.length > 0) {
+      setShowTemplatePicker(true)
+      // Clear the param so it doesn't re-trigger
+      router.replace('/app?tab=library', { scroll: false })
+    }
+  }, [searchParams, templates, router])
+
   const getCoverLabel = (title: string) => {
     if (title.includes("Counting")) return "1-10"
     if (title.includes("Alphabet Adventure 1")) return "A-I"
