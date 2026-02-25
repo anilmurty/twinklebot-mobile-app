@@ -24,7 +24,7 @@ export async function GET(
       .select(`
         *,
         character:characters(id, name),
-        template:story_templates(id, title)
+        template:story_templates(id, title, script_data)
       `)
       .eq('id', id)
       .eq('user_id', user.data.user?.id)
@@ -37,6 +37,17 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    // Build a map of scene_number → headline from template script_data
+    // Used to fill in missing headlines for scenes generated before the fix
+    const templateHeadlines: Record<number, string> = {}
+    if (storybook.template?.script_data?.scenes) {
+      for (const ts of storybook.template.script_data.scenes) {
+        if (ts.scene_number && ts.headline) {
+          templateHeadlines[ts.scene_number] = ts.headline
+        }
+      }
+    }
+
     // Generate signed URLs for scene images (bucket is private)
     if (storybook.scenes && Array.isArray(storybook.scenes)) {
       const { getSignedUrl } = await import('@/lib/supabase/storage')
@@ -46,6 +57,9 @@ export async function GET(
       
       const scenesWithSignedUrls = await Promise.all(
         sortedScenes.map(async (scene: any) => {
+          // Fill in missing headline from template script_data
+          const headline = scene.headline || templateHeadlines[scene.scene_number] || null
+
           if (scene.image_url) {
             try {
               // Extract path from URL
@@ -57,6 +71,7 @@ export async function GET(
                 const signedUrl = await getSignedUrl('storybook-scenes', path, 3600)
                 return {
                   ...scene,
+                  headline,
                   image_url: signedUrl,
                 }
               }
@@ -65,19 +80,23 @@ export async function GET(
               // Return original URL if signed URL generation fails
             }
           }
-          return scene
+          return { ...scene, headline }
         })
       )
       
+      const { template: _tpl, ...storybookWithoutTemplate } = storybook
       return NextResponse.json({
-        ...storybook,
+        ...storybookWithoutTemplate,
+        template: { id: storybook.template?.id, title: storybook.template?.title },
         character_name: storybook.character?.name || '',
         scenes: scenesWithSignedUrls,
       })
     }
 
+    const { template: _tpl2, ...storybookWithoutTemplate2 } = storybook
     return NextResponse.json({
-      ...storybook,
+      ...storybookWithoutTemplate2,
+      template: { id: storybook.template?.id, title: storybook.template?.title },
       character_name: storybook.character?.name || '',
     })
   } catch (error: any) {

@@ -268,18 +268,6 @@ export default function StorybookViewerPage() {
 
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
-                {/* Back Button */}
-                <div className="absolute top-4 left-4">
-                  <Button
-                    size="sm"
-                    onClick={() => router.push('/app')}
-                    className="bg-amber-800 hover:bg-amber-700 text-white shadow-lg"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </Button>
-                </div>
-
                 {/* Story Title */}
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-serif mb-6 drop-shadow-lg">
                   {storybook.title}
@@ -304,6 +292,15 @@ export default function StorybookViewerPage() {
                 </div>
               </div>
             </div>
+
+            {/* Back Arrow for Title Page */}
+            <button
+              onClick={() => router.push('/app')}
+              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
+            </button>
 
             {/* Next Arrow for Title Page */}
             <button
