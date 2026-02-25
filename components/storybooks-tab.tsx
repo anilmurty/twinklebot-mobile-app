@@ -93,6 +93,36 @@ export function StorybooksTab() {
     }
   }, [searchParams, refetchStorybooks])
 
+  // Auto-update resumeStorybook from storybooks list polling data
+  // This handles: (1) progress updates during generation, (2) preview completion detection
+  useEffect(() => {
+    if (!resumeStorybook) return
+    const updated = storybooks.find((sb) => sb.id === resumeStorybook.id)
+    if (!updated) return
+
+    const hadNoScenes = !resumeStorybook.scenes || resumeStorybook.scenes.length === 0
+    const nowHasScenes = updated.scenes && updated.scenes.length > 0
+
+    // Preview just completed — fetch full storybook data with signed URLs
+    if (hadNoScenes && nowHasScenes) {
+      storybooksApi.get(updated.id).then((freshData: any) => {
+        setResumeStorybook(freshData)
+        // Load subscription plans for the payment step
+        fetchSubscriptionPlans()
+      }).catch(() => {
+        // Fallback to list data
+        setResumeStorybook(updated)
+        fetchSubscriptionPlans()
+      })
+      return
+    }
+
+    // Update progress while still generating
+    if (hadNoScenes && updated.progress !== resumeStorybook.progress) {
+      setResumeStorybook(prev => prev ? { ...prev, progress: updated.progress } : prev)
+    }
+  }, [storybooks, resumeStorybook])
+
   const handleCreateCharacter = () => {
     router.push("/app?tab=characters&create=true")
   }
