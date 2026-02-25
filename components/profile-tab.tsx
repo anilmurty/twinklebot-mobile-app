@@ -149,10 +149,10 @@ export function ProfileTab() {
         </div>
 
         <div className="space-y-3 pt-4">
-          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/privacy')}>
+          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => router.push('/privacy')}>
             Privacy Policy
           </Button>
-          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/terms')}>
+          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => router.push('/terms')}>
             Terms of Service
           </Button>
           <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/help')}>
