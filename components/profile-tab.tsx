@@ -2,12 +2,12 @@
 
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Mail, LogOut, Loader2, RotateCcw } from "lucide-react"
+import { Mail, LogOut, Loader2, RotateCcw, HelpCircle } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { useProfile } from "@/lib/queries"
-import { navigateToUrl } from "@/lib/utils/navigation"
 import { isNativeApp } from "@/lib/utils/platform"
 import { restorePurchases } from "@/lib/services/iap-service"
 
@@ -50,6 +50,7 @@ export function ProfileTab() {
 
   const [showRestore, setShowRestore] = useState(false)
   const [isRestoring, setIsRestoring] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
     setShowRestore(isNativeApp())
@@ -155,7 +156,8 @@ export function ProfileTab() {
           <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => router.push('/terms')}>
             Terms of Service
           </Button>
-          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => navigateToUrl('https://www.twinklebot.app/help')}>
+          <Button variant="outline" className="w-full justify-start text-muted-foreground bg-transparent" size="lg" onClick={() => setShowHelp(true)}>
+            <HelpCircle className="w-4 h-4 mr-2" />
             Help & Support
           </Button>
         </div>
@@ -184,6 +186,26 @@ export function ProfileTab() {
           </>
         )}
       </div>
+
+      <Dialog open={showHelp} onOpenChange={setShowHelp}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-primary" />
+              Need Help?
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              Drop us a note at{' '}
+              <a
+                href="mailto:help@twinklebot.app"
+                className="text-primary font-medium hover:underline"
+              >
+                help@twinklebot.app
+              </a>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
