@@ -4,7 +4,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { generateImageWithNanoBanana } from './image-generation'
+import { generateImageWithNanoBanana, createPrediction, pollPrediction } from './image-generation'
 import { uploadToStorage, getSignedUrl, deleteFromStorage, getStorageUrl } from '@/lib/supabase/storage'
 
 export interface CharacterVariations {
@@ -94,9 +94,9 @@ export async function generateCharacterVariations(
   const basePhotoPath = getPhotoPath(basePhotoUrl)
   console.log(`[TIMING] Extracted photo path: ${Date.now() - pathExtractionStart}ms`)
 
-  // PARALLELIZE: Fetch character gender and model identifier simultaneously
+  // PARALLELIZE: Fetch character gender, model identifier, signed URL, and look data simultaneously
   const parallelQueriesStart = Date.now()
-  const [characterResult, templateResult] = await Promise.all([
+  const [characterResult, templateResult, signedBasePhotoUrl, lookResult] = await Promise.all([
     // Fetch character's gender from database
     supabaseAdmin
       .from('characters')
@@ -111,9 +111,19 @@ export async function generateCharacterVariations(
         generation_models:generation_models!story_templates_generation_model_id_fkey(model_identifier)
       `)
       .eq('id', templateId)
-      .single()
+      .single(),
+    // Get signed URL for base photo (was sequential before - saves ~200-500ms)
+    getSignedUrl('character-photos', basePhotoPath, 3600),
+    // Fetch selected look data (was sequential before - saves ~100-200ms)
+    storybookId
+      ? supabaseAdmin
+          .from('storybooks')
+          .select('look_id, character_looks:look_id(attire_image_url, prompt_modifier, is_original)')
+          .eq('id', storybookId)
+          .single()
+      : Promise.resolve(null),
   ])
-  console.log(`[TIMING] Parallel queries (gender + model): ${Date.now() - parallelQueriesStart}ms`)
+  console.log(`[TIMING] Parallel queries (gender + model + signed URL + look): ${Date.now() - parallelQueriesStart}ms`)
 
   const { data: characterData, error: characterError } = characterResult
   if (characterError || !characterData) {
@@ -131,8 +141,8 @@ export async function generateCharacterVariations(
   let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
   const { data: template, error: templateError } = templateResult
   if (!templateError && template?.generation_models) {
-    const modelData = Array.isArray(template.generation_models) 
-      ? template.generation_models[0] 
+    const modelData = Array.isArray(template.generation_models)
+      ? template.generation_models[0]
       : template.generation_models
     const templateModelId = (modelData as any)?.model_identifier
     if (templateModelId) {
@@ -142,31 +152,18 @@ export async function generateCharacterVariations(
   } else if (templateError) {
     console.warn(`⚠️  Could not get model from template ${templateId}, using default:`, templateError.message)
   }
-  
-  console.log(`Using model identifier: ${modelIdentifier}`)
-  
-  // Get signed URL (this is the slowest operation - network call to Supabase Storage)
-  const signedUrlStart = Date.now()
-  console.log(`[TIMING] Getting signed URL at ${new Date().toISOString()}`)
-  const signedBasePhotoUrl = await getSignedUrl('character-photos', basePhotoPath, 3600)
-  console.log(`[TIMING] Got signed URL: ${Date.now() - signedUrlStart}ms`)
 
-  // Fetch selected look if storybookId is provided
+  console.log(`Using model identifier: ${modelIdentifier}`)
+
+  // Process look data from parallel fetch
   let selectedLook: { attire_image_url: string; prompt_modifier: string; is_original: boolean } | null = null
-  if (storybookId) {
-    const lookFetchStart = Date.now()
-    const { data: storybook } = await supabaseAdmin
-      .from('storybooks')
-      .select('look_id, character_looks:look_id(attire_image_url, prompt_modifier, is_original)')
-      .eq('id', storybookId)
-      .single()
-    
+  if (lookResult) {
+    const { data: storybook } = lookResult
     if (storybook?.look_id && storybook.character_looks) {
-      const lookData = Array.isArray(storybook.character_looks) 
-        ? storybook.character_looks[0] 
+      const lookData = Array.isArray(storybook.character_looks)
+        ? storybook.character_looks[0]
         : storybook.character_looks
       selectedLook = lookData as any
-      console.log(`[TIMING] Fetched look data: ${Date.now() - lookFetchStart}ms`)
       console.log(`Selected look: ${selectedLook.is_original ? 'Original' : 'Custom'}`)
     }
   }
@@ -233,12 +230,7 @@ export async function generateCharacterVariations(
   let frontUrl: string
   
   if (storybookId) {
-    const importStart = Date.now()
-    const { supabaseAdmin } = await import('@/lib/supabase/server')
-    const { createPrediction, pollPrediction } = await import('./image-generation')
-    console.log(`[TIMING] Imported modules: ${Date.now() - importStart}ms`)
-    
-    // Create prediction and update progress
+    // Create prediction and update progress (using static imports - eliminates dynamic import delay)
     const predictionCreateStart = Date.now()
     const totalTimeBeforePrediction = Date.now() - variationGenStartTime
     console.log(`[TIMING] ⏱️  TOTAL TIME BEFORE FIRST PREDICTION: ${totalTimeBeforePrediction}ms (${(totalTimeBeforePrediction/1000).toFixed(2)}s)`)

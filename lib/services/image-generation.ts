@@ -272,30 +272,6 @@ export async function createBasePhotoAndCharacterPrediction(
   console.log(`Aspect ratio: ${aspectRatio}`)
   console.log(`Image input array: [basePhotoUrl, characterVariationUrl]`)
   
-  // Validate URLs are accessible before sending to Replicate
-  console.log('\nValidating URLs are accessible...')
-  try {
-    const basePhotoCheck = await fetch(basePhotoUrl, { method: 'HEAD' })
-    if (!basePhotoCheck.ok) {
-      throw new Error(`Base photo URL returned ${basePhotoCheck.status}: ${basePhotoCheck.statusText}. URL: ${basePhotoUrl}`)
-    }
-    console.log(`✅ Base photo URL is accessible (${basePhotoCheck.status})`)
-  } catch (err: any) {
-    console.error(`❌ Base photo URL validation failed:`, err.message)
-    throw new Error(`Base photo URL is not accessible: ${basePhotoUrl}. Error: ${err.message}`)
-  }
-
-  try {
-    const characterVariationCheck = await fetch(characterVariationUrl, { method: 'HEAD' })
-    if (!characterVariationCheck.ok) {
-      throw new Error(`Character variation URL returned ${characterVariationCheck.status}: ${characterVariationCheck.statusText}. URL: ${characterVariationUrl}`)
-    }
-    console.log(`✅ Character variation URL is accessible (${characterVariationCheck.status})`)
-  } catch (err: any) {
-    console.error(`❌ Character variation URL validation failed:`, err.message)
-    throw new Error(`Character variation URL is not accessible: ${characterVariationUrl}. Error: ${err.message}`)
-  }
-  
   console.log('=====================================\n')
   
   // Call Replicate API with both images

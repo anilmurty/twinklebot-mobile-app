@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { generatePreview } from '@/lib/services/preview-generator'
+import { waitUntil } from '@vercel/functions'
+
+// Allow up to 5 minutes for preview generation (character variation + scene)
+export const maxDuration = 300
 
 /**
  * POST /api/v1/storybooks/:id/generate-preview
@@ -13,12 +17,12 @@ export async function POST(
 ) {
   const apiStartTime = Date.now()
   console.log(`[API] POST /generate-preview called at ${new Date().toISOString()}`)
-  
+
   try {
     const authStart = Date.now()
     const user = await getAuthUser(request)
     console.log(`[TIMING] Auth check: ${Date.now() - authStart}ms`)
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -42,7 +46,6 @@ export async function POST(
     // Check if preview already exists
     if (storybook.status === 'preview_pending') {
       const existingCheckStart = Date.now()
-      // Get the preview scene
       const { data: fullStorybook } = await supabase
         .from('storybooks')
         .select('scenes, character:characters(name), template:story_templates(title)')
@@ -65,17 +68,19 @@ export async function POST(
     const totalApiTime = Date.now() - apiStartTime
     console.log(`[TIMING] ⏱️  API endpoint total time before calling generatePreview: ${totalApiTime}ms (${(totalApiTime/1000).toFixed(2)}s)`)
 
-    // Start preview generation (async - don't wait)
+    // Start preview generation in the background
+    // waitUntil keeps the serverless function alive until the promise resolves
     const generatePreviewStart = Date.now()
     console.log(`[TIMING] Calling generatePreview at ${new Date().toISOString()}`)
-    generatePreview(id)
-      .then((result) => {
-        console.log(`Preview generation completed for ${id}`)
-      })
-      .catch((error) => {
-        console.error(`Preview generation error for ${id}:`, error)
-      })
-    console.log(`[TIMING] generatePreview call initiated (async): ${Date.now() - generatePreviewStart}ms`)
+    waitUntil(
+      generatePreview(id)
+        .then((result) => {
+          console.log(`[PREVIEW] ✅ Preview generation completed for ${id} in ${Date.now() - generatePreviewStart}ms`)
+        })
+        .catch((error) => {
+          console.error(`[PREVIEW] ❌ Preview generation error for ${id}:`, error)
+        })
+    )
 
     return NextResponse.json({
       message: 'Preview generation started',
@@ -88,4 +93,3 @@ export async function POST(
     )
   }
 }
-
