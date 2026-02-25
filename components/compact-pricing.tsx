@@ -53,39 +53,28 @@ export function CompactPricing({
   // If user has credits, show use credit option
   if (storyCredits > 0 && onUseCredit) {
     return (
-      <div className="space-y-4">
-        <div className="bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="font-semibold text-foreground">You have story credits!</p>
-              <p className="text-sm text-muted-foreground">
-                {storyCredits} {storyCredits === 1 ? 'story' : 'stories'} available
-              </p>
-            </div>
-            <div className="text-2xl font-bold text-primary">{storyCredits}</div>
-          </div>
-          <Button
-            onClick={onUseCredit}
-            disabled={isSubmitting}
-            className="w-full bg-primary hover:bg-primary/90"
-            size="lg"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Unlocking...
-              </>
-            ) : (
-              <>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Use 1 Credit to Unlock
-              </>
-            )}
-          </Button>
-        </div>
-        <p className="text-xs text-center text-muted-foreground">
-          Or purchase more stories below
+      <div className="space-y-3">
+        <p className="text-sm text-center text-muted-foreground">
+          You have <span className="font-semibold text-foreground">{storyCredits} story {storyCredits === 1 ? 'credit' : 'credits'}</span>
         </p>
+        <Button
+          onClick={onUseCredit}
+          disabled={isSubmitting}
+          className="w-full bg-primary hover:bg-primary/90"
+          size="lg"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Unlocking...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Use 1 Credit to Unlock
+            </>
+          )}
+        </Button>
       </div>
     )
   }

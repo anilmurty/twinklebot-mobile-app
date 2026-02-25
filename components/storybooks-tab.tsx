@@ -649,34 +649,34 @@ export function StorybooksTab() {
                 ) : (
                   // Show preview and payment options when ready
                   <>
-                    {/* Compact preview */}
-                    <div 
-                      className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                      onClick={() => resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && setShowFullImage(true)}
-                    >
-                      <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
-                        {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
+                    {/* Preview card */}
+                    {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
+                      <div className="space-y-3">
+                        <div
+                          className="rounded-xl overflow-hidden border border-border cursor-pointer hover:shadow-md transition-shadow"
+                          onClick={() => setShowFullImage(true)}
+                        >
                           <img
                             src={resumeStorybook.scenes[0].image_url}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
+                            alt={`${resumeStorybook.title} preview`}
+                            className="w-full h-auto"
                           />
-                        ) : null}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowFullImage(true)}
+                        >
+                          <Play className="w-4 h-4 mr-2" />
+                          View Full Preview
+                        </Button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold truncate">{resumeStorybook.title}</h3>
-                        <p className="text-xs text-muted-foreground">Starring {resumeStorybook.character_name || 'your child'}</p>
-                        {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
-                          <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">
-                            View full preview
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                    ) : null}
 
                     {/* Full Preview Modal */}
                     <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
-                      <DialogContent className="max-w-lg max-h-[95vh] overflow-y-auto">
+                      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top, 1.5rem))' }}>
                         <DialogHeader>
                           <DialogTitle className="text-xl">{resumeStorybook.title}</DialogTitle>
                           <DialogDescription>

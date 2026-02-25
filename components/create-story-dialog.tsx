@@ -659,40 +659,34 @@ export function CreateStoryDialog({
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              {/* Compact preview */}
-              <div 
-                className="flex items-center gap-4 p-3 bg-accent/30 rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => previewSceneUrl && setShowFullImage(true)}
-              >
-                <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-secondary shrink-0">
-                  {previewSceneUrl ? (
+              {/* Preview card */}
+              {previewSceneUrl ? (
+                <div className="space-y-3">
+                  <div
+                    className="rounded-xl overflow-hidden border border-border cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => setShowFullImage(true)}
+                  >
                     <img
                       src={previewSceneUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
+                      alt={`${selectedTemplateData?.title} preview`}
+                      className="w-full h-auto"
                     />
-                  ) : characterPhotoUrl ? (
-                    <img
-                      src={characterPhotoUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover opacity-80"
-                    />
-                  ) : null}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setShowFullImage(true)}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    View Full Preview
+                  </Button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{selectedTemplateData?.title}</h3>
-                  <p className="text-xs text-muted-foreground">Starring {characterName || 'your child'}</p>
-                  {previewSceneUrl && (
-                    <span className="text-xs text-primary hover:underline mt-1 cursor-pointer">
-                      View full preview
-                    </span>
-                  )}
-                </div>
-              </div>
+              ) : null}
 
               {/* Full Preview Modal */}
               <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
-                <DialogContent className="max-w-lg max-h-[95vh] overflow-y-auto">
+                <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto" style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top, 1.5rem))' }}>
                   <DialogHeader>
                     <DialogTitle className="text-xl">{selectedTemplateData?.title}</DialogTitle>
                     <DialogDescription>
