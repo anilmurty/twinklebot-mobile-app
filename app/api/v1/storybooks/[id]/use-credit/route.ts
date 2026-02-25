@@ -87,13 +87,10 @@ export async function POST(
       })
       .eq('id', storybookId)
 
-    // Start storybook generation
-    try {
-      await generateStorybook(storybookId)
-    } catch (error: any) {
+    // Start storybook generation in the background (don't await — it takes minutes)
+    generateStorybook(storybookId).catch((error: any) => {
       console.error(`Failed to start generation for storybook ${storybookId}:`, error)
-      // Don't fail the request - storybook will be in generating state
-    }
+    })
 
     return NextResponse.json({
       success: true,
