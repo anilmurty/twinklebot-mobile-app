@@ -674,26 +674,39 @@ export function StorybooksTab() {
                       </div>
                     </div>
 
-                    {/* Full Image Modal */}
+                    {/* Full Preview Modal */}
                     <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
-                      <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-black/95">
-                        <div className="relative w-full h-[90vh] flex items-center justify-center">
+                      <DialogContent className="max-w-lg max-h-[95vh] overflow-y-auto">
+                        <DialogHeader>
+                          <DialogTitle className="text-xl">{resumeStorybook.title}</DialogTitle>
+                          <DialogDescription>
+                            Starring {resumeStorybook.character_name || 'your child'} — Scene 1 Preview
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4">
                           {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url && (
-                            <img
-                              src={resumeStorybook.scenes[0].image_url}
-                              alt="Story preview - full view"
-                              className="max-w-full max-h-full object-contain"
-                            />
+                            <div className="rounded-lg overflow-hidden border border-border">
+                              <img
+                                src={resumeStorybook.scenes[0].image_url}
+                                alt="Story preview"
+                                className="w-full h-auto"
+                              />
+                            </div>
                           )}
-                          <button
+                          {resumeStorybook.scenes && resumeStorybook.scenes[0]?.text && (
+                            <p className="text-sm leading-relaxed text-foreground/90 italic">
+                              {resumeStorybook.scenes[0].text}
+                            </p>
+                          )}
+                        </div>
+                        <div className="pt-2">
+                          <Button
+                            variant="outline"
+                            className="w-full"
                             onClick={() => setShowFullImage(false)}
-                            className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
-                            aria-label="Close"
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
+                            Back to Purchase
+                          </Button>
                         </div>
                       </DialogContent>
                     </Dialog>

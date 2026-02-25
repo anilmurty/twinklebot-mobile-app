@@ -69,7 +69,7 @@ export function CreateStoryDialog({
   const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
   const { data: previewStatusData } = useStorybookStatus(storybookId || '', shouldPollPreview)
 
-  // React to preview status updates
+  // React to preview status updates from the status endpoint
   useEffect(() => {
     if (!previewStatusData || currentStep !== "generating-preview") return
 
@@ -78,36 +78,52 @@ export function CreateStoryDialog({
       setPreviewProgress(previewStatusData.progress)
     }
 
-    // When preview is complete, fetch the scene URL and transition to payment
-    if (
-      previewStatusData.progress >= 100 &&
-      previewStatusData.current_scene > 0 &&
-      storybookId &&
-      !fetchingPreviewData
-    ) {
-      setFetchingPreviewData(true)
-      storybooksApi.get(storybookId).then((storybook: any) => {
-        const scenes = storybook.scenes || []
-        if (scenes.length > 0) {
-          setPreviewSceneUrl(scenes[0].image_url)
-          setPreviewSceneText(scenes[0].text || null)
-          setCurrentStep("payment")
-        } else {
-          // Scenes not ready yet, allow retry on next poll
-          setFetchingPreviewData(false)
-        }
-      }).catch((err: any) => {
-        console.error("Failed to fetch preview scene:", err)
-        setFetchingPreviewData(false) // Allow retry on next poll
-      })
-    }
-
     // Handle failure
     if (previewStatusData.status === 'failed') {
       setError("Preview generation failed. Please try again.")
       setCurrentStep("look-selection")
     }
-  }, [previewStatusData, currentStep, storybookId, fetchingPreviewData, previewProgress])
+  }, [previewStatusData, currentStep, previewProgress])
+
+  // Separate effect: detect preview completion and transition to payment
+  // Uses a direct API poll every 5 seconds for reliability
+  useEffect(() => {
+    if (currentStep !== "generating-preview" || !storybookId || fetchingPreviewData) return
+
+    const checkPreviewReady = async () => {
+      try {
+        const storybook = await storybooksApi.get(storybookId)
+        const scenes = storybook.scenes || []
+        if (scenes.length > 0 && scenes[0].image_url) {
+          setPreviewSceneUrl(scenes[0].image_url)
+          setPreviewSceneText(scenes[0].text || null)
+          setPreviewProgress(100)
+          setCurrentStep("payment")
+          return true
+        }
+        // Also check for failure
+        if (storybook.status === 'failed') {
+          setError(storybook.error_message || "Preview generation failed. Please try again.")
+          setCurrentStep("look-selection")
+          return true
+        }
+      } catch (err: any) {
+        console.error("Preview check failed:", err)
+      }
+      return false
+    }
+
+    // Check immediately once
+    const initialCheck = checkPreviewReady()
+
+    // Then poll every 5 seconds
+    const interval = setInterval(async () => {
+      const done = await checkPreviewReady()
+      if (done) clearInterval(interval)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [currentStep, storybookId, fetchingPreviewData])
 
   useEffect(() => {
     if (open) {

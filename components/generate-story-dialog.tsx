@@ -14,6 +14,7 @@ import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services
 import { useCharacters } from "@/lib/queries/use-characters"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
 
@@ -64,7 +65,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
   const { data: previewStatusData } = useStorybookStatus(storybookId || '', shouldPollPreview)
 
-  // React to preview status updates
+  // React to preview status updates from the status endpoint
   useEffect(() => {
     if (!previewStatusData || currentStep !== "generating-preview") return
 
@@ -73,36 +74,52 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setPreviewProgress(previewStatusData.progress)
     }
 
-    // When preview is complete, fetch the scene URL and transition to payment
-    if (
-      previewStatusData.progress >= 100 &&
-      previewStatusData.current_scene > 0 &&
-      storybookId &&
-      !fetchingPreviewData
-    ) {
-      setFetchingPreviewData(true)
-      storybooksApi.get(storybookId).then((storybook: any) => {
-        const scenes = storybook.scenes || []
-        if (scenes.length > 0) {
-          setPreviewSceneUrl(scenes[0].image_url)
-          setPreviewSceneText(scenes[0].text || null)
-          setCurrentStep("payment")
-        } else {
-          // Scenes not ready yet, allow retry on next poll
-          setFetchingPreviewData(false)
-        }
-      }).catch((err: any) => {
-        console.error("Failed to fetch preview scene:", err)
-        setFetchingPreviewData(false) // Allow retry on next poll
-      })
-    }
-
     // Handle failure
     if (previewStatusData.status === 'failed') {
       setError("Preview generation failed. Please try again.")
       setCurrentStep("look-selection")
     }
-  }, [previewStatusData, currentStep, storybookId, fetchingPreviewData, previewProgress])
+  }, [previewStatusData, currentStep, previewProgress])
+
+  // Separate effect: detect preview completion and transition to payment
+  // Uses a direct API poll every 5 seconds for reliability
+  useEffect(() => {
+    if (currentStep !== "generating-preview" || !storybookId || fetchingPreviewData) return
+
+    const checkPreviewReady = async () => {
+      try {
+        const storybook = await storybooksApi.get(storybookId)
+        const scenes = storybook.scenes || []
+        if (scenes.length > 0 && scenes[0].image_url) {
+          setPreviewSceneUrl(scenes[0].image_url)
+          setPreviewSceneText(scenes[0].text || null)
+          setPreviewProgress(100)
+          setCurrentStep("payment")
+          return true
+        }
+        // Also check for failure
+        if (storybook.status === 'failed') {
+          setError(storybook.error_message || "Preview generation failed. Please try again.")
+          setCurrentStep("look-selection")
+          return true
+        }
+      } catch (err: any) {
+        console.error("Preview check failed:", err)
+      }
+      return false
+    }
+
+    // Check immediately once
+    const initialCheck = checkPreviewReady()
+
+    // Then poll every 5 seconds
+    const interval = setInterval(async () => {
+      const done = await checkPreviewReady()
+      if (done) clearInterval(interval)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [currentStep, storybookId, fetchingPreviewData])
 
   useEffect(() => {
     if (open) {
@@ -496,33 +513,25 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                             id={`look-${look.id}`}
                             className="sr-only"
                           />
-                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary relative">
                             {look.is_original && selectedCharacterData?.front_photo_url ? (
-                              <img
+                              <Image
                                 src={selectedCharacterData.front_photo_url}
                                 alt={look.look_name}
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 40vw, 200px"
                               />
                             ) : look.reference_image_url ? (
-                              <img
+                              <Image
                                 src={look.reference_image_url}
                                 alt={look.look_name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
-                                  const target = e.target as HTMLImageElement
-                                  target.style.display = 'none'
-                                  const parent = target.parentElement
-                                  if (parent) {
-                                    parent.innerHTML = '<span class="text-xs text-muted-foreground">Image not found</span>'
-                                  }
-                                }}
-                                onLoad={() => {
-                                  console.log(`Successfully loaded image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
-                                }}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 40vw, 200px"
                               />
                             ) : (
-                              <span className="text-xs text-muted-foreground">No image</span>
+                              <span className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">No image</span>
                             )}
                           </div>
                           <div className="text-center">
