@@ -16,12 +16,15 @@ export function MarkdownPage({ content, title }: MarkdownPageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+      <div
+        className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border"
+        style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      >
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.back()}
+            onClick={() => router.push('/app?tab=profile')}
             className="shrink-0"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
