@@ -403,7 +403,10 @@ export default function StorybookViewerPage() {
                     <X className="w-5 h-5 text-white" />
                   </button>
                   {scene.headline ? (
-                    <h1 className="text-white text-xl md:text-2xl lg:text-3xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0 pt-1">
+                    <h1
+                      className="text-yellow-300 text-xl md:text-2xl lg:text-3xl font-bold font-serif text-center flex-1 px-2 min-w-0 pt-1"
+                      style={{ WebkitTextStroke: '0.5px rgba(120, 53, 15, 0.8)', textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(120, 53, 15, 0.6)' }}
+                    >
                       {highlightCharacterName(highlightNumbers(scene.headline, scene.scene_number || sceneIndex + 1))}
                     </h1>
                   ) : (
