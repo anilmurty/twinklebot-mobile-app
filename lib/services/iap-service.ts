@@ -33,21 +33,33 @@ export async function getIAPPackages(): Promise<IAPPackage[]> {
     const { Purchases } = await import('@revenuecat/purchases-capacitor')
     const offerings = await Purchases.getOfferings()
 
+    console.log(`[IAP] Platform: ${getPlatform()}, offerings current: ${offerings.current?.identifier || 'none'}`)
+    console.log(`[IAP] Available packages: ${offerings.current?.availablePackages?.length || 0}`)
+
     if (!offerings.current?.availablePackages) {
-      console.warn('No RevenueCat offerings available')
+      console.warn('[IAP] No RevenueCat offerings available. Check that:')
+      console.warn('[IAP] 1. Products are created in App Store Connect / Google Play Console')
+      console.warn('[IAP] 2. Products are added to RevenueCat and linked to an offering')
+      console.warn('[IAP] 3. The offering identifier is "default"')
       return []
     }
 
-    return offerings.current.availablePackages.map((pkg) => ({
-      identifier: pkg.identifier,
-      productId: pkg.product.identifier,
-      priceString: pkg.product.priceString,
-      price: pkg.product.price,
-      currencyCode: pkg.product.currencyCode,
-      credits: PRODUCT_CREDITS[pkg.product.identifier] || 1,
-    }))
+    const packages = offerings.current.availablePackages.map((pkg) => {
+      const mapped = {
+        identifier: pkg.identifier,
+        productId: pkg.product.identifier,
+        priceString: pkg.product.priceString,
+        price: pkg.product.price,
+        currencyCode: pkg.product.currencyCode,
+        credits: PRODUCT_CREDITS[pkg.product.identifier] || 1,
+      }
+      console.log(`[IAP] Package: ${mapped.identifier} (${mapped.productId}) = ${mapped.priceString}, ${mapped.credits} credits`)
+      return mapped
+    })
+
+    return packages
   } catch (err) {
-    console.error('Failed to fetch IAP packages:', err)
+    console.error('[IAP] Failed to fetch packages:', err)
     return []
   }
 }

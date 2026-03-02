@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Sparkles, Loader2, X } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { storybooksApi, templatesApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi, charactersApi } from "@/lib/api-client"
 import { navigateToUrl } from "@/lib/utils/navigation"
@@ -55,7 +55,6 @@ export function CreateStoryDialog({
   const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
   const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
   const [loadingPlans, setLoadingPlans] = useState(false)
-  const [showFullImage, setShowFullImage] = useState(false)
   const [storyCredits, setStoryCredits] = useState(0)
   const [characterGender, setCharacterGender] = useState<'male' | 'female' | null>(null)
   const [looks, setLooks] = useState<any[]>([])
@@ -290,16 +289,17 @@ export function CreateStoryDialog({
         const pkg = iapPackages.find((p) => p.credits === credits)
 
         if (!pkg) {
-          setError("This package is not available for in-app purchase")
+          console.error(`[IAP] No package found for ${credits} credits. Available:`, iapPackages.map(p => `${p.identifier}(${p.credits})`))
+          setError("In-app purchases are not available right now. Please try again later.")
           setIsSubmitting(false)
           return
         }
 
         const success = await purchasePackage(pkg.identifier)
         if (success) {
-          // Purchase succeeded — webhook will credit user server-side
-          // Use a credit for this storybook
-          await storybooksApi.useCredit(storybookId)
+          // Purchase succeeded — RevenueCat webhook will add credits,
+          // auto-use one credit for the pending storybook, and start generation.
+          // Just navigate to storybooks tab where polling will show progress.
           onOpenChange(false)
           router.push("/app?tab=storybooks")
         }
@@ -659,101 +659,45 @@ export function CreateStoryDialog({
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              {/* Preview card */}
+              {/* Inline scene-style preview */}
               {previewSceneUrl ? (
-                <div className="space-y-3">
-                  <div
-                    className="rounded-xl overflow-hidden border border-border cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => setShowFullImage(true)}
-                  >
-                    <img
-                      src={previewSceneUrl}
-                      alt={`${selectedTemplateData?.title} preview`}
-                      className="w-full h-auto"
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setShowFullImage(true)}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    View Full Preview
-                  </Button>
-                </div>
-              ) : null}
-
-              {/* Full Preview Modal — styled like the storybook scene viewer */}
-              <Dialog open={showFullImage} onOpenChange={setShowFullImage}>
-                <DialogContent
-                  className="max-w-lg p-0 bg-black border-0 rounded-xl overflow-hidden gap-0"
-                  showCloseButton={false}
-                  style={{ maxHeight: '90vh' }}
-                >
-                  <div className="relative w-full" style={{ minHeight: '70vh', maxHeight: '90vh' }}>
-                    {/* Full background image */}
-                    {previewSceneUrl && (
-                      <img
-                        src={previewSceneUrl}
-                        alt="Scene preview"
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    )}
-
-                    {/* Top header gradient */}
-                    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/60 to-transparent px-4 pt-6 pb-8 z-10">
-                      <div className="flex items-start justify-between gap-2">
-                        <button
-                          onClick={() => setShowFullImage(false)}
-                          className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors backdrop-blur-sm shrink-0"
-                          aria-label="Close"
-                        >
-                          <X className="w-5 h-5 text-white" />
-                        </button>
-                        <h1 className="text-white text-xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 pt-1">
-                          {selectedTemplateData?.title}
-                        </h1>
-                        <div className="text-white text-xs font-medium shrink-0 bg-amber-600 px-2.5 py-1 rounded-full">
-                          Preview
-                        </div>
+                <div className="rounded-xl overflow-hidden bg-black relative" style={{ minHeight: '280px' }}>
+                  <img
+                    src={previewSceneUrl}
+                    alt={`${selectedTemplateData?.title} preview`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 via-black/40 to-transparent px-3 pt-3 pb-6 z-10">
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="text-white text-sm font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] flex-1 truncate">
+                        {selectedTemplateData?.title}
+                      </h2>
+                      <div className="text-white text-[10px] font-medium shrink-0 bg-amber-600 px-2 py-0.5 rounded-full">
+                        Preview
                       </div>
                     </div>
-
-                    {/* Bottom text overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 z-10">
-                      {previewSceneText && (
-                        <div className="bg-gradient-to-t from-black/95 via-black/85 to-transparent px-4 pt-10 pb-2">
-                          <div className="text-center max-w-3xl mx-auto">
-                            {previewSceneText.split('\n\n').map((stanza: string, i: number) => (
-                              <div key={i} className={i > 0 ? 'mt-3' : ''}>
-                                {stanza.split('\n').filter((l: string) => l.trim()).map((line: string, j: number) => (
-                                  <p
-                                    key={j}
-                                    className="text-white text-base leading-relaxed font-serif font-medium"
-                                    style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)', letterSpacing: '0.01em' }}
-                                  >
-                                    {line}
-                                  </p>
-                                ))}
-                              </div>
+                  </div>
+                  {previewSceneText && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-3 pt-8 pb-3 z-10">
+                      <div className="text-center">
+                        {previewSceneText.split('\n\n').slice(0, 1).map((stanza: string, i: number) => (
+                          <div key={i}>
+                            {stanza.split('\n').filter((l: string) => l.trim()).slice(0, 2).map((line: string, j: number) => (
+                              <p
+                                key={j}
+                                className="text-white text-xs leading-relaxed font-serif font-medium"
+                                style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}
+                              >
+                                {line}
+                              </p>
                             ))}
                           </div>
-                        </div>
-                      )}
-                      <div className="bg-black/90 px-4 pb-6 pt-2 flex justify-center">
-                        <Button
-                          size="sm"
-                          className="bg-amber-800 hover:bg-amber-700 text-white text-xs px-6"
-                          onClick={() => setShowFullImage(false)}
-                        >
-                          Back to Purchase
-                        </Button>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  )}
+                </div>
+              ) : null}
 
               {/* Compact Pricing */}
               {loadingPlans ? (

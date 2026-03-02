@@ -112,10 +112,8 @@ export async function POST(request: NextRequest) {
         })
         .eq('id', pendingStorybook.id)
 
-      try {
-        await generateStorybook(pendingStorybook.id)
-        console.log(`RevenueCat: Started generation for storybook ${pendingStorybook.id}`)
-      } catch (err: any) {
+      // Start generation in the background (don't await — it takes minutes and would timeout the webhook)
+      generateStorybook(pendingStorybook.id).catch(async (err: any) => {
         console.error(`RevenueCat: Failed to generate storybook ${pendingStorybook.id}:`, err)
         await supabaseAdmin
           .from('storybooks')
@@ -125,7 +123,8 @@ export async function POST(request: NextRequest) {
             updated_at: new Date().toISOString(),
           })
           .eq('id', pendingStorybook.id)
-      }
+      })
+      console.log(`RevenueCat: Started generation for storybook ${pendingStorybook.id}`)
     }
 
     return NextResponse.json({ received: true })
