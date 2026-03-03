@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 /**
  * Image Proxy API
- * 
+ *
  * Serves private storage images with browser caching.
  * This solves the problem of signed URLs changing on every request,
  * which prevents browser caching.
- * 
+ *
  * GET /api/v1/images?bucket=storybook-scenes&path=abc/scene-1.jpg
- * 
+ *
  * Features:
  * - Validates user owns the resource before serving
  * - Returns stable URLs that browsers can cache
  * - Sets Cache-Control: private, max-age=3600 (1 hour cache)
- * - Supports optional width parameter for resizing (future)
+ * - Supports both header-based and cookie-based auth (for img tags)
  */
 
 // Bucket to ownership validation mapping
@@ -23,6 +24,54 @@ const BUCKET_VALIDATORS: Record<string, (userId: string, path: string) => Promis
   'storybook-scenes': validateStorybookOwnership,
   'character-photos': validateCharacterOwnership,
   'character-variations': validateCharacterOwnership,
+}
+
+/**
+ * Get user from cookies (for img tag requests that don't send auth headers)
+ */
+async function getAuthUserFromCookies(request: NextRequest): Promise<string | null> {
+  const cookieHeader = request.headers.get('cookie')
+  if (!cookieHeader) return null
+
+  // Supabase stores auth in cookies like: sb-<project-ref>-auth-token
+  // The cookie contains a JSON array [access_token, refresh_token, ...]
+  const cookies = cookieHeader.split(';').map(c => c.trim())
+
+  for (const cookie of cookies) {
+    if (cookie.startsWith('sb-') && cookie.includes('-auth-token=')) {
+      try {
+        const [, value] = cookie.split('=')
+        const decoded = decodeURIComponent(value)
+        const parsed = JSON.parse(decoded)
+        const accessToken = Array.isArray(parsed) ? parsed[0] : parsed.access_token
+
+        if (accessToken) {
+          // Verify the token
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+          const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
+
+          if (!supabaseUrl || !supabaseAnonKey) return null
+
+          const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+            global: {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          })
+
+          const { data, error } = await supabase.auth.getUser()
+          if (!error && data.user) {
+            return data.user.id
+          }
+        }
+      } catch (e) {
+        // Cookie parsing failed, continue checking other cookies
+      }
+    }
+  }
+
+  return null
 }
 
 /**
@@ -93,13 +142,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Authenticate user
+    // Authenticate user - try header first, then cookies (for img tags)
+    let userId: string | null = null
+
     const user = await getAuthUser(request)
-    if (!user || !user.data.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (user?.data.user?.id) {
+      userId = user.data.user.id
+    } else {
+      // Fallback to cookie-based auth (for img tag requests)
+      userId = await getAuthUserFromCookies(request)
     }
 
-    const userId = user.data.user.id
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
     // Validate ownership
     const isOwner = await validator(userId, path)
