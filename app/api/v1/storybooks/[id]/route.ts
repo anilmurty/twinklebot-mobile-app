@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
+import { getImageProxyUrl } from '@/lib/utils/image-proxy'
 
 /**
  * GET /api/v1/storybooks/:id
@@ -18,7 +19,7 @@ export async function GET(
 
     const supabase = createServerClient(request.headers.get('authorization'))
     const { id } = 'then' in params ? await params : params
-    
+
     const { data: storybook, error } = await supabase
       .from('storybooks')
       .select(`
@@ -48,48 +49,44 @@ export async function GET(
       }
     }
 
-    // Generate signed URLs for scene images (bucket is private)
+    // Generate proxy URLs for scene images (stable URLs that allow browser caching)
     if (storybook.scenes && Array.isArray(storybook.scenes)) {
-      const { getSignedUrl } = await import('@/lib/supabase/storage')
-      
       // Sort scenes by scene_number to ensure correct order
       const sortedScenes = [...storybook.scenes].sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
-      
-      const scenesWithSignedUrls = await Promise.all(
-        sortedScenes.map(async (scene: any) => {
-          // Fill in missing headline from template script_data
-          const headline = scene.headline || templateHeadlines[scene.scene_number] || null
 
-          if (scene.image_url) {
-            try {
-              // Extract path from URL
-              // URL format: https://xxx.supabase.co/storage/v1/object/public/storybook-scenes/{storybook_id}/scene-{number}.jpg
-              const urlMatch = scene.image_url.match(/storybook-scenes\/(.+)$/)
-              if (urlMatch) {
-                const path = urlMatch[1]
-                // Generate signed URL (valid for 1 hour)
-                const signedUrl = await getSignedUrl('storybook-scenes', path, 3600)
-                return {
-                  ...scene,
-                  headline,
-                  image_url: signedUrl,
-                }
+      const scenesWithProxyUrls = sortedScenes.map((scene: any) => {
+        // Fill in missing headline from template script_data
+        const headline = scene.headline || templateHeadlines[scene.scene_number] || null
+
+        if (scene.image_url) {
+          try {
+            // Extract path from URL
+            // URL format: https://xxx.supabase.co/storage/v1/object/public/storybook-scenes/{storybook_id}/scene-{number}.jpg
+            const urlMatch = scene.image_url.match(/storybook-scenes\/(.+?)(\?|$)/)
+            if (urlMatch) {
+              const path = urlMatch[1]
+              // Generate proxy URL (stable, cacheable)
+              const proxyUrl = getImageProxyUrl('storybook-scenes', path)
+              return {
+                ...scene,
+                headline,
+                image_url: proxyUrl,
               }
-            } catch (err) {
-              console.error(`Failed to generate signed URL for scene ${scene.scene_number}:`, err)
-              // Return original URL if signed URL generation fails
             }
+          } catch (err) {
+            console.error(`Failed to generate proxy URL for scene ${scene.scene_number}:`, err)
+            // Return original URL if proxy URL generation fails
           }
-          return { ...scene, headline }
-        })
-      )
-      
+        }
+        return { ...scene, headline }
+      })
+
       const { template: _tpl, ...storybookWithoutTemplate } = storybook
       return NextResponse.json({
         ...storybookWithoutTemplate,
         template: { id: storybook.template?.id, title: storybook.template?.title },
         character_name: storybook.character?.name || '',
-        scenes: scenesWithSignedUrls,
+        scenes: scenesWithProxyUrls,
       })
     }
 

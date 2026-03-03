@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Generate thumbnails and signed URLs for storybooks
-    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    // Generate thumbnails and proxy URLs for storybooks
+    const { getImageProxyUrl } = await import('@/lib/utils/image-proxy')
     const storybooksWithThumbnails = await Promise.all(
       (storybooks || []).map(async (sb: any) => {
         const result: any = {
@@ -146,12 +146,12 @@ export async function GET(request: NextRequest) {
             const firstScene = scenesWithImages[0]
             if (firstScene.image_url) {
               try {
-                const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
+                const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+?)(\?|$)/)
                 if (urlMatch) {
-                  const signedUrl = await getSignedUrl('storybook-scenes', urlMatch[1], 3600)
+                  const proxyUrl = getImageProxyUrl('storybook-scenes', urlMatch[1])
                   // Replace template thumbnail with first scene image
-                  result.thumbnail_url = signedUrl
-                  result.first_scene_image = signedUrl
+                  result.thumbnail_url = proxyUrl
+                  result.first_scene_image = proxyUrl
                 }
               } catch (err) {
                 console.error(`Failed to generate thumbnail for storybook ${sb.id}:`, err)
