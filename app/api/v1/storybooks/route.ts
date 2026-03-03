@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
 
     // Generate thumbnails and proxy URLs for storybooks
     const { getImageProxyUrl } = await import('@/lib/utils/image-proxy')
+    const userId = user.data.user?.id!
     const storybooksWithThumbnails = await Promise.all(
       (storybooks || []).map(async (sb: any) => {
         const result: any = {
@@ -148,7 +149,7 @@ export async function GET(request: NextRequest) {
               try {
                 const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+?)(\?|$)/)
                 if (urlMatch) {
-                  const proxyUrl = getImageProxyUrl('storybook-scenes', urlMatch[1])
+                  const proxyUrl = getImageProxyUrl('storybook-scenes', urlMatch[1], userId)
                   // Replace template thumbnail with first scene image
                   result.thumbnail_url = proxyUrl
                   result.first_scene_image = proxyUrl

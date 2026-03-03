@@ -125,6 +125,8 @@ export async function GET(request: NextRequest) {
     const bucket = searchParams.get('bucket')
     const path = searchParams.get('path')
 
+    console.log('Image proxy request:', { bucket, path })
+
     // Validate required parameters
     if (!bucket || !path) {
       return NextResponse.json(
@@ -142,16 +144,37 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Authenticate user - try header first, then cookies (for img tags)
+    // Authenticate user - try multiple methods
     let userId: string | null = null
+    let authMethod: string = 'none'
 
+    // Method 1: Authorization header (for API calls)
     const user = await getAuthUser(request)
     if (user?.data.user?.id) {
       userId = user.data.user.id
-    } else {
-      // Fallback to cookie-based auth (for img tag requests)
-      userId = await getAuthUserFromCookies(request)
+      authMethod = 'header'
     }
+
+    // Method 2: URL token (for mobile app img tags)
+    if (!userId) {
+      const token = searchParams.get('token')
+      if (token) {
+        const { parseImageToken } = await import('@/lib/utils/image-proxy')
+        const tokenData = parseImageToken(token)
+        if (tokenData && tokenData.bucket === bucket && tokenData.path === path) {
+          userId = tokenData.userId
+          authMethod = 'token'
+        }
+      }
+    }
+
+    // Method 3: Cookies (for browser img tags)
+    if (!userId) {
+      userId = await getAuthUserFromCookies(request)
+      if (userId) authMethod = 'cookie'
+    }
+
+    console.log('Image proxy auth:', { authMethod, hasUserId: !!userId, bucket, path: path?.substring(0, 50) })
 
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

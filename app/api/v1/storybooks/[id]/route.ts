@@ -53,6 +53,7 @@ export async function GET(
     if (storybook.scenes && Array.isArray(storybook.scenes)) {
       // Sort scenes by scene_number to ensure correct order
       const sortedScenes = [...storybook.scenes].sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
+      const userId = user.data.user?.id!
 
       const scenesWithProxyUrls = sortedScenes.map((scene: any) => {
         // Fill in missing headline from template script_data
@@ -65,8 +66,8 @@ export async function GET(
             const urlMatch = scene.image_url.match(/storybook-scenes\/(.+?)(\?|$)/)
             if (urlMatch) {
               const path = urlMatch[1]
-              // Generate proxy URL (stable, cacheable)
-              const proxyUrl = getImageProxyUrl('storybook-scenes', path)
+              // Generate proxy URL (stable, cacheable) with token for mobile auth
+              const proxyUrl = getImageProxyUrl('storybook-scenes', path, userId)
               return {
                 ...scene,
                 headline,

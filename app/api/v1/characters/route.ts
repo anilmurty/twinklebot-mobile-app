@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Generate proxy URLs for character photos (stable URLs that allow browser caching)
+    const userId = user.data.user?.id!
     const formatted = (characters || []).map((char: any) => {
       let photoUrl = char.front_photo_url
 
@@ -44,13 +45,13 @@ export async function GET(request: NextRequest) {
           const urlMatch = photoUrl.match(/character-photos\/(.+?)(\?|$)/)
           if (urlMatch) {
             const path = urlMatch[1]
-            photoUrl = getImageProxyUrl('character-photos', path)
+            photoUrl = getImageProxyUrl('character-photos', path, userId)
           } else if (photoUrl.includes('character-photos')) {
             // Fallback: try to extract path from full URL
             const urlObj = new URL(photoUrl)
             const pathParts = urlObj.pathname.split('/character-photos/')
             if (pathParts.length > 1) {
-              photoUrl = getImageProxyUrl('character-photos', pathParts[1])
+              photoUrl = getImageProxyUrl('character-photos', pathParts[1], userId)
             }
           }
         } catch (err) {
