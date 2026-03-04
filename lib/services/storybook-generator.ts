@@ -41,8 +41,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     throw new Error(`Storybook not found: ${storybookId}`)
   }
 
-  // Check if already completed
+  // Check if already completed or already generating (prevent duplicate generation)
   if (storybook.status === 'completed') {
+    console.log(`Storybook ${storybookId} already completed, skipping`)
+    return
+  }
+  if (storybook.status === 'generating') {
+    console.log(`Storybook ${storybookId} already generating, skipping duplicate call`)
     return
   }
 
@@ -51,12 +56,20 @@ export async function generateStorybook(storybookId: string): Promise<void> {
   const existingScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
   const hasPreviewScene = existingScenes.length > 0 && existingScenes[0]?.image_url
 
-  // Update status to generating
+  // Atomically set status to 'generating' only if it hasn't changed since we read it
+  // This prevents race conditions where multiple callers try to start generation simultaneously
   const statusUpdateStart = Date.now()
-  await supabaseAdmin
+  const { data: updateResult, error: statusError } = await supabaseAdmin
     .from('storybooks')
-    .update({ status: 'generating' })
+    .update({ status: 'generating', updated_at: new Date().toISOString() })
     .eq('id', storybookId)
+    .eq('status', storybook.status) // Only update if status hasn't changed
+    .select('id')
+
+  if (statusError || !updateResult || updateResult.length === 0) {
+    console.log(`Storybook ${storybookId} status changed by another process, skipping duplicate generation`)
+    return
+  }
   console.log(`[TIMING] Updated status to generating: ${Date.now() - statusUpdateStart}ms`)
 
   if (isResumingFromPreview) {

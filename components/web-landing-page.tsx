@@ -75,7 +75,7 @@ export function WebLandingPage() {
       image: "/colorful-counting-storybook-cover.jpg",
     },
     {
-      title: "Alphabet Journey",
+      title: "Alphabet Adventures",
       description: "Explore letters A to Z",
       image: "/alphabet-learning-book-cover.jpg",
     },

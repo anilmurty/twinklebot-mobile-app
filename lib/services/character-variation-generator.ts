@@ -137,20 +137,26 @@ export async function generateCharacterVariations(
 
   console.log(`Character gender: ${gender}`)
 
-  // Process model identifier
-  let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
-  const { data: template, error: templateError } = templateResult
-  if (!templateError && template?.generation_models) {
-    const modelData = Array.isArray(template.generation_models)
-      ? template.generation_models[0]
-      : template.generation_models
-    const templateModelId = (modelData as any)?.model_identifier
-    if (templateModelId) {
-      modelIdentifier = templateModelId
-      console.log(`✅ Using model from template: ${modelIdentifier}`)
+  // Process model identifier - env var takes priority as global override
+  let modelIdentifier: string
+  if (process.env.NANOBANANA_MODEL_VERSION) {
+    modelIdentifier = process.env.NANOBANANA_MODEL_VERSION
+    console.log(`✅ Using model from env var: ${modelIdentifier}`)
+  } else {
+    modelIdentifier = 'google/nano-banana'
+    const { data: template, error: templateError } = templateResult
+    if (!templateError && template?.generation_models) {
+      const modelData = Array.isArray(template.generation_models)
+        ? template.generation_models[0]
+        : template.generation_models
+      const templateModelId = (modelData as any)?.model_identifier
+      if (templateModelId) {
+        modelIdentifier = templateModelId
+        console.log(`✅ Using model from template: ${modelIdentifier}`)
+      }
+    } else if (templateError) {
+      console.warn(`⚠️  Could not get model from template ${templateId}, using default:`, templateError.message)
     }
-  } else if (templateError) {
-    console.warn(`⚠️  Could not get model from template ${templateId}, using default:`, templateError.message)
   }
 
   console.log(`Using model identifier: ${modelIdentifier}`)

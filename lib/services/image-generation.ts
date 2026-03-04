@@ -107,6 +107,12 @@ export async function pollPrediction(
  * Falls back to env var or default if template model not found
  */
 async function getModelIdentifier(templateId?: number): Promise<string> {
+  // Env var always takes priority (acts as a global override)
+  if (process.env.NANOBANANA_MODEL_VERSION) {
+    console.log(`✅ Using model from env var: ${process.env.NANOBANANA_MODEL_VERSION}`)
+    return process.env.NANOBANANA_MODEL_VERSION
+  }
+
   // If template ID provided, try to get model from template
   if (templateId) {
     try {
@@ -121,8 +127,8 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
         .single()
 
       if (template?.generation_models) {
-        const modelData = Array.isArray(template.generation_models) 
-          ? template.generation_models[0] 
+        const modelData = Array.isArray(template.generation_models)
+          ? template.generation_models[0]
           : template.generation_models
         const modelIdentifier = (modelData as any)?.model_identifier
         if (modelIdentifier) {
@@ -131,12 +137,12 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
         }
       }
     } catch (error: any) {
-      console.warn(`⚠️  Could not get model from template ${templateId}, falling back to env/default:`, error.message)
+      console.warn(`⚠️  Could not get model from template ${templateId}, falling back to default:`, error.message)
     }
   }
 
-  // Fallback to env var or default
-  return process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
+  // Fallback default
+  return 'google/nano-banana'
 }
 
 /**
