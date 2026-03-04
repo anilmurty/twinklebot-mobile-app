@@ -182,6 +182,11 @@ export function ProfileTab() {
             )}
           </Button>
         )}
+
+        {/* App Version */}
+        <p className="text-center text-xs text-muted-foreground/50 pt-4">
+          v{process.env.NEXT_PUBLIC_APP_VERSION} · {process.env.NEXT_PUBLIC_GIT_SHA}
+        </p>
           </>
         )}
       </div>
