@@ -119,6 +119,8 @@ export default function StoryPreviewPage() {
   const isCountingStory = template?.title?.includes('Learning to Count') ||
                           template?.title?.includes('Counting')
 
+  const isAlphabetStory = template?.title?.includes('Alphabet')
+
   // Color palette for number highlighting (different color per scene)
   const numberColors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
@@ -173,6 +175,71 @@ export default function StoryPreviewPage() {
       parts.push(text.substring(lastIndex))
     }
     return parts.length > 0 ? <>{parts}</> : text
+  }
+
+  // Build alphabet map from scene headlines (e.g., "A for Airplane" → { letter: 'A', object: 'Airplane' })
+  const alphabetMap: { [sceneNum: number]: { letter: string; object: string } } = {}
+  if (isAlphabetStory) {
+    scenes.forEach((s) => {
+      const match = s.headline?.match(/^([A-Z])\s+for\s+(.+)$/i)
+      if (match && s.scene_number) {
+        alphabetMap[s.scene_number] = { letter: match[1].toUpperCase(), object: match[2].trim() }
+      }
+    })
+  }
+
+  // Function to highlight alphabet letter and object in text for alphabet story
+  const highlightAlphabet = (text: string, sceneNumber: number): React.ReactNode => {
+    const entry = alphabetMap[sceneNumber]
+    if (!entry) return text
+
+    const color = numberColors[sceneNumber - 1] || numberColors[0]
+    const { letter, object } = entry
+    const escapedObject = object.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+    // Match standalone letter OR object word (case-insensitive regex, but skip lowercase letter matches)
+    const regex = new RegExp(`\\b(${letter})\\b|\\b(${escapedObject})\\b`, 'gi')
+    const parts: React.ReactNode[] = []
+    let lastIndex = 0
+    let keyCounter = 0
+    let match
+
+    while ((match = regex.exec(text)) !== null) {
+      // If this matched the single-letter pattern, only highlight if uppercase
+      if (match[1] !== undefined && match[0] !== letter) {
+        continue
+      }
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index))
+      }
+      parts.push(
+        <span
+          key={`alpha-${keyCounter++}`}
+          style={{
+            color,
+            fontSize: '1.2em',
+            fontWeight: 'bold',
+            textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
+          }}
+        >
+          {match[0]}
+        </span>
+      )
+      lastIndex = regex.lastIndex
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex))
+    }
+
+    return parts.length > 0 ? <>{parts}</> : text
+  }
+
+  // Unified highlight function for all story types
+  const highlightSceneText = (text: string, sceneNumber: number): React.ReactNode => {
+    if (isCountingStory) return highlightNumbers(text, sceneNumber)
+    if (isAlphabetStory) return highlightAlphabet(text, sceneNumber)
+    return text
   }
 
   if (loading) {
@@ -387,7 +454,7 @@ export default function StoryPreviewPage() {
                   </button>
                   {scene.headline ? (
                     <h1 className="text-white text-xl md:text-2xl lg:text-3xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0 pt-1">
-                      {highlightNumbers(scene.headline.replace(/\[Name\]/g, characterName), scene.scene_number || sceneIndex + 1)}
+                      {highlightSceneText(scene.headline.replace(/\[Name\]/g, characterName), scene.scene_number || sceneIndex + 1)}
                     </h1>
                   ) : (
                     <div className="flex-1" />
@@ -426,7 +493,7 @@ export default function StoryPreviewPage() {
                                     letterSpacing: '0.01em'
                                   }}
                                 >
-                                  {highlightNumbers(line, scene.scene_number || sceneIndex + 1)}
+                                  {highlightSceneText(line, scene.scene_number || sceneIndex + 1)}
                                 </p>
                               ))}
                           </div>
