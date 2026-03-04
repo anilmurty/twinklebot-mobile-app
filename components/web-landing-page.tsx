@@ -243,29 +243,17 @@ export function WebLandingPage() {
 
             {/* Right: Hero Image */}
             <div className="relative">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-amber-900/20 border-4 border-white">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-amber-900/20">
                 <Image
-                  src="/happy-children-reading-colorful-storybooks-togethe.jpg"
-                  alt="Children reading personalized storybooks"
+                  src="/landing-hero.jpg"
+                  alt="Parent and child experiencing TwinkleBot storybooks"
                   width={600}
                   height={450}
                   className="w-full h-auto object-cover"
                   priority
                 />
-                {/* Floating card */}
-                <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-                      <BookOpen className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-amber-900">Emma&apos;s Zoo Adventure</p>
-                      <p className="text-sm text-amber-700/60">Just generated!</p>
-                    </div>
-                  </div>
-                </div>
               </div>
-              
+
               {/* Decorative elements */}
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-primary/30 to-amber-300/30 rounded-full blur-xl" />
               <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-gradient-to-br from-emerald-300/30 to-teal-300/30 rounded-full blur-xl" />
