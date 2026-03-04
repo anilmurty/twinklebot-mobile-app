@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import { 
   Sparkles, 
@@ -26,6 +27,7 @@ export function WebLandingPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showContact, setShowContact] = useState(false)
   
   // Toggle to show/hide pricing section (for A/B testing)
   const showPricing = false
@@ -563,13 +565,13 @@ export function WebLandingPage() {
             />
             
             <div className="flex items-center gap-6 text-sm text-amber-800/60">
-              <a href="#" className="hover:text-amber-900 transition-colors">Terms</a>
-              <a href="#" className="hover:text-amber-900 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-amber-900 transition-colors">Contact</a>
+              <a href="https://www.twinklebot.app/terms" className="hover:text-amber-900 transition-colors">Terms</a>
+              <a href="https://www.twinklebot.app/privacy" className="hover:text-amber-900 transition-colors">Privacy</a>
+              <button onClick={() => setShowContact(true)} className="hover:text-amber-900 transition-colors">Contact</button>
             </div>
 
             <p className="text-sm text-amber-800/60">
-              &copy; {new Date().getFullYear()} Twinklebot. All rights reserved.
+              &copy; 2026 Metabuilder LLC. All rights reserved.
             </p>
           </div>
         </div>
@@ -650,6 +652,23 @@ export function WebLandingPage() {
           </div>
         </div>
       )}
+
+      <Dialog open={showContact} onOpenChange={setShowContact}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Contact Us</DialogTitle>
+            <DialogDescription className="pt-2 text-base">
+              Drop us a note at{' '}
+              <a
+                href="mailto:support@twinklebot.app"
+                className="text-primary font-medium hover:underline"
+              >
+                support@twinklebot.app
+              </a>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
