@@ -14,7 +14,6 @@ import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services
 import { useCharacters } from "@/lib/queries/use-characters"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
 
@@ -516,25 +515,21 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                             id={`look-${look.id}`}
                             className="sr-only"
                           />
-                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary relative">
+                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
                             {look.is_original && selectedCharacterData?.front_photo_url ? (
-                              <Image
+                              <img
                                 src={selectedCharacterData.front_photo_url}
                                 alt={look.look_name}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 768px) 40vw, 200px"
+                                className="w-full h-full object-cover"
                               />
                             ) : look.reference_image_url ? (
-                              <Image
+                              <img
                                 src={look.reference_image_url}
                                 alt={look.look_name}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 768px) 40vw, 200px"
+                                className="w-full h-full object-cover"
                               />
                             ) : (
-                              <span className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">No image</span>
+                              <span className="text-xs text-muted-foreground">No image</span>
                             )}
                           </div>
                           <div className="text-center">

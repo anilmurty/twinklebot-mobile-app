@@ -521,14 +521,6 @@ export function CreateStoryDialog({
                                 src={characterPhotoUrl}
                                 alt={look.look_name}
                                 className="w-full h-full object-cover"
-                                loading="eager"
-                                decoding="sync"
-                                onLoad={() => console.log(`✅ Original look photo loaded:`, characterPhotoUrl)}
-                                onError={(e) => {
-                                  console.error(`❌ Original look photo FAILED:`, characterPhotoUrl)
-                                  console.error(`❌ Element src:`, (e.target as HTMLImageElement).src)
-                                  console.error(`❌ Element currentSrc:`, (e.target as HTMLImageElement).currentSrc)
-                                }}
                               />
                             ) : look.reference_image_url ? (
                               <img
