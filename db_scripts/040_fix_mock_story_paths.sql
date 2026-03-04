@@ -3,7 +3,6 @@
 -- The storage bucket uses "mock-story" (hyphen) but the DB had "mock_story" (underscore)
 
 UPDATE story_templates
-SET mock_story_data = REPLACE(mock_story_data::text, 'mock_story/', 'mock-story/')::jsonb,
-    updated_at = NOW()
+SET mock_story_data = REPLACE(mock_story_data::text, 'mock_story/', 'mock-story/')::jsonb
 WHERE mock_story_data IS NOT NULL
   AND mock_story_data::text LIKE '%mock_story/%';
