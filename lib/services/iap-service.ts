@@ -13,14 +13,32 @@ export interface IAPPackage {
   currencyCode: string
   /** Number of story credits this package gives */
   credits: number
+  /** Quality tier: basic or premium */
+  tier: 'basic' | 'premium'
 }
 
-/** Map RevenueCat product IDs to story credit counts */
-const PRODUCT_CREDITS: Record<string, number> = {
-  'com.twinklebot.story.single': 1,
-  'com.twinklebot.story.bundle2': 2,
-  'com.twinklebot.story.bundle3': 3,
-  'com.twinklebot.story.bundle4': 4,
+/** Map RevenueCat product IDs to story credit counts and quality tier */
+interface ProductInfo {
+  credits: number
+  tier: 'basic' | 'premium'
+}
+
+const PRODUCT_MAP: Record<string, ProductInfo> = {
+  // Legacy product IDs (mapped to basic tier)
+  'com.twinklebot.story.single': { credits: 1, tier: 'basic' },
+  'com.twinklebot.story.bundle2': { credits: 2, tier: 'basic' },
+  'com.twinklebot.story.bundle3': { credits: 3, tier: 'basic' },
+  'com.twinklebot.story.bundle4': { credits: 4, tier: 'basic' },
+  // Basic tier product IDs
+  'com.twinklebot.story.basic.single': { credits: 1, tier: 'basic' },
+  'com.twinklebot.story.basic.bundle2': { credits: 2, tier: 'basic' },
+  'com.twinklebot.story.basic.bundle3': { credits: 3, tier: 'basic' },
+  'com.twinklebot.story.basic.bundle4': { credits: 4, tier: 'basic' },
+  // Premium tier product IDs
+  'com.twinklebot.story.premium.single': { credits: 1, tier: 'premium' },
+  'com.twinklebot.story.premium.bundle2': { credits: 2, tier: 'premium' },
+  'com.twinklebot.story.premium.bundle3': { credits: 3, tier: 'premium' },
+  'com.twinklebot.story.premium.bundle4': { credits: 4, tier: 'premium' },
 }
 
 /**
@@ -45,13 +63,15 @@ export async function getIAPPackages(): Promise<IAPPackage[]> {
     }
 
     const packages = offerings.current.availablePackages.map((pkg) => {
+      const productInfo = PRODUCT_MAP[pkg.product.identifier] || { credits: 1, tier: 'basic' as const }
       const mapped = {
         identifier: pkg.identifier,
         productId: pkg.product.identifier,
         priceString: pkg.product.priceString,
         price: pkg.product.price,
         currencyCode: pkg.product.currencyCode,
-        credits: PRODUCT_CREDITS[pkg.product.identifier] || 1,
+        credits: productInfo.credits,
+        tier: productInfo.tier,
       }
       console.log(`[IAP] Package: ${mapped.identifier} (${mapped.productId}) = ${mapped.priceString}, ${mapped.credits} credits`)
       return mapped

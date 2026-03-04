@@ -59,6 +59,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [iapPackages, setIapPackages] = useState<IAPPackage[]>([])
   const [previewSceneText, setPreviewSceneText] = useState<string | null>(null)
   const [fetchingPreviewData, setFetchingPreviewData] = useState(false)
+  const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('basic')
+  const [premiumCredits, setPremiumCredits] = useState(0)
 
   // Poll for preview status while generating
   const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
@@ -115,6 +117,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setCharacterGender(null)
       setPreviewSceneText(null)
       setFetchingPreviewData(false)
+      setSelectedTier('basic')
+      setPremiumCredits(0)
     }
   }, [open, story.id])
 
@@ -176,7 +180,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     try {
       // Check payment override and story credits
       const profile = await profileApi.get()
-      setStoryCredits(profile?.story_credits || 0)
+      setStoryCredits(profile?.basic_credits || profile?.story_credits || 0)
+      setPremiumCredits(profile?.premium_credits || 0)
 
       // Fetch subscription plans (one-time only for Phase 1)
       setLoadingPlans(true)
@@ -184,10 +189,12 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       // Filter to only show one-time plans
       const oneTimePlans = (plansData.plans || []).filter((p: any) => p.plan_type === 'one-time')
       setSubscriptionPlans(oneTimePlans)
-      if (oneTimePlans.length > 0) {
-        // Default to single storybook (1 credit) plan
-        const singlePlan = oneTimePlans.find((p: any) => p.stories_per_period === 1)
-        setSelectedPlanId(singlePlan?.id || oneTimePlans[0].id)
+      // Default to single storybook (1 credit) plan for the selected tier
+      const tierPlans = oneTimePlans.filter((p: any) => p.quality_tier === selectedTier)
+      const plansToSearch = tierPlans.length > 0 ? tierPlans : oneTimePlans
+      if (plansToSearch.length > 0) {
+        const singlePlan = plansToSearch.find((p: any) => p.stories_per_period === 1)
+        setSelectedPlanId(singlePlan?.id || plansToSearch[0].id)
       }
       // Load IAP packages on native
       if (isNativeApp()) {
@@ -243,6 +250,16 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     }
   }
 
+  const handleTierChange = (tier: 'basic' | 'premium') => {
+    setSelectedTier(tier)
+    // Update selected plan to match new tier
+    const tierPlans = subscriptionPlans.filter((p: any) => p.quality_tier === tier)
+    if (tierPlans.length > 0) {
+      const singlePlan = tierPlans.find((p: any) => p.stories_per_period === 1)
+      setSelectedPlanId(singlePlan?.id || tierPlans[0].id)
+    }
+  }
+
   const handleCompletePurchase = async (planId: number) => {
     if (!storybookId || !planId) {
       setError("Missing required information")
@@ -257,10 +274,13 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
         // Native IAP flow via RevenueCat
         const plan = subscriptionPlans.find((p: any) => p.id === planId)
         const credits = plan?.stories_per_period || 1
-        const pkg = iapPackages.find((p) => p.credits === credits)
+        // Find IAP package matching credits AND tier
+        const pkg = iapPackages.find((p) => p.credits === credits && p.tier === selectedTier)
+          // Fallback: match by credits only (for legacy packages)
+          || iapPackages.find((p) => p.credits === credits)
 
         if (!pkg) {
-          console.error(`[IAP] No package found for ${credits} credits. Available:`, iapPackages.map(p => `${p.identifier}(${p.credits})`))
+          console.error(`[IAP] No package found for ${credits} ${selectedTier} credits. Available:`, iapPackages.map(p => `${p.identifier}(${p.credits},${p.tier})`))
           setError("In-app purchases are not available right now. Please try again later.")
           setIsSubmitting(false)
           return
@@ -295,18 +315,20 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     }
   }
 
-  const handleUseCredit = async () => {
+  const handleUseCredit = async (tier?: 'basic' | 'premium') => {
     if (!storybookId) {
       setError("Missing storybook information")
       return
     }
 
+    const useTier = tier || selectedTier
+
     try {
       setIsSubmitting(true)
       setError(null)
 
-      await storybooksApi.useCredit(storybookId)
-      
+      await storybooksApi.useCredit(storybookId, useTier)
+
       // Navigate to storybooks tab
       onOpenChange(false)
       router.push("/app?tab=storybooks")
@@ -671,8 +693,15 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   onPurchase={handleCompletePurchase}
                   isSubmitting={isSubmitting}
                   storyCredits={storyCredits}
+                  premiumCredits={premiumCredits}
                   onUseCredit={handleUseCredit}
-                  iapPriceMap={iapPackages.length > 0 ? Object.fromEntries(iapPackages.map(p => [p.credits, p.priceString])) : undefined}
+                  selectedTier={selectedTier}
+                  onTierChange={handleTierChange}
+                  iapPriceMap={iapPackages.length > 0 ? Object.fromEntries(
+                    iapPackages
+                      .filter(p => p.tier === selectedTier)
+                      .map(p => [p.credits, p.priceString])
+                  ) : undefined}
                 />
               )}
 

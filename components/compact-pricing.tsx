@@ -21,9 +21,14 @@ interface CompactPricingProps {
   onPurchase: (planId: number) => void
   isSubmitting?: boolean
   storyCredits?: number
-  onUseCredit?: () => void
+  premiumCredits?: number
+  onUseCredit?: (tier: 'basic' | 'premium') => void
   /** Map of plan credits → localized price string from RevenueCat (e.g. "$7.99") */
   iapPriceMap?: Record<number, string>
+  /** Currently selected quality tier */
+  selectedTier?: 'basic' | 'premium'
+  /** Callback when tier changes */
+  onTierChange?: (tier: 'basic' | 'premium') => void
 }
 
 export function CompactPricing({
@@ -33,32 +38,77 @@ export function CompactPricing({
   onPurchase,
   isSubmitting = false,
   storyCredits = 0,
+  premiumCredits = 0,
   onUseCredit,
   iapPriceMap,
+  selectedTier: controlledTier,
+  onTierChange,
 }: CompactPricingProps) {
+  const [internalTier, setInternalTier] = useState<'basic' | 'premium'>('basic')
+  const selectedTier = controlledTier ?? internalTier
+  const handleTierChange = (tier: 'basic' | 'premium') => {
+    setInternalTier(tier)
+    onTierChange?.(tier)
+  }
+
+  // Filter plans by selected tier
+  const tierPlans = plans.filter(p => (p as any).quality_tier === selectedTier)
+  // Fallback: if no plans match tier filter (legacy data), show all plans
+  const displayPlans = tierPlans.length > 0 ? tierPlans : plans
+
   // Sort plans by stories_per_period (1, 2, 3, 4)
-  const sortedPlans = [...plans]
+  const sortedPlans = [...displayPlans]
     .filter(p => p.stories_per_period > 0)
     .sort((a, b) => a.stories_per_period - b.stories_per_period)
 
-  // Calculate savings percentage
+  // Calculate savings percentage based on tier's single price
   const getSavings = (plan: Plan): number => {
-    const singlePrice = 799 // $7.99 base price
+    const singlePlan = sortedPlans.find(p => p.stories_per_period === 1)
+    const singlePrice = singlePlan?.price_amount || plan.price_amount
     const expectedPrice = singlePrice * plan.stories_per_period
     const actualPrice = plan.price_amount
     if (plan.stories_per_period <= 1) return 0
     return Math.round(((expectedPrice - actualPrice) / expectedPrice) * 100)
   }
 
-  // If user has credits, show use credit option
-  if (storyCredits > 0 && onUseCredit) {
+  // Determine credits for selected tier
+  const tierCredits = selectedTier === 'premium' ? premiumCredits : storyCredits
+
+  // If user has credits for the selected tier, show use credit option
+  if (tierCredits > 0 && onUseCredit) {
     return (
       <div className="space-y-3">
+        {/* Tier Toggle */}
+        <div className="flex rounded-lg border border-border overflow-hidden">
+          <button
+            onClick={() => handleTierChange('basic')}
+            className={cn(
+              "flex-1 py-2 px-3 text-sm font-medium transition-colors",
+              selectedTier === 'basic'
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Basic
+          </button>
+          <button
+            onClick={() => handleTierChange('premium')}
+            className={cn(
+              "flex-1 py-2 px-3 text-sm font-medium transition-colors",
+              selectedTier === 'premium'
+                ? "bg-primary text-primary-foreground"
+                : "bg-card text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Premium
+          </button>
+        </div>
+
         <p className="text-sm text-center text-muted-foreground">
-          You have <span className="font-semibold text-foreground">{storyCredits} story {storyCredits === 1 ? 'credit' : 'credits'}</span>
+          You have <span className="font-semibold text-foreground">{tierCredits} {selectedTier} {tierCredits === 1 ? 'credit' : 'credits'}</span>
         </p>
         <Button
-          onClick={onUseCredit}
+          onClick={() => onUseCredit(selectedTier)}
           disabled={isSubmitting}
           className="w-full bg-primary hover:bg-primary/90"
           size="lg"
@@ -71,7 +121,7 @@ export function CompactPricing({
           ) : (
             <>
               <Sparkles className="w-4 h-4 mr-2" />
-              Use 1 Credit to Unlock
+              Use 1 {selectedTier === 'premium' ? 'Premium ' : ''}Credit to Unlock
             </>
           )}
         </Button>
@@ -81,6 +131,38 @@ export function CompactPricing({
 
   return (
     <div className="space-y-3">
+      {/* Tier Toggle */}
+      <div className="flex rounded-lg border border-border overflow-hidden">
+        <button
+          onClick={() => handleTierChange('basic')}
+          className={cn(
+            "flex-1 py-2 px-3 text-sm font-medium transition-colors",
+            selectedTier === 'basic'
+              ? "bg-primary text-primary-foreground"
+              : "bg-card text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Basic
+        </button>
+        <button
+          onClick={() => handleTierChange('premium')}
+          className={cn(
+            "flex-1 py-2 px-3 text-sm font-medium transition-colors",
+            selectedTier === 'premium'
+              ? "bg-primary text-primary-foreground"
+              : "bg-card text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Premium
+        </button>
+      </div>
+
+      {selectedTier === 'premium' && (
+        <p className="text-[10px] text-center text-muted-foreground">
+          Higher quality AI images with nano-banana-pro
+        </p>
+      )}
+
       {sortedPlans.map((plan) => {
         const isSelected = selectedPlanId === plan.id
         const price = (plan.price_amount / 100).toFixed(2)

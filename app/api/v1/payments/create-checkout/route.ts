@@ -71,6 +71,9 @@ export async function POST(request: NextRequest) {
     // Determine checkout mode
     const mode = plan.plan_type === 'subscription' ? 'subscription' : 'payment'
 
+    // Read quality_tier from the plan
+    const qualityTier = plan.quality_tier || 'basic'
+
     // Create checkout session
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get('origin') || 'http://localhost:3000'
     const successUrl = `${baseUrl}/?tab=storybooks&payment=success`
@@ -88,10 +91,11 @@ export async function POST(request: NextRequest) {
         plan_id: plan_id.toString(),
         user_id: userId,
         coupon_code: coupon_code || '',
+        quality_tier: qualityTier,
       },
     })
 
-    // Update storybook with checkout session ID and payment status
+    // Update storybook with checkout session ID, payment status, and quality tier
     await supabaseAdmin
       .from('storybooks')
       .update({
@@ -99,6 +103,7 @@ export async function POST(request: NextRequest) {
         stripe_price_id: plan.stripe_price_id,
         payment_status: 'pending',
         stripe_coupon_code: coupon_code || null,
+        quality_tier: qualityTier,
         updated_at: new Date().toISOString(),
       })
       .eq('id', storybook_id)

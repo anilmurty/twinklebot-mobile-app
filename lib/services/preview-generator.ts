@@ -253,13 +253,14 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     console.log(`[PREVIEW] Constructed base photo path: ${basePhotoPath} from base_photo: ${firstScene.base_photo}`)
 
-    // Generate first scene image
+    // Generate first scene image (always use basic model for preview)
     const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
       basePhotoPath,
       signedVariationUrl,
       firstScene.insertion_prompt,
       firstScene.aspect_ratio || 'match_input_image',
-      template.id
+      template.id,
+      'basic'
     )
 
     console.log(`[PREVIEW] First scene image generated: ${sceneImageUrl}`)

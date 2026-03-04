@@ -10,14 +10,25 @@ Complete setup guide for iOS and Android IAP using RevenueCat.
 
 ## Products to Create
 
-All products are **consumable** one-time purchases (not subscriptions):
+All products are **consumable** one-time purchases (not subscriptions). There are two quality tiers:
 
+### Basic Tier
 | Product ID | Credits | Price | Display Name |
 |---|---|---|---|
-| `com.twinklebot.story.single` | 1 | $7.99 | 1 Story Credit |
-| `com.twinklebot.story.bundle2` | 2 | $13.99 | 2 Story Credits |
-| `com.twinklebot.story.bundle3` | 3 | $18.99 | 3 Story Credits |
-| `com.twinklebot.story.bundle4` | 4 | $22.99 | 4 Story Credits |
+| `com.twinklebot.story.single` | 1 | $0.99 | Basic Single Storybook |
+| `com.twinklebot.story.bundle2` | 2 | $1.49 | Basic 2-Story Bundle |
+| `com.twinklebot.story.bundle3` | 3 | $1.99 | Basic 3-Story Bundle |
+| `com.twinklebot.story.bundle4` | 4 | $2.49 | Basic 4-Story Bundle |
+
+### Premium Tier
+| Product ID | Credits | Price | Display Name |
+|---|---|---|---|
+| `com.twinklebot.story.premium.single` | 1 | $3.99 | Premium Single Storybook |
+| `com.twinklebot.story.premium.bundle2` | 2 | $6.99 | Premium 2-Story Bundle |
+| `com.twinklebot.story.premium.bundle3` | 3 | $9.99 | Premium 3-Story Bundle |
+| `com.twinklebot.story.premium.bundle4` | 4 | $12.99 | Premium 4-Story Bundle |
+
+> **Note**: Basic products use the original product IDs (without `.basic.` prefix) for backward compatibility. Premium products use `.premium.` in the ID. The code maps legacy IDs to the basic tier automatically.
 
 ---
 
@@ -48,43 +59,67 @@ All products are **consumable** one-time purchases (not subscriptions):
 
 In App Store Connect, go to your app > **Monetization** > **In-App Purchases** > **+**
 
-Create each one as **Consumable**:
+Create each one as **Consumable**. You need 8 products (4 basic + 4 premium):
 
-#### Product 1: Single Story Credit
+#### Basic Products
+
+**Basic Single Storybook**
 - **Type**: Consumable
-- **Reference Name**: Single Story Credit
 - **Product ID**: `com.twinklebot.story.single`
-- **Price**: $7.99 (Tier 8)
-- **Display Name**: 1 Story Credit
+- **Price**: $0.99 (Tier 1)
+- **Display Name**: Basic Single Storybook
 - **Description**: Create one personalized storybook starring your child
-- **Review Notes**: Consumable credit used to generate a personalized children's storybook with AI-generated illustrations
 
-#### Product 2: 2-Story Bundle
+**Basic 2-Story Bundle**
 - **Type**: Consumable
-- **Reference Name**: 2-Story Bundle
 - **Product ID**: `com.twinklebot.story.bundle2`
-- **Price**: $13.99 (Tier 14)
-- **Display Name**: 2 Story Credits
+- **Price**: $1.49 (Tier 2 — or nearest available)
+- **Display Name**: Basic 2-Story Bundle
 - **Description**: Create two personalized storybooks starring your child
-- **Review Notes**: Bundle of 2 consumable credits for generating personalized children's storybooks
 
-#### Product 3: 3-Story Bundle
+**Basic 3-Story Bundle**
 - **Type**: Consumable
-- **Reference Name**: 3-Story Bundle
 - **Product ID**: `com.twinklebot.story.bundle3`
-- **Price**: $18.99 (Tier 19)
-- **Display Name**: 3 Story Credits
+- **Price**: $1.99 (Tier 2)
+- **Display Name**: Basic 3-Story Bundle
 - **Description**: Create three personalized storybooks starring your child
-- **Review Notes**: Bundle of 3 consumable credits for generating personalized children's storybooks
 
-#### Product 4: 4-Story Bundle
+**Basic 4-Story Bundle**
 - **Type**: Consumable
-- **Reference Name**: 4-Story Bundle
 - **Product ID**: `com.twinklebot.story.bundle4`
-- **Price**: $22.99 (Tier 23)
-- **Display Name**: 4 Story Credits
+- **Price**: $2.49 (Tier 3 — or nearest available)
+- **Display Name**: Basic 4-Story Bundle
 - **Description**: Create four personalized storybooks starring your child
-- **Review Notes**: Bundle of 4 consumable credits for generating personalized children's storybooks
+
+#### Premium Products
+
+**Premium Single Storybook**
+- **Type**: Consumable
+- **Product ID**: `com.twinklebot.story.premium.single`
+- **Price**: $3.99 (Tier 4)
+- **Display Name**: Premium Single Storybook
+- **Description**: Create one premium quality personalized storybook with higher quality AI images
+
+**Premium 2-Story Bundle**
+- **Type**: Consumable
+- **Product ID**: `com.twinklebot.story.premium.bundle2`
+- **Price**: $6.99 (Tier 7)
+- **Display Name**: Premium 2-Story Bundle
+- **Description**: Create two premium quality personalized storybooks with higher quality AI images
+
+**Premium 3-Story Bundle**
+- **Type**: Consumable
+- **Product ID**: `com.twinklebot.story.premium.bundle3`
+- **Price**: $9.99 (Tier 10)
+- **Display Name**: Premium 3-Story Bundle
+- **Description**: Create three premium quality personalized storybooks with higher quality AI images
+
+**Premium 4-Story Bundle**
+- **Type**: Consumable
+- **Product ID**: `com.twinklebot.story.premium.bundle4`
+- **Price**: $12.99 (Tier 13)
+- **Display Name**: Premium 4-Story Bundle
+- **Description**: Create four premium quality personalized storybooks with higher quality AI images
 
 > **Note**: Each product requires a screenshot of the purchase UI for review. You can add this later before submitting for review.
 
@@ -154,35 +189,25 @@ Back in Google Play Console:
 
 Go to **Monetize** > **In-app products** > **Create product**
 
-Create each as a **managed product** (one-time, non-subscription):
+Create each as a **managed product** (one-time, non-subscription). You need 8 products:
 
-#### Product 1
-- **Product ID**: `com.twinklebot.story.single`
-- **Name**: 1 Story Credit
-- **Description**: Create one personalized storybook starring your child
-- **Default price**: $7.99
-- **Status**: Active
+#### Basic Products
 
-#### Product 2
-- **Product ID**: `com.twinklebot.story.bundle2`
-- **Name**: 2 Story Credits
-- **Description**: Create two personalized storybooks starring your child
-- **Default price**: $13.99
-- **Status**: Active
+| Product ID | Name | Price |
+|---|---|---|
+| `com.twinklebot.story.single` | Basic Single Storybook | $0.99 |
+| `com.twinklebot.story.bundle2` | Basic 2-Story Bundle | $1.49 |
+| `com.twinklebot.story.bundle3` | Basic 3-Story Bundle | $1.99 |
+| `com.twinklebot.story.bundle4` | Basic 4-Story Bundle | $2.49 |
 
-#### Product 3
-- **Product ID**: `com.twinklebot.story.bundle3`
-- **Name**: 3 Story Credits
-- **Description**: Create three personalized storybooks starring your child
-- **Default price**: $18.99
-- **Status**: Active
+#### Premium Products
 
-#### Product 4
-- **Product ID**: `com.twinklebot.story.bundle4`
-- **Name**: 4 Story Credits
-- **Description**: Create four personalized storybooks starring your child
-- **Default price**: $22.99
-- **Status**: Active
+| Product ID | Name | Price |
+|---|---|---|
+| `com.twinklebot.story.premium.single` | Premium Single Storybook | $3.99 |
+| `com.twinklebot.story.premium.bundle2` | Premium 2-Story Bundle | $6.99 |
+| `com.twinklebot.story.premium.bundle3` | Premium 3-Story Bundle | $9.99 |
+| `com.twinklebot.story.premium.bundle4` | Premium 4-Story Bundle | $12.99 |
 
 ### 2.5 Set Up License Testing
 
@@ -229,14 +254,23 @@ RevenueCat needs a service account to verify purchases:
 
 Go to **Product catalog** > **Products** tab > **+ New**
 
-For each of the 4 products, add both the iOS and Android versions:
+For each of the 8 products, add both the iOS and Android versions:
 
+#### Basic Products
 | Identifier | App Store Product ID | Play Store Product ID |
 |---|---|---|
 | `com.twinklebot.story.single` | `com.twinklebot.story.single` | `com.twinklebot.story.single` |
 | `com.twinklebot.story.bundle2` | `com.twinklebot.story.bundle2` | `com.twinklebot.story.bundle2` |
 | `com.twinklebot.story.bundle3` | `com.twinklebot.story.bundle3` | `com.twinklebot.story.bundle3` |
 | `com.twinklebot.story.bundle4` | `com.twinklebot.story.bundle4` | `com.twinklebot.story.bundle4` |
+
+#### Premium Products
+| Identifier | App Store Product ID | Play Store Product ID |
+|---|---|---|
+| `com.twinklebot.story.premium.single` | `com.twinklebot.story.premium.single` | `com.twinklebot.story.premium.single` |
+| `com.twinklebot.story.premium.bundle2` | `com.twinklebot.story.premium.bundle2` | `com.twinklebot.story.premium.bundle2` |
+| `com.twinklebot.story.premium.bundle3` | `com.twinklebot.story.premium.bundle3` | `com.twinklebot.story.premium.bundle3` |
+| `com.twinklebot.story.premium.bundle4` | `com.twinklebot.story.premium.bundle4` | `com.twinklebot.story.premium.bundle4` |
 
 ### 3.4 Create Offering
 
@@ -245,7 +279,7 @@ Go to **Product catalog** > **Offerings** > **+ New offering**
 - **Identifier**: `default` (must be exactly "default" — this is what the SDK fetches)
 - **Display Name**: Story Credits
 
-Add 4 packages:
+Add 8 packages (4 basic + 4 premium):
 
 | Package | Product |
 |---|---|
@@ -253,6 +287,10 @@ Add 4 packages:
 | `bundle2` | `com.twinklebot.story.bundle2` |
 | `bundle3` | `com.twinklebot.story.bundle3` |
 | `bundle4` | `com.twinklebot.story.bundle4` |
+| `premium_single` | `com.twinklebot.story.premium.single` |
+| `premium_bundle2` | `com.twinklebot.story.premium.bundle2` |
+| `premium_bundle3` | `com.twinklebot.story.premium.bundle3` |
+| `premium_bundle4` | `com.twinklebot.story.premium.bundle4` |
 
 ### 3.5 Get API Keys
 
@@ -308,7 +346,7 @@ REVENUECAT_WEBHOOK_SECRET=your-random-webhook-secret
 1. Make a sandbox purchase
 2. Check RevenueCat dashboard > **Customers** to see the purchase event
 3. Check your Vercel function logs to see the webhook received
-4. Verify story credits were added to the user's profile in Supabase
+4. Verify credits were added to the correct pool (`basic_credits` or `premium_credits`) in Supabase
 
 ---
 
@@ -332,13 +370,16 @@ The IAP integration is implemented in these files:
 ## Purchase Flow (Native)
 
 1. User taps "Continue to Payment" in any purchase dialog
-2. `isNativeApp()` returns true → IAP branch
-3. `getIAPPackages()` fetches offerings from RevenueCat
-4. `purchasePackage()` opens native Apple/Google payment sheet
-5. On success:
-   - Client calls `storybooksApi.useCredit(storybookId)` to start generation immediately
+2. User selects quality tier: **Basic** or **Premium**
+3. Plans are filtered by selected tier; user picks a bundle
+4. `isNativeApp()` returns true → IAP branch
+5. `getIAPPackages()` fetches offerings from RevenueCat
+6. `purchasePackage()` opens native Apple/Google payment sheet
+7. On success:
+   - Client calls `storybooksApi.useCredit(storybookId, qualityTier)` to start generation immediately
    - RevenueCat sends webhook to our server
-   - Server credits user's `profiles.story_credits` in Supabase
+   - Server credits user's `basic_credits` or `premium_credits` in Supabase
    - If there's a pending storybook, server auto-generates it
-6. On cancel: nothing happens, user stays on payment screen
-7. On error: error message displayed
+   - If premium: scene 1 (preview) is regenerated with the pro model before generating remaining scenes
+8. On cancel: nothing happens, user stays on payment screen
+9. On error: error message displayed

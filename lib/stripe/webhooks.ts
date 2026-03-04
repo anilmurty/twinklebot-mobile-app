@@ -51,6 +51,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
   const planId = session.metadata.plan_id
   const userId = session.metadata.user_id
   const couponCode = session.metadata.coupon_code
+  const qualityTier = (session.metadata.quality_tier as 'basic' | 'premium') || 'basic'
 
   // Get the plan to determine how many credits to add
   let creditsToAdd = 1 // Default to 1 credit
@@ -60,7 +61,7 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
       .select('stories_per_period')
       .eq('id', parseInt(planId))
       .single()
-    
+
     if (plan) {
       creditsToAdd = plan.stories_per_period || 1
     }
@@ -68,32 +69,36 @@ async function handleCheckoutSessionCompleted(event: Stripe.Event) {
 
   // For one-time payments (bundles), add credits to user's profile
   if (session.mode === 'payment' && userId) {
+    // Determine which credit column to use based on quality tier
+    const creditColumn = qualityTier === 'premium' ? 'premium_credits' : 'basic_credits'
+
     // Add credits to user's profile
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('story_credits')
+      .select(`story_credits, basic_credits, premium_credits`)
       .eq('id', userId)
       .single()
-    
-    const currentCredits = profile?.story_credits || 0
+
+    const currentCredits = (profile as any)?.[creditColumn] || 0
     // Add all purchased credits, then deduct 1 for the current storybook
     const newCredits = currentCredits + creditsToAdd - 1
-    
+
     await supabaseAdmin
       .from('profiles')
       .update({
-        story_credits: Math.max(0, newCredits),
+        [creditColumn]: Math.max(0, newCredits),
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
-    
-    console.log(`Added ${creditsToAdd} credits to user ${userId}, used 1 for storybook ${storybookId}, remaining: ${newCredits}`)
+
+    console.log(`Added ${creditsToAdd} ${qualityTier} credits to user ${userId}, used 1 for storybook ${storybookId}, remaining: ${newCredits}`)
   }
 
-  // Update storybook payment status
+  // Update storybook payment status and quality tier
   const updateData: any = {
     payment_status: 'completed',
     stripe_checkout_session_id: session.id,
+    quality_tier: qualityTier,
     updated_at: new Date().toISOString(),
   }
 

@@ -86,6 +86,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     throw new Error('Missing character or template data')
   }
 
+    // Read quality tier from storybook (set during payment)
+    const qualityTier = (storybook.quality_tier as 'basic' | 'premium') || 'basic'
+    console.log(`[QUALITY] Using quality tier: ${qualityTier}`)
+
     const userId = storybook.user_id
     const scenes = template.script_data.scenes as SceneTemplate[]
     const totalScenes = scenes.length
@@ -170,10 +174,19 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       .update({ progress: initialProgress, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
 
-    // If resuming from preview, skip first scene generation
-    const scenesToGenerate = isResumingFromPreview && hasPreviewScene
+    // If resuming from preview, skip first scene generation (unless premium needs regeneration)
+    let scenesToGenerate = isResumingFromPreview && hasPreviewScene
       ? scenes.filter(s => s.scene_number !== existingScenes[0]?.scene_number)
       : scenes
+
+    // PREMIUM REGENERATION: If premium tier and resuming from preview,
+    // regenerate scene 1 with the pro model (preview was generated with basic model)
+    if (qualityTier === 'premium' && isResumingFromPreview && hasPreviewScene) {
+      const previewSceneNumber = existingScenes[0]?.scene_number
+      console.log(`[PREMIUM] Premium tier detected - will regenerate scene ${previewSceneNumber} with pro model`)
+      // Include the preview scene in scenesToGenerate so it gets regenerated
+      scenesToGenerate = scenes
+    }
 
     // Helper function to check if scene already exists in database
     const checkSceneExists = async (sceneNumber: number): Promise<boolean> => {
@@ -194,13 +207,23 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       return exists
     }
 
+    // Track whether scene 1 is being regenerated for premium (to skip existence check)
+    const premiumRegenerateSceneNumber = (qualityTier === 'premium' && isResumingFromPreview && hasPreviewScene)
+      ? existingScenes[0]?.scene_number
+      : null
+
     // Helper function to generate a single scene (first attempt only - no retries)
     const generateSceneFirstAttempt = async (sceneTemplate: SceneTemplate): Promise<void> => {
       // Check database first to avoid duplicate predictions
-      const alreadyExists = await checkSceneExists(sceneTemplate.scene_number)
-      if (alreadyExists) {
-        console.log(`Scene ${sceneTemplate.scene_number} already generated in database, skipping`)
-        return
+      // Skip this check for the premium regeneration scene
+      if (sceneTemplate.scene_number !== premiumRegenerateSceneNumber) {
+        const alreadyExists = await checkSceneExists(sceneTemplate.scene_number)
+        if (alreadyExists) {
+          console.log(`Scene ${sceneTemplate.scene_number} already generated in database, skipping`)
+          return
+        }
+      } else {
+        console.log(`[PREMIUM] Regenerating scene ${sceneTemplate.scene_number} with premium model`)
       }
 
       console.log(`Generating scene ${sceneTemplate.scene_number} (first attempt)`)
@@ -268,10 +291,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       console.log('=====================================\n')
 
       // Double-check database right before creating prediction to avoid race conditions
-      const stillNeeded = !(await checkSceneExists(sceneTemplate.scene_number))
-      if (!stillNeeded) {
-        console.log(`Scene ${sceneTemplate.scene_number} was completed by another process, skipping`)
-        return
+      // Skip this check for the premium regeneration scene
+      if (sceneTemplate.scene_number !== premiumRegenerateSceneNumber) {
+        const stillNeeded = !(await checkSceneExists(sceneTemplate.scene_number))
+        if (!stillNeeded) {
+          console.log(`Scene ${sceneTemplate.scene_number} was completed by another process, skipping`)
+          return
+        }
       }
 
       // Create prediction
@@ -281,7 +307,8 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         characterVariationUrl,
         sceneTemplate.insertion_prompt,
         sceneTemplate.aspect_ratio || '9:16',
-        template.id // Pass template ID to get model from template
+        template.id, // Pass template ID to get model from template
+        qualityTier // Pass quality tier for model selection
       )
       
       console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)

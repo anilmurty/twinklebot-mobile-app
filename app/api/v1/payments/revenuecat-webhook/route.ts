@@ -2,12 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateStorybook } from '@/lib/services/storybook-generator'
 
-/** Map RevenueCat product IDs to story credit counts */
-const PRODUCT_CREDITS: Record<string, number> = {
-  'com.twinklebot.story.single': 1,
-  'com.twinklebot.story.bundle2': 2,
-  'com.twinklebot.story.bundle3': 3,
-  'com.twinklebot.story.bundle4': 4,
+/** Map RevenueCat product IDs to story credit counts and quality tier */
+interface ProductInfo {
+  credits: number
+  tier: 'basic' | 'premium'
+}
+
+const PRODUCT_MAP: Record<string, ProductInfo> = {
+  // Legacy product IDs (mapped to basic tier)
+  'com.twinklebot.story.single': { credits: 1, tier: 'basic' },
+  'com.twinklebot.story.bundle2': { credits: 2, tier: 'basic' },
+  'com.twinklebot.story.bundle3': { credits: 3, tier: 'basic' },
+  'com.twinklebot.story.bundle4': { credits: 4, tier: 'basic' },
+  // Basic tier product IDs
+  'com.twinklebot.story.basic.single': { credits: 1, tier: 'basic' },
+  'com.twinklebot.story.basic.bundle2': { credits: 2, tier: 'basic' },
+  'com.twinklebot.story.basic.bundle3': { credits: 3, tier: 'basic' },
+  'com.twinklebot.story.basic.bundle4': { credits: 4, tier: 'basic' },
+  // Premium tier product IDs
+  'com.twinklebot.story.premium.single': { credits: 1, tier: 'premium' },
+  'com.twinklebot.story.premium.bundle2': { credits: 2, tier: 'premium' },
+  'com.twinklebot.story.premium.bundle3': { credits: 3, tier: 'premium' },
+  'com.twinklebot.story.premium.bundle4': { credits: 4, tier: 'premium' },
 }
 
 /**
@@ -52,13 +68,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Determine credits from product ID
-    const creditsToAdd = PRODUCT_CREDITS[productId] || 1
+    // Determine credits and tier from product ID
+    const productInfo = PRODUCT_MAP[productId] || { credits: 1, tier: 'basic' as const }
+    const creditsToAdd = productInfo.credits
+    const qualityTier = productInfo.tier
+    const creditColumn = qualityTier === 'premium' ? 'premium_credits' : 'basic_credits'
 
     // Add credits to user's profile
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('story_credits')
+      .select(`story_credits, basic_credits, premium_credits`)
       .eq('id', userId)
       .single()
 
@@ -67,19 +86,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const currentCredits = profile.story_credits || 0
+    const currentCredits = (profile as any)[creditColumn] || 0
     const newCredits = currentCredits + creditsToAdd
 
     await supabaseAdmin
       .from('profiles')
       .update({
-        story_credits: newCredits,
+        [creditColumn]: newCredits,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
 
     console.log(
-      `RevenueCat: Added ${creditsToAdd} credits to user ${userId} ` +
+      `RevenueCat: Added ${creditsToAdd} ${qualityTier} credits to user ${userId} ` +
       `(product: ${productId}), total: ${newCredits}`
     )
 
@@ -99,7 +118,7 @@ export async function POST(request: NextRequest) {
       await supabaseAdmin
         .from('profiles')
         .update({
-          story_credits: Math.max(0, newCredits - 1),
+          [creditColumn]: Math.max(0, newCredits - 1),
           updated_at: new Date().toISOString(),
         })
         .eq('id', userId)
@@ -108,6 +127,7 @@ export async function POST(request: NextRequest) {
         .from('storybooks')
         .update({
           payment_status: 'completed',
+          quality_tier: qualityTier,
           updated_at: new Date().toISOString(),
         })
         .eq('id', pendingStorybook.id)
@@ -124,7 +144,7 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', pendingStorybook.id)
       })
-      console.log(`RevenueCat: Started generation for storybook ${pendingStorybook.id}`)
+      console.log(`RevenueCat: Started generation for storybook ${pendingStorybook.id} (${qualityTier})`)
     }
 
     return NextResponse.json({ received: true })

@@ -309,9 +309,10 @@ export const storybooksApi = {
     apiRequest<{ message: string; revoked: boolean }>(`/storybooks/${id}/revoke-share`, {
       method: 'POST',
     }),
-  useCredit: (id: string) =>
-    apiRequest<{ success: boolean; remaining_credits: number; storybook_id: string }>(`/storybooks/${id}/use-credit`, {
+  useCredit: (id: string, qualityTier?: 'basic' | 'premium') =>
+    apiRequest<{ success: boolean; remaining_credits: number; quality_tier: string; storybook_id: string }>(`/storybooks/${id}/use-credit`, {
       method: 'POST',
+      body: JSON.stringify({ quality_tier: qualityTier || 'basic' }),
     }),
 }
 

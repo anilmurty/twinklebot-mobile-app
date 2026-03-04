@@ -24,6 +24,17 @@ export async function POST(
     const { id: storybookId } = await params
     const userId = user.data.user?.id!
 
+    // Parse quality_tier from request body (default to 'basic')
+    let qualityTier: 'basic' | 'premium' = 'basic'
+    try {
+      const body = await request.json()
+      if (body.quality_tier === 'premium') {
+        qualityTier = 'premium'
+      }
+    } catch {
+      // No body or invalid JSON — default to basic
+    }
+
     // Check if storybook exists and belongs to user
     const supabase = createServerClient(request.headers.get('authorization'))
     const { data: storybook, error: storybookError } = await supabase
@@ -47,10 +58,11 @@ export async function POST(
       )
     }
 
-    // Check if user has credits
+    // Check if user has credits for the selected tier
+    const creditColumn = qualityTier === 'premium' ? 'premium_credits' : 'basic_credits'
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('story_credits')
+      .select(`story_credits, basic_credits, premium_credits`)
       .eq('id', userId)
       .single()
 
@@ -58,19 +70,19 @@ export async function POST(
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    const currentCredits = profile.story_credits || 0
+    const currentCredits = (profile as any)[creditColumn] || 0
     if (currentCredits < 1) {
       return NextResponse.json(
-        { error: 'No story credits available', credits: currentCredits },
+        { error: `No ${qualityTier} story credits available`, credits: currentCredits },
         { status: 400 }
       )
     }
 
-    // Deduct 1 credit
+    // Deduct 1 credit from the correct pool
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({
-        story_credits: currentCredits - 1,
+        [creditColumn]: currentCredits - 1,
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -82,11 +94,12 @@ export async function POST(
       )
     }
 
-    // Update storybook payment status
+    // Update storybook payment status and quality tier
     await supabaseAdmin
       .from('storybooks')
       .update({
         payment_status: 'completed',
+        quality_tier: qualityTier,
         updated_at: new Date().toISOString(),
       })
       .eq('id', storybookId)
@@ -102,6 +115,7 @@ export async function POST(
       success: true,
       message: 'Credit used successfully',
       remaining_credits: currentCredits - 1,
+      quality_tier: qualityTier,
       storybook_id: storybookId,
     })
   } catch (error: any) {

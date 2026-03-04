@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     // Ensure profile exists (create if doesn't exist)
     let { data: profile, error } = await supabase
       .from('profiles')
-      .select('*, custom_stories_per_month, story_credits')
+      .select('*, custom_stories_per_month, story_credits, basic_credits, premium_credits')
       .eq('id', userId)
       .single()
 
@@ -75,6 +75,8 @@ export async function GET(request: NextRequest) {
       effective_stories_per_month: effectiveLimit,
       remaining_stories_this_month: Math.max(0, effectiveLimit - (profile?.stories_generated_this_month || 0)),
       story_credits: profile?.story_credits || 0,
+      basic_credits: profile?.basic_credits || 0,
+      premium_credits: profile?.premium_credits || 0,
     })
   } catch (error: any) {
     return NextResponse.json(

@@ -106,11 +106,22 @@ export async function pollPrediction(
  * Get model identifier from template's generation_model_id
  * Falls back to env var or default if template model not found
  */
-async function getModelIdentifier(templateId?: number): Promise<string> {
+async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | 'premium'): Promise<string> {
   // Env var always takes priority (acts as a global override)
   if (process.env.NANOBANANA_MODEL_VERSION) {
     console.log(`✅ Using model from env var: ${process.env.NANOBANANA_MODEL_VERSION}`)
     return process.env.NANOBANANA_MODEL_VERSION
+  }
+
+  // Quality tier selection (overrides template model)
+  if (qualityTier === 'premium') {
+    console.log(`✅ Using premium model: google/nano-banana-pro`)
+    return 'google/nano-banana-pro'
+  }
+
+  if (qualityTier === 'basic') {
+    console.log(`✅ Using basic model: google/nano-banana`)
+    return 'google/nano-banana'
   }
 
   // If template ID provided, try to get model from template
@@ -231,10 +242,11 @@ export async function createBasePhotoAndCharacterPrediction(
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
   aspectRatio: string = 'match_input_image',
-  templateId?: number // Optional: get model from template
+  templateId?: number, // Optional: get model from template
+  qualityTier?: 'basic' | 'premium' // Optional: quality tier for model selection
 ): Promise<string> {
-  // Get model identifier (from template or env/default)
-  const modelIdentifier = await getModelIdentifier(templateId)
+  // Get model identifier (from quality tier, template, or env/default)
+  const modelIdentifier = await getModelIdentifier(templateId, qualityTier)
   const modelVersion = await resolveModelVersion(modelIdentifier)
   
   // Validate inputs
@@ -303,14 +315,16 @@ export async function generateImageWithBasePhotoAndCharacter(
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
   aspectRatio: string = 'match_input_image',
-  templateId?: number // Optional: get model from template
+  templateId?: number, // Optional: get model from template
+  qualityTier?: 'basic' | 'premium' // Optional: quality tier for model selection
 ): Promise<string> {
   const predictionId = await createBasePhotoAndCharacterPrediction(
     basePhotoPath,
     characterVariationUrl,
     insertionPrompt,
     aspectRatio,
-    templateId
+    templateId,
+    qualityTier
   )
   return pollPrediction(predictionId)
 }
