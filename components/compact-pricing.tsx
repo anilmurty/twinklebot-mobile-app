@@ -157,9 +157,13 @@ export function CompactPricing({
         </button>
       </div>
 
-      {selectedTier === 'premium' && (
+      {selectedTier === 'premium' ? (
         <p className="text-[10px] text-center text-muted-foreground">
-          Higher quality AI images with nano-banana-pro
+          Higher quality images generated with more expensive AI models
+        </p>
+      ) : (
+        <p className="text-[10px] text-center text-muted-foreground">
+          For best results, we recommend using the &quot;Premium&quot; option
         </p>
       )}
 

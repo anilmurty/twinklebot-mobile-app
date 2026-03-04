@@ -521,6 +521,9 @@ export function CreateStoryDialog({
                                 src={characterPhotoUrl}
                                 alt={look.look_name}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  console.error(`Failed to load original photo for look ${look.id}:`, characterPhotoUrl)
+                                }}
                               />
                             ) : look.reference_image_url ? (
                               <img
