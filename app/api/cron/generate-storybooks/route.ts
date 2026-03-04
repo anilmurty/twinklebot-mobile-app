@@ -25,12 +25,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Find pending or generating storybooks
+    // Find pending storybooks, or generating ones that are stuck (updated >5 min ago)
     const queryStart = Date.now()
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
     const { data: pendingStorybooks, error } = await supabaseAdmin
       .from('storybooks')
       .select('id, status')
-      .in('status', ['pending', 'generating'])
+      .or(`status.eq.pending,and(status.eq.generating,updated_at.lt.${fiveMinAgo})`)
       .order('created_at', { ascending: true })
       .limit(1) // Process one at a time
     console.log(`[TIMING] Queried for pending storybooks: ${Date.now() - queryStart}ms`)
