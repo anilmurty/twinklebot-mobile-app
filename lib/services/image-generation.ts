@@ -136,7 +136,7 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
   }
 
   // Fallback to env var or default
-  return process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
+  return process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
 }
 
 /**

@@ -138,7 +138,7 @@ export async function generateCharacterVariations(
   console.log(`Character gender: ${gender}`)
 
   // Process model identifier
-  let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana-pro'
+  let modelIdentifier: string = process.env.NANOBANANA_MODEL_VERSION || 'google/nano-banana'
   const { data: template, error: templateError } = templateResult
   if (!templateError && template?.generation_models) {
     const modelData = Array.isArray(template.generation_models)
