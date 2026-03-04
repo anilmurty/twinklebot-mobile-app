@@ -517,13 +517,11 @@ export function CreateStoryDialog({
                           />
                           <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
                             {look.is_original && characterPhotoUrl ? (
-                              <img
-                                src={characterPhotoUrl}
-                                alt={look.look_name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  console.error(`Failed to load original photo for look ${look.id}:`, characterPhotoUrl)
-                                }}
+                              <div
+                                className="w-full h-full bg-cover bg-center"
+                                style={{ backgroundImage: `url(${characterPhotoUrl})` }}
+                                role="img"
+                                aria-label={look.look_name}
                               />
                             ) : look.reference_image_url ? (
                               <img
