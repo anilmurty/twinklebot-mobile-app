@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient, supabaseAdmin } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { generateStorybook } from '@/lib/services/storybook-generator'
+import { waitUntil } from '@vercel/functions'
+
+// Allow up to 5 minutes for storybook generation
+export const maxDuration = 300
 
 /**
  * POST /api/v1/storybooks/[id]/use-credit
@@ -87,10 +91,12 @@ export async function POST(
       })
       .eq('id', storybookId)
 
-    // Start storybook generation in the background (don't await — it takes minutes)
-    generateStorybook(storybookId).catch((error: any) => {
-      console.error(`Failed to start generation for storybook ${storybookId}:`, error)
-    })
+    // Start storybook generation in the background, kept alive by waitUntil
+    waitUntil(
+      generateStorybook(storybookId).catch((error: any) => {
+        console.error(`Failed to start generation for storybook ${storybookId}:`, error)
+      })
+    )
 
     return NextResponse.json({
       success: true,

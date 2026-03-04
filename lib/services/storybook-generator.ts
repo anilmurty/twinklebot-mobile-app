@@ -41,23 +41,21 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     throw new Error(`Storybook not found: ${storybookId}`)
   }
 
-  // Check if already completed or already generating (prevent duplicate generation)
+  // Check if already completed
   if (storybook.status === 'completed') {
     console.log(`Storybook ${storybookId} already completed, skipping`)
     return
   }
-  if (storybook.status === 'generating') {
-    console.log(`Storybook ${storybookId} already generating, skipping duplicate call`)
-    return
-  }
 
-  // Check if resuming from preview_pending
+  // Check if resuming from preview_pending or retrying a stuck 'generating' storybook
   const isResumingFromPreview = storybook.status === 'preview_pending'
+  const isRetryingStuck = storybook.status === 'generating'
   const existingScenes = Array.isArray(storybook.scenes) ? storybook.scenes : []
   const hasPreviewScene = existingScenes.length > 0 && existingScenes[0]?.image_url
 
   // Atomically set status to 'generating' only if it hasn't changed since we read it
   // This prevents race conditions where multiple callers try to start generation simultaneously
+  // For 'generating' status (stuck retry), we allow it through since cron already filtered by time
   const statusUpdateStart = Date.now()
   const { data: updateResult, error: statusError } = await supabaseAdmin
     .from('storybooks')
@@ -71,6 +69,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     return
   }
   console.log(`[TIMING] Updated status to generating: ${Date.now() - statusUpdateStart}ms`)
+
+  if (isRetryingStuck) {
+    console.log(`[RETRY] Resuming stuck storybook ${storybookId} - ${existingScenes.filter((s: any) => s.image_url).length} scenes already completed`)
+  }
 
   if (isResumingFromPreview) {
     console.log(`[RESUME] Resuming generation from preview state`)
