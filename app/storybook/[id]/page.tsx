@@ -207,16 +207,21 @@ export default function StorybookViewerPage() {
     const { letter, object } = entry
     const escapedObject = object.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-    // Match standalone letter OR object word (case-insensitive regex, but skip lowercase letter matches)
-    const regex = new RegExp(`\\b(${letter})\\b|\\b(${escapedObject})\\b`, 'gi')
+    // Capitalize first letter of each word
+    const capitalize = (s: string) => s.replace(/\b\w/g, c => c.toUpperCase())
+
+    // Match: letter only when followed by " is for" or " for", OR the object word anywhere
+    const letterPattern = `(${letter})(?=\\s+(?:is\\s+)?for\\b)`
+    const objectPattern = `\\b(${escapedObject})\\b`
+    const regex = new RegExp(`${letterPattern}|${objectPattern}`, 'gi')
     const parts: React.ReactNode[] = []
     let lastIndex = 0
     let keyCounter = 0
     let match
 
     while ((match = regex.exec(text)) !== null) {
-      // If this matched the single-letter pattern, only highlight if uppercase
-      if (match[1] !== undefined && match[0] !== letter) {
+      // If this matched the letter pattern, only accept uppercase
+      if (match[1] !== undefined && match[1] !== letter) {
         continue
       }
       if (match.index > lastIndex) {
@@ -227,12 +232,12 @@ export default function StorybookViewerPage() {
           key={`alpha-${keyCounter++}`}
           style={{
             color,
-            fontSize: '1.2em',
+            fontSize: '1.4em',
             fontWeight: 'bold',
             textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
           }}
         >
-          {match[0]}
+          {capitalize(match[0])}
         </span>
       )
       lastIndex = regex.lastIndex
