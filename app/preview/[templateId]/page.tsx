@@ -37,6 +37,35 @@ export default function StoryPreviewPage() {
   const [error, setError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
 
+  // Swipe state
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    if (Math.abs(distance) < minSwipeDistance) return
+
+    if (distance > 0) {
+      handleNext()
+    } else {
+      handlePrevious()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   const fetchTemplate = async () => {
     try {
       setLoading(true)
@@ -271,7 +300,12 @@ export default function StoryPreviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black flex flex-col">
+    <div
+      className="min-h-screen bg-black flex flex-col"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <div className="flex-1 relative overflow-hidden">
         {/* Title Page */}
         {isTitlePage && (
@@ -302,19 +336,22 @@ export default function StoryPreviewPage() {
 
                 {/* Preview Badge */}
                 <div className="mb-6">
-                  <div className="bg-yellow-500/90 text-black px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
+                  <div className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-bold shadow-lg">
                     PREVIEW
                   </div>
                 </div>
 
                 {/* Story Title */}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-serif mb-8 drop-shadow-lg">
+                <h1
+                  className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-8 drop-shadow-lg"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   {template?.title}
                 </h1>
 
                 {/* Info Card */}
-                <Card className="bg-white/95 backdrop-blur-sm p-6 md:p-8 mb-8 shadow-2xl">
-                  <p className="text-amber-900 text-base md:text-lg leading-relaxed">
+                <Card className="bg-card border border-border backdrop-blur-sm p-6 md:p-8 mb-8 shadow-2xl">
+                  <p className="text-foreground text-base md:text-lg leading-relaxed">
                     This preview uses a model for the child. That model will be replaced with <strong>your child</strong> as a character dressed as you choose.
                   </p>
                 </Card>
@@ -323,15 +360,17 @@ export default function StoryPreviewPage() {
                 <Button
                   size="lg"
                   onClick={handleGenerateStory}
-                  className="bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-amber-950 font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+                  className="bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
                   Generate Custom Storybook
                 </Button>
 
                 {/* Page Indicator */}
-                <div className="mt-8 text-white/60 text-sm">
-                  Tap the arrow to start reading →
+                <div className="mt-8 text-white/60 text-sm flex items-center gap-2">
+                  <span className="md:hidden">Swipe left to start reading</span>
+                  <span className="hidden md:inline">Click the arrow to start reading →</span>
+                  <span className="md:hidden animate-bounce-x">👆</span>
                 </div>
               </div>
             </div>
@@ -339,7 +378,7 @@ export default function StoryPreviewPage() {
             {/* Next Arrow for Title Page */}
             <button
               onClick={handleNext}
-              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/30 hover:bg-white/50 transition-all backdrop-blur-md shadow-lg border border-white/20"
+              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 transition-all backdrop-blur-md shadow-lg border border-primary/30 hidden md:block"
               aria-label="Start reading"
             >
               <ArrowRight className="w-7 h-7 text-white drop-shadow-lg" />
@@ -357,11 +396,17 @@ export default function StoryPreviewPage() {
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
                 {/* The End Title */}
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white font-serif mb-4 drop-shadow-lg">
+                <h1
+                  className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-lg"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   The End
                 </h1>
 
-                <p className="text-white/70 text-lg md:text-xl mb-12 font-serif italic">
+                <p
+                  className="text-white/70 text-lg md:text-xl mb-12 italic"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   of {template?.title}
                 </p>
 
@@ -373,17 +418,17 @@ export default function StoryPreviewPage() {
                 </div>
 
                 {/* CTA Section */}
-                <Card className="bg-white/95 backdrop-blur-sm p-6 md:p-8 mb-8 shadow-2xl">
-                  <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-3">
+                <Card className="bg-card border border-border backdrop-blur-sm p-6 md:p-8 mb-8 shadow-2xl">
+                  <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
                     Make Your Child the Star!
                   </h2>
-                  <p className="text-amber-800/70 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Create a personalized version of this story featuring your child as the main character.
                   </p>
                   <Button
                     size="lg"
                     onClick={handleGenerateStory}
-                    className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-amber-950 font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
+                    className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
                   >
                     <Sparkles className="w-5 h-5 mr-2" />
                     Generate Custom Storybook
@@ -405,7 +450,7 @@ export default function StoryPreviewPage() {
             {/* Previous Arrow for End Page */}
             <button
               onClick={handlePrevious}
-              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/30 hover:bg-white/50 transition-all backdrop-blur-md shadow-lg border border-white/20"
+              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 transition-all backdrop-blur-md shadow-lg border border-primary/30 hidden md:block"
               aria-label="Go back"
             >
               <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
@@ -452,23 +497,23 @@ export default function StoryPreviewPage() {
                   {/* Close button */}
                   <button
                     onClick={() => router.push('/app?tab=library')}
-                    className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors backdrop-blur-sm shrink-0"
+                    className="p-2 rounded-full bg-primary/70 hover:bg-primary/80 transition-colors backdrop-blur-sm shrink-0"
                     aria-label="Exit preview"
                   >
                     <X className="w-5 h-5 text-white" />
                   </button>
                   {scene.headline ? (
-                    <h1 className="text-white text-xl md:text-2xl lg:text-3xl font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0 pt-1">
+                    <h1 className="text-white text-xl md:text-2xl lg:text-3xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-center flex-1 px-2 min-w-0 pt-1" style={{ fontFamily: "var(--font-display)" }}>
                       {highlightSceneText(scene.headline.replace(/\[Name\]/g, characterName), scene.scene_number || sceneIndex + 1)}
                     </h1>
                   ) : (
                     <div className="flex-1" />
                   )}
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="bg-yellow-500/90 text-black px-2 py-0.5 rounded-full text-[10px] font-bold">
+                    <div className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[10px] font-bold">
                       PREVIEW
                     </div>
-                    <div className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-black/40 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                    <div className="text-white text-sm font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] bg-primary/70 px-2.5 py-1 rounded-full backdrop-blur-sm">
                       {sceneIndex + 1}/{scenes.length}
                     </div>
                   </div>
@@ -492,8 +537,9 @@ export default function StoryPreviewPage() {
                               .map((line, lineIdx) => (
                                 <p
                                   key={lineIdx}
-                                  className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose font-serif drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
+                                  className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
                                   style={{
+                                    fontFamily: "var(--font-display)",
                                     textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
                                     letterSpacing: '0.01em'
                                   }}
@@ -512,7 +558,7 @@ export default function StoryPreviewPage() {
                   <Button
                     size="sm"
                     onClick={handleGenerateStory}
-                    className="bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-amber-950 font-semibold shadow-lg px-6"
+                    className="bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-lg px-6"
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
                     Generate Custom Storybook
@@ -521,13 +567,13 @@ export default function StoryPreviewPage() {
               </div>
             </div>
 
-            {/* Navigation Arrows - larger and more visible */}
+            {/* Navigation Arrows - desktop only */}
             <>
               {/* Left Arrow */}
               <button
                 onClick={handlePrevious}
                 disabled={currentScene === 0}
-                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/25 hover:bg-white/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-white/20 pointer-events-auto"
+                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-primary/30 pointer-events-auto hidden md:block"
                 aria-label="Previous scene"
               >
                 <ArrowLeft className="w-6 h-6 text-white drop-shadow-lg" />
@@ -537,7 +583,7 @@ export default function StoryPreviewPage() {
               <button
                 onClick={handleNext}
                 disabled={currentScene === totalPages - 1}
-                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-white/25 hover:bg-white/40 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-white/20 pointer-events-auto"
+                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-primary/30 pointer-events-auto hidden md:block"
                 aria-label="Next scene"
               >
                 <ArrowRight className="w-6 h-6 text-white drop-shadow-lg" />

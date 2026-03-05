@@ -40,6 +40,35 @@ export default function StorybookViewerPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // Swipe state
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    if (Math.abs(distance) < minSwipeDistance) return
+
+    if (distance > 0) {
+      handleNext()
+    } else {
+      handlePrevious()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   useEffect(() => {
     if (storybookId) {
       fetchStorybook()
@@ -269,7 +298,7 @@ export default function StorybookViewerPage() {
         <>
           {parts.map((part, i) =>
             part.toLowerCase() === characterName.toLowerCase() ? (
-              <span key={i} className="text-amber-500" style={{ fontSize: '1.1em', fontWeight: 700 }}>{part}</span>
+              <span key={i} className="text-primary" style={{ fontSize: '1.1em', fontWeight: 700 }}>{part}</span>
             ) : (
               part
             )
@@ -321,7 +350,12 @@ export default function StorybookViewerPage() {
     : 'Your Child'
 
   return (
-    <div className="min-h-screen flex flex-col bg-black md:bg-background md:p-6 lg:p-8">
+    <div
+      className="min-h-screen flex flex-col bg-black md:bg-background md:p-6 lg:p-8"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Contained Frame - full-bleed on mobile, framed on desktop */}
       <div
         id="storybook-container"
@@ -342,7 +376,10 @@ export default function StorybookViewerPage() {
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
                 {/* Story Title */}
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-serif mb-6 drop-shadow-lg">
+                <h1
+                  className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 drop-shadow-lg"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   {storybook.title}
                 </h1>
 
@@ -350,18 +387,23 @@ export default function StorybookViewerPage() {
                 <div className="flex items-center gap-2 mb-8">
                   <Sparkles className="w-5 h-5 text-primary" />
                   <span className="text-white/80 text-lg">Starring</span>
-                  <span className="text-amber-500 text-xl font-bold">{characterName}</span>
+                  <span className="text-primary text-xl font-bold">{characterName}</span>
                   <Sparkles className="w-5 h-5 text-primary" />
                 </div>
 
                 {/* Story Intro */}
-                <p className="text-white/90 text-lg md:text-xl font-serif italic leading-relaxed mb-8 drop-shadow-md">
+                <p
+                  className="text-white/90 text-lg md:text-xl italic leading-relaxed mb-8 drop-shadow-md"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   {getStoryIntro(storybook.template?.title, characterName || 'your child')}
                 </p>
 
                 {/* Page Indicator */}
-                <div className="text-white/60 text-sm">
-                  Tap the arrow to start reading →
+                <div className="text-white/60 text-sm flex items-center gap-2">
+                  <span className="md:hidden">Swipe left to start reading</span>
+                  <span className="hidden md:inline">Click the arrow to start reading →</span>
+                  <span className="md:hidden animate-bounce-x">👆</span>
                 </div>
               </div>
             </div>
@@ -369,7 +411,7 @@ export default function StorybookViewerPage() {
             {/* Back Arrow for Title Page */}
             <button
               onClick={() => router.push('/app')}
-              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
+              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 transition-all backdrop-blur-md shadow-lg border border-primary/30 hidden md:block"
               aria-label="Go back"
             >
               <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
@@ -378,7 +420,7 @@ export default function StorybookViewerPage() {
             {/* Next Arrow for Title Page */}
             <button
               onClick={handleNext}
-              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
+              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 transition-all backdrop-blur-md shadow-lg border border-primary/30 hidden md:block"
               aria-label="Start reading"
             >
               <ArrowRight className="w-7 h-7 text-white drop-shadow-lg" />
@@ -396,11 +438,17 @@ export default function StorybookViewerPage() {
               {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
                 {/* The End Title */}
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white font-serif mb-4 drop-shadow-lg">
+                <h1
+                  className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-lg"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   The End
                 </h1>
 
-                <p className="text-white/70 text-lg md:text-xl mb-8 font-serif italic">
+                <p
+                  className="text-white/70 text-lg md:text-xl mb-8 italic"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
                   of {characterName}'s adventure
                 </p>
 
@@ -412,17 +460,17 @@ export default function StorybookViewerPage() {
                 </div>
 
                 {/* CTA Section */}
-                <Card className="bg-white/95 backdrop-blur-sm p-6 md:p-8 mb-6 shadow-2xl">
-                  <h2 className="text-xl md:text-2xl font-bold text-amber-900 mb-3">
+                <Card className="bg-card border border-border backdrop-blur-sm p-6 md:p-8 mb-6 shadow-2xl">
+                  <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
                     Ready for another adventure?
                   </h2>
-                  <p className="text-amber-800/70 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Explore more stories in our library and create new magical memories.
                   </p>
                   <Button
                     size="lg"
                     onClick={() => router.push('/app?tab=library')}
-                    className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-amber-950 font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
+                    className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
                   >
                     <BookOpen className="w-5 h-5 mr-2" />
                     Generate Your Next Story
@@ -444,7 +492,7 @@ export default function StorybookViewerPage() {
             {/* Previous Arrow for End Page */}
             <button
               onClick={handlePrevious}
-              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
+              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 transition-all backdrop-blur-md shadow-lg border border-primary/30 hidden md:block"
               aria-label="Go back"
             >
               <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
@@ -470,22 +518,22 @@ export default function StorybookViewerPage() {
                   {/* Close button */}
                   <button
                     onClick={() => router.push('/app')}
-                    className="p-2 rounded-full bg-amber-800/70 hover:bg-amber-700/80 transition-colors backdrop-blur-sm shrink-0"
+                    className="p-2 rounded-full bg-primary/70 hover:bg-primary/80 transition-colors backdrop-blur-sm shrink-0"
                     aria-label="Exit"
                   >
                     <X className="w-5 h-5 text-white" />
                   </button>
                   {scene.headline ? (
                     <h1
-                      className="text-yellow-300 text-xl md:text-2xl lg:text-3xl font-bold font-serif text-center flex-1 px-2 min-w-0 pt-1"
-                      style={{ WebkitTextStroke: '0.5px rgba(120, 53, 15, 0.8)', textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(120, 53, 15, 0.6)' }}
+                      className="text-primary text-xl md:text-2xl lg:text-3xl font-bold text-center flex-1 px-2 min-w-0 pt-1"
+                      style={{ fontFamily: "var(--font-display)", textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 0 2px rgba(120, 53, 15, 0.6)' }}
                     >
                       {highlightCharacterName(highlightSceneText(scene.headline, scene.scene_number || sceneIndex + 1))}
                     </h1>
                   ) : (
                     <div className="flex-1" />
                   )}
-                  <div className="text-white text-sm font-medium shrink-0 bg-amber-800/70 px-2.5 py-1 rounded-full backdrop-blur-sm">
+                  <div className="text-white text-sm font-medium shrink-0 bg-primary/70 px-2.5 py-1 rounded-full backdrop-blur-sm">
                     {sceneIndex + 1}/{scenes.length}
                   </div>
                 </div>
@@ -507,8 +555,9 @@ export default function StorybookViewerPage() {
                               .map((line, lineIdx) => (
                                 <p
                                   key={lineIdx}
-                                  className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose font-serif drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
+                                  className="text-white text-base md:text-lg lg:text-xl leading-relaxed md:leading-loose drop-shadow-[0_2px_6px_rgba(0,0,0,0.95)] font-medium"
                                   style={{
+                                    fontFamily: "var(--font-display)",
                                     textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 1px 2px rgba(0,0,0,0.8)',
                                     letterSpacing: '0.01em'
                                   }}
@@ -528,7 +577,7 @@ export default function StorybookViewerPage() {
                     size="sm"
                     variant="ghost"
                     onClick={() => router.push('/app?tab=library')}
-                    className="text-amber-400/80 hover:text-amber-300 hover:bg-amber-900/30 text-xs"
+                    className="text-primary/80 hover:text-primary hover:bg-primary/10 text-xs"
                   >
                     <BookOpen className="w-3.5 h-3.5 mr-1.5" />
                     Browse More Stories
@@ -537,13 +586,13 @@ export default function StorybookViewerPage() {
               </div>
             </div>
 
-            {/* Navigation Arrows - larger and more visible */}
+            {/* Navigation Arrows - desktop only */}
             <>
               {/* Left Arrow */}
               <button
                 onClick={handlePrevious}
                 disabled={currentScene === 0}
-                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/70 hover:bg-amber-700/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-amber-700/30 pointer-events-auto"
+                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-primary/30 pointer-events-auto hidden md:block"
                 aria-label="Previous scene"
               >
                 <ArrowLeft className="w-6 h-6 text-white drop-shadow-lg" />
@@ -553,7 +602,7 @@ export default function StorybookViewerPage() {
               <button
                 onClick={handleNext}
                 disabled={currentScene === totalPages - 1}
-                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/70 hover:bg-amber-700/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-amber-700/30 pointer-events-auto"
+                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-primary/70 hover:bg-primary/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-primary/30 pointer-events-auto hidden md:block"
                 aria-label="Next scene"
               >
                 <ArrowRight className="w-6 h-6 text-white drop-shadow-lg" />

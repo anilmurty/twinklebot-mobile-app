@@ -136,6 +136,15 @@
   &::-webkit-scrollbar { display: none; }
 }
 
+@utility animate-bounce-x {
+  animation: bounce-x 1.5s ease-in-out infinite;
+}
+
+@keyframes bounce-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-8px); }
+}
+
 /* Safe area support for native apps (Capacitor/PWA) */
 @supports (padding: env(safe-area-inset-top)) {
   :root {

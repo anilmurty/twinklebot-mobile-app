@@ -132,8 +132,8 @@ function LibraryCard({
           {template.title}
         </h3>
         <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
-          <span className={tagline.color}>{tagline.verb}</span>
-          <span className="text-muted-foreground"> · {tagline.subject}</span>
+          <span className="text-muted-foreground">{tagline.verb}</span>
+          <span className={tagline.color}> · {tagline.subject}</span>
         </p>
       </div>
 
@@ -428,8 +428,8 @@ export function StoryLibraryTab() {
                       {template.title}
                     </h4>
                     <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
-                      <span className={tagline.color}>{tagline.verb}</span>
-                      <span className="text-muted-foreground"> · {tagline.subject}</span>
+                      <span className="text-muted-foreground">{tagline.verb}</span>
+                      <span className={tagline.color}> · {tagline.subject}</span>
                     </p>
                     <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
                       {template.description?.replace(/\{character_name\}/g, "your child") ||

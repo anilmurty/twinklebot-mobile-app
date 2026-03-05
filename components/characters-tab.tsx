@@ -21,6 +21,29 @@ interface Character {
   created_at: string
 }
 
+function groupCharactersByMonth(characters: Character[]) {
+  const groups: { label: string; characters: Character[] }[] = []
+  const map = new Map<string, Character[]>()
+
+  for (const c of characters) {
+    const d = new Date(c.created_at)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push(c)
+  }
+
+  // Sort keys descending (newest first)
+  const sortedKeys = [...map.keys()].sort((a, b) => b.localeCompare(a))
+  for (const key of sortedKeys) {
+    const d = new Date(key + '-01')
+    groups.push({
+      label: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      characters: map.get(key)!
+    })
+  }
+  return groups
+}
+
 export function CharactersTab() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -126,6 +149,8 @@ export function CharactersTab() {
     }
   }
 
+  const characterGroups = groupCharactersByMonth(characters)
+
   return (
     <div className="min-h-full">
       <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-6 md:space-y-8">
@@ -138,7 +163,7 @@ export function CharactersTab() {
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">
             <p className="text-destructive">{error}</p>
-            <Button onClick={fetchCharacters} size="sm" className="mt-2">
+            <Button onClick={() => refetchCharacters()} size="sm" className="mt-2">
               Retry
             </Button>
           </Card>
@@ -148,81 +173,114 @@ export function CharactersTab() {
             <p className="text-sm text-muted-foreground">Create your first character to start generating storybooks!</p>
           </Card>
         ) : (
-          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {characters.map((character) => (
-              <Card key={character.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="flex flex-col items-center p-6 space-y-4">
-                  <div className="relative">
-                    {character.front_photo_url ? (
-                      <img
-                        src={character.front_photo_url || "/placeholder.svg"}
-                        alt={character.name}
-                        className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-full border-4 border-primary/20"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.svg"
-                        }}
-                      />
-                    ) : (
-                      <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-secondary border-4 border-primary/20 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-muted-foreground">
-                          {character.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 w-full space-y-3 text-center">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-center gap-2">
-                        <h3 className="font-bold text-2xl md:text-3xl break-words">{character.name}</h3>
-                        <div className="flex gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleRenameClick(character)}
-                            className="text-muted-foreground hover:text-foreground hover:bg-accent"
-                            title="Rename character"
+          <div className="space-y-8 md:space-y-10">
+            {characterGroups.map((group) => (
+              <section key={group.label} className="space-y-3">
+                <h2 className="font-bold text-2xl md:text-3xl px-1 text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+                  {group.label}
+                </h2>
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
+                  {group.characters.map((character) => (
+                    <div key={character.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+                      {/* Image area */}
+                      <div
+                        className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer"
+                        onClick={() =>
+                          setCreateStoryForCharacter({
+                            id: character.id,
+                            name: character.name,
+                            photoUrl: character.front_photo_url,
+                          })
+                        }
+                      >
+                        {character.front_photo_url ? (
+                          <img
+                            src={character.front_photo_url}
+                            alt={character.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = "/placeholder.svg"
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                            <span className="text-5xl font-bold text-white/40">
+                              {character.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        {/* Bottom gradient */}
+                        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+                        {/* Desktop hover overlay */}
+                        <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setCreateStoryForCharacter({
+                                id: character.id,
+                                name: character.name,
+                                photoUrl: character.front_photo_url,
+                              })
+                            }}
+                            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
                           >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteClick(character.id, character.name)}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            title="Delete character"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                            <Sparkles className="w-4 h-4 mr-1.5 inline" />
+                            Create Story
+                          </button>
                         </div>
                       </div>
-                      <p className="text-sm md:text-base text-muted-foreground">
-                        Created{" "}
-                        {new Date(character.created_at).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
+                      {/* Name + date below image */}
+                      <div className="mt-2.5 px-1">
+                        <h3 className="font-semibold text-base leading-tight truncate text-foreground">
+                          {character.name}
+                        </h3>
+                        <p className="text-[11px] mt-0.5">
+                          <span className="text-muted-foreground">Created </span>
+                          <span className="text-primary">
+                            {new Date(character.created_at).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </span>
+                        </p>
+                      </div>
+                      {/* Mobile buttons */}
+                      <div className="flex items-center gap-2 mt-2 px-1 md:hidden">
+                        <Button
+                          size="sm"
+                          className="flex-1 h-8 text-xs"
+                          onClick={() =>
+                            setCreateStoryForCharacter({
+                              id: character.id,
+                              name: character.name,
+                              photoUrl: character.front_photo_url,
+                            })
+                          }
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Create Story
+                        </Button>
+                        <button
+                          onClick={() => handleRenameClick(character)}
+                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                          title="Rename character"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(character.id, character.name)}
+                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          title="Delete character"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <Button
-                      onClick={() =>
-                        setCreateStoryForCharacter({
-                          id: character.id,
-                          name: character.name,
-                          photoUrl: character.front_photo_url,
-                        })
-                      }
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
-                      title={`Create Story with ${character.name}`}
-                    >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Create Story
-                    </Button>
-                  </div>
+                  ))}
                 </div>
-              </Card>
+              </section>
             ))}
           </div>
         )}

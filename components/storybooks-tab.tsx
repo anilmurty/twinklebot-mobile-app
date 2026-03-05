@@ -516,31 +516,28 @@ export function StorybooksTab() {
                             {storybook.title}
                           </h3>
                           <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
-                            <span className="text-primary">STARRING</span>
-                            <span className="text-muted-foreground"> · {storybook.character_name}</span>
+                            <span className="text-muted-foreground">STARRING</span>
+                            <span className="text-primary"> · {storybook.character_name}</span>
                           </p>
                         </div>
                         {/* Mobile buttons */}
-                        <div className="flex gap-2 mt-2 px-1 md:hidden">
+                        <div className="flex items-center gap-2 mt-2 px-1 md:hidden">
                           {isPreviewReady ? (
-                            <Button size="sm" className="w-full h-8 text-xs" onClick={() => handleViewPreview(storybook)}>
+                            <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleViewPreview(storybook)}>
                               <Play className="w-3 h-3 mr-1" />
                               View Preview
                             </Button>
                           ) : (
-                            <Button size="sm" variant="outline" className="w-full h-8 text-xs" onClick={() => setResumeStorybook(storybook)}>
+                            <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => setResumeStorybook(storybook)}>
                               <Clock className="w-3 h-3 mr-1 animate-spin" />
                               {isGeneratingPreview ? "Generating..." : "In Progress"}
                             </Button>
                           )}
-                        </div>
-                        {/* Delete */}
-                        <div className="flex justify-end mt-1 px-1">
                           <button
                             onClick={() => handleDeleteClick(storybook.id, storybook.title)}
-                            className="text-destructive/50 hover:text-destructive text-xs flex items-center gap-0.5 transition-colors"
+                            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
@@ -602,15 +599,15 @@ export function StorybooksTab() {
                             {storybook.title}
                           </h3>
                           <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
-                            <span className="text-primary">STARRING</span>
-                            <span className="text-muted-foreground"> · {storybook.character_name}</span>
+                            <span className="text-muted-foreground">STARRING</span>
+                            <span className="text-primary"> · {storybook.character_name}</span>
                           </p>
                           <p className="text-[11px] text-muted-foreground mt-0.5">
                             {sceneCount} scenes · {formatDate(storybook.created_at)}
                           </p>
                         </div>
                         {/* Mobile buttons */}
-                        <div className="flex gap-2 mt-2 px-1 md:hidden">
+                        <div className="flex items-center gap-2 mt-2 px-1 md:hidden">
                           <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleReadStorybook(storybook.id)}>
                             <BookOpen className="w-3 h-3 mr-1" />
                             Read
@@ -624,14 +621,11 @@ export function StorybooksTab() {
                             <Share2 className="w-3 h-3 mr-1" />
                             {storybook.share_token ? 'Shared' : 'Share'}
                           </Button>
-                        </div>
-                        {/* Delete */}
-                        <div className="flex justify-end mt-1 px-1">
                           <button
                             onClick={() => handleDeleteClick(storybook.id, storybook.title)}
-                            className="text-destructive/50 hover:text-destructive text-xs flex items-center gap-0.5 transition-colors"
+                            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
                           >
-                            <Trash2 className="w-3 h-3" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
