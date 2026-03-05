@@ -73,7 +73,7 @@ export function ProfileTab() {
   const storyCredits = profile?.story_credits || 0
   const avatarUrl = (user as any)?.user_metadata?.avatar_url || (user as any)?.user_metadata?.picture
   return (
-    <div className="min-h-full bg-gradient-to-b from-muted/20 to-background">
+    <div className="min-h-full">
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">

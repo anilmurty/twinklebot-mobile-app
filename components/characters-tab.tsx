@@ -127,9 +127,9 @@ export function CharactersTab() {
   }
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-secondary/20 to-background">
+    <div className="min-h-full">
       <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-6 md:space-y-8">
-        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Characters</h1>
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>Characters</h1>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -235,8 +235,7 @@ export function CharactersTab() {
       >
         <Button
           onClick={() => setShowCreateDialog(true)}
-          className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0"
-          style={{ backgroundColor: 'rgba(120, 53, 15, 0.85)', color: 'white' }}
+          className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0 bg-primary text-primary-foreground"
         >
           <Plus className="w-4 h-4" />
           <span className="font-semibold text-sm">Add a Character</span>

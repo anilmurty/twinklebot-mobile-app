@@ -52,6 +52,7 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
             width={240}
             height={128}
             className="h-16 lg:h-20 w-auto"
+            style={{ filter: "brightness(1.6) saturate(1.2)" }}
             priority
           />
         </div>

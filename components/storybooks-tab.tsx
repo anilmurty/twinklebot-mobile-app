@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Sparkles } from "lucide-react"
+import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Sparkles, Eye } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -364,10 +364,50 @@ export function StorybooksTab() {
     return null
   }
 
+  // Derive storybook status helpers
+  const getStorybookStatus = (storybook: Storybook) => {
+    const sceneCount = storybook.scenes?.length || 0
+    const isGenerating = storybook.status === "generating" || storybook.status === "pending"
+    const isCompleted = storybook.status === "completed"
+    const isPreviewPending = storybook.status === "preview_pending"
+    const isGeneratingPreview = isPreviewPending && sceneCount === 0
+    const isPreviewReady = isPreviewPending && sceneCount > 0
+    const thumbnailUrl = isGeneratingPreview
+      ? storybook.thumbnail_url || storybook.template?.thumbnail_url || storybook.first_scene_base_image
+      : storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
+    return { sceneCount, isGenerating, isCompleted, isPreviewPending, isGeneratingPreview, isPreviewReady, thumbnailUrl }
+  }
+
+  const handleViewPreview = async (storybook: Storybook) => {
+    try {
+      const freshStorybook = await storybooksApi.get(storybook.id)
+      setResumeStorybook(freshStorybook)
+      if (subscriptionPlans.length === 0) {
+        await fetchSubscriptionPlans()
+      } else {
+        await fetchSubscriptionPlans()
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch storybook:", err)
+      setResumeStorybook(storybook)
+      await fetchSubscriptionPlans()
+    }
+  }
+
+  // Group storybooks
+  const inProgressBooks = storybooks.filter(sb => {
+    const { isCompleted } = getStorybookStatus(sb)
+    return !isCompleted
+  })
+  const completedBooks = storybooks.filter(sb => {
+    const { isCompleted } = getStorybookStatus(sb)
+    return isCompleted
+  })
+
   return (
-    <div className="min-h-full bg-gradient-to-b from-primary/5 to-background">
-      <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-6 md:space-y-8">
-        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">My Storybooks</h1>
+    <div className="min-h-full">
+      <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-8 md:space-y-10">
+        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground" style={{ fontFamily: "var(--font-display)" }}>My Storybooks</h1>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -415,205 +455,191 @@ export function StorybooksTab() {
           </div>
         ) : (
           <>
-            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
-            {storybooks.map((storybook) => {
-              const sceneCount = storybook.scenes?.length || 0
-              const progress = storybook.progress || 0
-              const isGenerating = storybook.status === "generating" || storybook.status === "pending"
-              const isCompleted = storybook.status === "completed"
-              const isPreviewPending = storybook.status === "preview_pending"
-              const isGeneratingPreview = isPreviewPending && sceneCount === 0 // Preview pending but no scenes yet = generating
-              const isPreviewReady = isPreviewPending && sceneCount > 0 // Preview pending with scenes = ready
-              // Use template cover image (thumbnail_url) when generating preview
-              // Fallback to placeholder if not found
-              // Otherwise use scene image or template thumbnail
-              const thumbnailUrl = isGeneratingPreview 
-                ? storybook.thumbnail_url || storybook.template?.thumbnail_url || storybook.first_scene_base_image
-                : storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
-              const overlay = getThumbnailOverlay(storybook.title)
+            {/* In Progress section */}
+            {inProgressBooks.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="font-bold text-2xl md:text-3xl px-1 text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+                  In Progress
+                </h2>
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
+                  {inProgressBooks.map((storybook) => {
+                    const { isGenerating, isGeneratingPreview, isPreviewReady, thumbnailUrl } = getStorybookStatus(storybook)
+                    const progress = storybook.progress || 0
 
-              return (
-                <Card key={storybook.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-                  <div className="flex flex-col p-4 md:p-6 w-full h-full">
-                    <div className="relative mx-auto mb-4">
-                      {thumbnailUrl ? (
-                        <>
-                          <img
-                            src={thumbnailUrl || "/placeholder.svg"}
-                            alt={storybook.title}
-                            className="w-full aspect-[3/4] max-w-[200px] object-cover rounded-lg"
-                          />
-                          {overlay && (
-                            <div className="absolute inset-0 flex items-end justify-center pointer-events-none pb-2">
-                              <span
-                                className={`text-3xl font-black ${overlay.color} drop-shadow-[0_2px_4px_rgba(255,255,255,0.9)]`}
-                              >
-                                {overlay.text}
+                    return (
+                      <div key={storybook.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+                        {/* Image area */}
+                        <div
+                          className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
+                          onClick={() => isPreviewReady ? handleViewPreview(storybook) : setResumeStorybook(storybook)}
+                        >
+                          {thumbnailUrl ? (
+                            <img
+                              src={thumbnailUrl}
+                              alt={storybook.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                              <BookOpen className="w-12 h-12 text-white/30" />
+                            </div>
+                          )}
+                          {/* Generating overlay */}
+                          {(isGenerating || isGeneratingPreview) && (
+                            <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-3">
+                              <Clock className="w-10 h-10 text-white animate-spin" />
+                              <div className="w-3/4">
+                                <div className="w-full bg-white/20 rounded-full h-1.5">
+                                  <div
+                                    className="bg-primary h-1.5 rounded-full transition-all"
+                                    style={{ width: `${Math.max(progress, 5)}%` }}
+                                  />
+                                </div>
+                                <p className="text-white/70 text-xs text-center mt-1">{progress}%</p>
+                              </div>
+                            </div>
+                          )}
+                          {/* Preview ready badge */}
+                          {isPreviewReady && (
+                            <div className="absolute top-3 right-3">
+                              <span className="bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
+                                Preview Ready
                               </span>
                             </div>
                           )}
-                        </>
-                      ) : (
-                        <div className="w-full aspect-[3/4] max-w-[200px] bg-secondary rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-10 h-10 text-muted-foreground" />
+                          {/* Bottom gradient */}
+                          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
                         </div>
-                      )}
-                      {(isGenerating || isGeneratingPreview) && (
-                        <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                          <Clock className="w-6 h-6 text-white animate-spin" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col flex-1 space-y-3 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-lg md:text-xl break-words line-clamp-2">
+                        {/* Title + character below image */}
+                        <div className="mt-2.5 px-1">
+                          <h3 className="font-semibold text-base leading-tight truncate text-foreground">
                             {storybook.title}
                           </h3>
-                          <p className="text-base font-bold text-foreground break-words line-clamp-1">
-                            Starring: {storybook.character_name}
+                          <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
+                            <span className="text-primary">STARRING</span>
+                            <span className="text-muted-foreground"> · {storybook.character_name}</span>
                           </p>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDeleteClick(storybook.id, storybook.title)}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-
-                      {isCompleted && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {sceneCount > 0 && <span>{sceneCount} scenes</span>}
-                          {sceneCount > 0 && <span>•</span>}
-                          <span>{formatDate(storybook.created_at)}</span>
-                        </div>
-                      )}
-
-                      {/* Push buttons to bottom */}
-                      <div className="mt-auto">
-                        {isCompleted ? (
-                          <div className="space-y-2">
-                            <Badge variant="secondary" className="bg-accent text-accent-foreground shrink-0">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Ready
-                            </Badge>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                className="flex-1"
-                                onClick={() => handleReadStorybook(storybook.id)}
-                              >
-                                Read
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleOpenShareModal(storybook)}
-                                className={`flex-1 ${storybook.share_token ? 'border-green-500 text-green-600 hover:bg-green-50' : ''}`}
-                              >
-                                <Share2 className="w-4 h-4" />
-                                <span className="hidden sm:inline ml-1">
-                                  {storybook.share_token ? 'Edit Share' : 'Share'}
-                                </span>
-                              </Button>
-                            </div>
-                          </div>
-                        ) : isPreviewReady ? (
-                          <div className="space-y-2">
-                            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-                              Preview Ready
-                            </Badge>
-                            <Button
-                              size="sm"
-                              className="w-full"
-                              onClick={async () => {
-                                // Fetch fresh storybook data to ensure we have the latest preview scene
-                                try {
-                                  const freshStorybook = await storybooksApi.get(storybook.id)
-                                  setResumeStorybook(freshStorybook)
-                                  // Fetch subscription plans if not already loaded
-                                  if (subscriptionPlans.length === 0) {
-                                    await fetchSubscriptionPlans()
-                                  } else {
-                                    // Ensure plans are loaded
-                                    await fetchSubscriptionPlans()
-                                  }
-                                } catch (err: any) {
-                                  console.error("Failed to fetch storybook:", err)
-                                  // Fallback to using the storybook from the list
-                                  setResumeStorybook(storybook)
-                                  await fetchSubscriptionPlans()
-                                }
-                              }}
-                            >
-                              <Play className="w-4 h-4 mr-2" />
+                        {/* Mobile buttons */}
+                        <div className="flex gap-2 mt-2 px-1 md:hidden">
+                          {isPreviewReady ? (
+                            <Button size="sm" className="w-full h-8 text-xs" onClick={() => handleViewPreview(storybook)}>
+                              <Play className="w-3 h-3 mr-1" />
                               View Preview
                             </Button>
-                          </div>
-                        ) : isGeneratingPreview ? (
-                          <div className="space-y-2">
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Generating Preview
-                            </Badge>
-                            <Button
-                              size="sm"
-                              className="w-full"
-                              onClick={() => {
-                                setResumeStorybook(storybook)
-                              }}
-                            >
-                              <Clock className="w-4 h-4 mr-2 animate-spin" />
-                              View Generation
+                          ) : (
+                            <Button size="sm" variant="outline" className="w-full h-8 text-xs" onClick={() => setResumeStorybook(storybook)}>
+                              <Clock className="w-3 h-3 mr-1 animate-spin" />
+                              {isGeneratingPreview ? "Generating..." : "In Progress"}
                             </Button>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-muted-foreground break-words line-clamp-2 flex-1">
-                                {progress < 100
-                                  ? "Preparing character..."
-                                  : (() => {
-                                      const completedScenes = storybook.scenes?.filter((s: any) => s.image_url)?.length || 0
-                                      const totalScenes = storybook.total_scenes || 10
-                                      if (completedScenes === 0) {
-                                        return "Starting storybook generation..."
-                                      }
-                                      return `${completedScenes} of ${totalScenes} scenes...`
-                                    })()}
-                              </span>
-                              <span className="font-medium ml-2 shrink-0">
-                                {(() => {
-                                  if (progress < 100) return `${progress}%`
-                                  const completed = storybook.scenes?.filter((s: any) => s.image_url)?.length || 0
-                                  const total = storybook.total_scenes || 10
-                                  return `${Math.round((completed / total) * 100)}%`
-                                })()}
-                              </span>
-                            </div>
-                            <div className="w-full bg-secondary rounded-full h-2">
-                              <div
-                                className="bg-primary h-2 rounded-full transition-all"
-                                style={{ width: `${(() => {
-                                  if (progress < 100) return Math.max(progress, 10)
-                                  const completed = storybook.scenes?.filter((s: any) => s.image_url)?.length || 0
-                                  const total = storybook.total_scenes || 10
-                                  return Math.max(Math.round((completed / total) * 100), 10)
-                                })()}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
+                        {/* Delete */}
+                        <div className="flex justify-end mt-1 px-1">
+                          <button
+                            onClick={() => handleDeleteClick(storybook.id, storybook.title)}
+                            className="text-destructive/50 hover:text-destructive text-xs flex items-center gap-0.5 transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Ready to Read section */}
+            {completedBooks.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="font-bold text-2xl md:text-3xl px-1 text-foreground" style={{ fontFamily: "var(--font-display)" }}>
+                  Ready to Read
+                </h2>
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
+                  {completedBooks.map((storybook) => {
+                    const { sceneCount, thumbnailUrl } = getStorybookStatus(storybook)
+
+                    return (
+                      <div key={storybook.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+                        {/* Image area */}
+                        <div
+                          className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
+                          onClick={() => handleReadStorybook(storybook.id)}
+                        >
+                          {thumbnailUrl ? (
+                            <img
+                              src={thumbnailUrl}
+                              alt={storybook.title}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-white/10 flex items-center justify-center">
+                              <BookOpen className="w-12 h-12 text-white/30" />
+                            </div>
+                          )}
+                          {/* Bottom gradient */}
+                          <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+                          {/* Desktop hover overlay */}
+                          <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleReadStorybook(storybook.id) }}
+                              className="px-4 py-2 rounded-full bg-white/90 text-gray-900 text-sm font-semibold hover:bg-white transition-colors"
+                            >
+                              Read
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleOpenShareModal(storybook) }}
+                              className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                            >
+                              Share
+                            </button>
+                          </div>
+                        </div>
+                        {/* Title + character below image */}
+                        <div className="mt-2.5 px-1">
+                          <h3 className="font-semibold text-base leading-tight truncate text-foreground">
+                            {storybook.title}
+                          </h3>
+                          <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
+                            <span className="text-primary">STARRING</span>
+                            <span className="text-muted-foreground"> · {storybook.character_name}</span>
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {sceneCount} scenes · {formatDate(storybook.created_at)}
+                          </p>
+                        </div>
+                        {/* Mobile buttons */}
+                        <div className="flex gap-2 mt-2 px-1 md:hidden">
+                          <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleReadStorybook(storybook.id)}>
+                            <BookOpen className="w-3 h-3 mr-1" />
+                            Read
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={`flex-1 h-8 text-xs ${storybook.share_token ? 'border-green-500/50 text-green-400' : ''}`}
+                            onClick={() => handleOpenShareModal(storybook)}
+                          >
+                            <Share2 className="w-3 h-3 mr-1" />
+                            {storybook.share_token ? 'Shared' : 'Share'}
+                          </Button>
+                        </div>
+                        {/* Delete */}
+                        <div className="flex justify-end mt-1 px-1">
+                          <button
+                            onClick={() => handleDeleteClick(storybook.id, storybook.title)}
+                            className="text-destructive/50 hover:text-destructive text-xs flex items-center gap-0.5 transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
           </>
         )}
       </div>
@@ -626,8 +652,7 @@ export function StorybooksTab() {
         >
           <Button
             onClick={handleCreateStorybook}
-            className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0"
-            style={{ backgroundColor: 'rgba(120, 53, 15, 0.85)', color: 'white' }}
+            className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0 bg-primary text-primary-foreground"
           >
             <Sparkles className="w-4 h-4" />
             <span className="font-semibold text-sm">Create New Storybook</span>

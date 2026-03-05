@@ -2,10 +2,9 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { BookOpen, ImageIcon, Loader2, Lightbulb, Eye, Sparkles } from "lucide-react"
+import { Card } from "@/components/ui/card"
+import { BookOpen, Loader2, Lightbulb, Eye, Sparkles } from "lucide-react"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
 import {
   Dialog,
@@ -30,19 +29,195 @@ interface Template {
   }
 }
 
+// --- Category definitions ---
+
+const CATEGORIES = [
+  { id: "math", label: "Math Learning" },
+  { id: "language", label: "Language Learning" },
+  { id: "world", label: "World Knowledge" },
+] as const
+
+function getDisplayCategory(title: string): string {
+  if (title.includes("Count")) return "math"
+  if (title.includes("Alphabet")) return "language"
+  if (title.includes("Zoo")) return "world"
+  return "world"
+}
+
+function getTagline(title: string): { verb: string; subject: string; color: string } {
+  if (title.includes("Counting"))
+    return { verb: "TEACHES", subject: "COUNTING 1-10", color: "text-blue-400" }
+  if (title.includes("Alphabet Adventure 1") || title.includes("Alphabet") && title.includes("A"))
+    return { verb: "TEACHES", subject: "LETTERS A-I", color: "text-green-400" }
+  if (title.includes("Alphabet Adventure 2") || title.includes("Alphabet") && title.includes("J"))
+    return { verb: "TEACHES", subject: "LETTERS J-R", color: "text-green-400" }
+  if (title.includes("Alphabet Adventure 3") || title.includes("Alphabet") && title.includes("S"))
+    return { verb: "TEACHES", subject: "LETTERS S-Z", color: "text-green-400" }
+  if (title.includes("Zoo"))
+    return { verb: "EXPLORES", subject: "ANIMALS & NATURE", color: "text-amber-400" }
+  return { verb: "EXPLORES", subject: "ADVENTURE", color: "text-amber-400" }
+}
+
+// --- LibraryCard component ---
+
+function LibraryCard({
+  template,
+  failedThumbnails,
+  onThumbnailError,
+  onPreview,
+  onGenerate,
+}: {
+  template: Template
+  failedThumbnails: Set<number>
+  onThumbnailError: (id: number) => void
+  onPreview: (template: Template) => void
+  onGenerate: (template: Template) => void
+}) {
+  const thumbnail = template.thumbnail_url
+  const hasMock =
+    template.mock_story_data?.scenes &&
+    Array.isArray(template.mock_story_data.scenes) &&
+    template.mock_story_data.scenes.length > 0
+  const tagline = getTagline(template.title)
+
+  return (
+    <div className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+      {/* Image area */}
+      <div
+        className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
+        onClick={() => (hasMock ? onPreview(template) : onGenerate(template))}
+      >
+        {thumbnail && !failedThumbnails.has(template.id) ? (
+          <img
+            src={thumbnail}
+            alt={template.title}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={() => onThumbnailError(template.id)}
+          />
+        ) : (
+          <div className="w-full h-full bg-white/10 flex items-center justify-center">
+            <BookOpen className="w-12 h-12 text-white/30" />
+          </div>
+        )}
+        {/* Bottom gradient overlay */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
+        {/* Desktop hover overlay */}
+        <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center gap-2">
+          {hasMock && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onPreview(template)
+              }}
+              className="px-4 py-2 rounded-full bg-white/90 text-gray-900 text-sm font-semibold hover:bg-white transition-colors"
+            >
+              Preview
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onGenerate(template)
+            }}
+            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+          >
+            Generate
+          </button>
+        </div>
+      </div>
+
+      {/* Title + tagline below image */}
+      <div className="mt-2.5 px-1">
+        <h3 className="font-semibold text-base leading-tight truncate text-foreground">
+          {template.title}
+        </h3>
+        <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
+          <span className={tagline.color}>{tagline.verb}</span>
+          <span className="text-muted-foreground"> · {tagline.subject}</span>
+        </p>
+      </div>
+
+      {/* Mobile buttons below tagline */}
+      <div className="flex gap-2 mt-2 px-1 md:hidden">
+        {hasMock && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 h-8 text-xs border-white/20 text-white/80 hover:bg-white/10"
+            onClick={() => onPreview(template)}
+          >
+            <Eye className="w-3 h-3 mr-1" />
+            Preview
+          </Button>
+        )}
+        <Button
+          size="sm"
+          className={`${hasMock ? "flex-1" : "w-full"} h-8 text-xs`}
+          onClick={() => onGenerate(template)}
+        >
+          <BookOpen className="w-3 h-3 mr-1" />
+          Generate
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// --- CategorySection component ---
+
+function CategorySection({
+  label,
+  templates,
+  failedThumbnails,
+  onThumbnailError,
+  onPreview,
+  onGenerate,
+}: {
+  label: string
+  templates: Template[]
+  failedThumbnails: Set<number>
+  onThumbnailError: (id: number) => void
+  onPreview: (template: Template) => void
+  onGenerate: (template: Template) => void
+}) {
+  if (templates.length === 0) return null
+
+  return (
+    <section className="space-y-3">
+      <h2
+        className="font-bold text-2xl md:text-3xl px-1 text-foreground"
+        style={{ fontFamily: "var(--font-display)" }}
+      >
+        {label}
+      </h2>
+      <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
+        {templates.map((template) => (
+          <LibraryCard
+            key={template.id}
+            template={template}
+            failedThumbnails={failedThumbnails}
+            onThumbnailError={onThumbnailError}
+            onPreview={onPreview}
+            onGenerate={onGenerate}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+// --- Main component ---
+
 export function StoryLibraryTab() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  // Use TanStack Query for data fetching with automatic caching
-  // Templates are cached for 30 minutes since they rarely change
   const {
     data: templatesData,
     isLoading: loading,
-    error: templatesError
+    error: templatesError,
   } = useTemplates()
 
-  // Derive data from query results
   const templates = templatesData?.templates || []
   const error = templatesError?.message || null
 
@@ -55,54 +230,26 @@ export function StoryLibraryTab() {
 
   // Check for templateId in URL params to auto-open generate modal (from preview page)
   useEffect(() => {
-    const templateId = searchParams.get('templateId')
+    const templateId = searchParams.get("templateId")
     if (templateId && templates.length > 0 && !selectedStory) {
-      const template = templates.find(t => t.id === parseInt(templateId))
+      const template = templates.find((t) => t.id === parseInt(templateId))
       if (template) {
         setSelectedStory(template)
-        // Clear the URL param after opening the modal
-        router.replace('/app?tab=library', { scroll: false })
+        router.replace("/app?tab=library", { scroll: false })
       }
     }
   }, [searchParams, templates, selectedStory, router])
 
   // Auto-open template picker when navigated with create=true (from storybooks tab FAB)
   useEffect(() => {
-    const shouldCreate = searchParams.get('create')
-    if (shouldCreate === 'true' && templates.length > 0) {
+    const shouldCreate = searchParams.get("create")
+    if (shouldCreate === "true" && templates.length > 0) {
       setShowTemplatePicker(true)
-      // Clear the param so it doesn't re-trigger
-      router.replace('/app?tab=library', { scroll: false })
+      router.replace("/app?tab=library", { scroll: false })
     }
   }, [searchParams, templates, router])
 
-  const getCoverLabel = (title: string) => {
-    if (title.includes("Counting")) return "1-10"
-    if (title.includes("Alphabet Adventure 1")) return "A-I"
-    if (title.includes("Alphabet Adventure 2")) return "J-R"
-    if (title.includes("Alphabet Adventure 3")) return "S-Z"
-    return ""
-  }
-
-  const getCategory = (title: string) => {
-    if (title.includes("Counting")) return "Numbers"
-    if (title.includes("Alphabet")) return "Letters"
-    return "Story"
-  }
-
-  const getSceneCount = (template: Template) => {
-    // script_data is a JSONB object with a scenes array inside it
-    if (template.script_data && typeof template.script_data === "object" && "scenes" in template.script_data) {
-      return Array.isArray(template.script_data.scenes) ? template.script_data.scenes.length : 0
-    }
-    // Fallback: check if script_data is directly an array (legacy format)
-    if (Array.isArray(template.script_data)) {
-      return template.script_data.length
-    }
-    return 0
-  }
-
-  const handleThumbnailError = useCallback((templateId: number, thumbnail: string, title: string) => {
+  const handleThumbnailError = useCallback((templateId: number) => {
     setFailedThumbnails((prev) => {
       const newSet = new Set(prev)
       newSet.add(templateId)
@@ -110,14 +257,23 @@ export function StoryLibraryTab() {
     })
   }, [])
 
+  const handlePreview = useCallback(
+    (template: Template) => {
+      router.push(`/preview/${template.id}`)
+    },
+    [router]
+  )
+
+  const handleGenerate = useCallback((template: Template) => {
+    setSelectedStory(template)
+  }, [])
+
   const handleSubmitFeedback = async () => {
     if (!feedbackText.trim()) return
 
     setSubmittingFeedback(true)
     try {
-      // Here you would send the feedback to your backend
       console.log("Feedback submitted:", feedbackText)
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500))
       setFeedbackText("")
       setShowFeedbackDialog(false)
@@ -128,10 +284,22 @@ export function StoryLibraryTab() {
     }
   }
 
+  // Group templates by category
+  const categorizedTemplates = CATEGORIES.map((cat) => ({
+    ...cat,
+    templates: templates.filter((t) => getDisplayCategory(t.title) === cat.id),
+  }))
+
   return (
-    <div className="min-h-full bg-gradient-to-b from-accent/20 to-background">
-      <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-6 md:space-y-8">
-        <h1 className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground">Story Library</h1>
+    <div className="min-h-full">
+      <div className="p-6 md:p-8 lg:p-10 pb-24 space-y-8 md:space-y-10">
+        {/* Desktop heading */}
+        <h1
+          className="hidden md:block text-3xl md:text-4xl lg:text-5xl font-bold text-foreground"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          Story Library
+        </h1>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -142,115 +310,80 @@ export function StoryLibraryTab() {
             <p className="text-destructive">{error}</p>
           </Card>
         ) : (
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
-            {templates.map((template) => {
-              const coverLabel = getCoverLabel(template.title)
-              const category = getCategory(template.title)
-              const sceneCount = getSceneCount(template)
-              const thumbnail = template.thumbnail_url
+          <>
+            {/* Category sections */}
+            {categorizedTemplates.map((cat) => (
+              <CategorySection
+                key={cat.id}
+                label={cat.label}
+                templates={cat.templates}
+                failedThumbnails={failedThumbnails}
+                onThumbnailError={handleThumbnailError}
+                onPreview={handlePreview}
+                onGenerate={handleGenerate}
+              />
+            ))}
 
-              return (
-                <Card key={template.id} className="overflow-hidden hover:shadow-lg transition-shadow w-full flex flex-col h-full">
-                  <div className="flex flex-col gap-3 p-4 md:p-6 w-full flex-1">
-                    <div className="relative shrink-0 mx-auto">
-                      {thumbnail && !failedThumbnails.has(template.id) ? (
-                        <img
-                          src={thumbnail || "/placeholder.svg"}
-                          alt={template.title}
-                          className="w-32 h-44 md:w-40 md:h-56 object-cover rounded-lg"
-                          onError={() => handleThumbnailError(template.id, thumbnail, template.title)}
-                        />
-                      ) : (
-                        <div className="w-32 h-44 md:w-40 md:h-56 bg-secondary rounded-lg flex items-center justify-center">
-                          <BookOpen className="w-10 h-10 text-muted-foreground" />
-                        </div>
-                      )}
-                      {coverLabel && thumbnail && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <span className="text-4xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                            {coverLabel}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 flex flex-col space-y-2 w-full min-h-0">
-                      <div className="flex-shrink-0">
-                        <h3 className="font-bold text-lg md:text-xl text-center break-words leading-tight">{template.title}</h3>
-                        <p className="text-sm md:text-base text-muted-foreground text-center break-words line-clamp-3 mt-1 min-h-[3rem]">
-                          {template.description?.replace(/\{character_name\}/g, "your child") ||
-                            "A personalized adventure story"}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground flex-shrink-0">
-                        <span className="flex items-center gap-1">
-                          <ImageIcon className="w-3 h-3" />
-                          {sceneCount} scenes
-                        </span>
-                      </div>
-
-                      <div className="flex gap-2 mt-auto pt-2 flex-shrink-0">
-                        {template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => router.push(`/preview/${template.id}`)}
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            Preview
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          className={template.mock_story_data?.scenes && Array.isArray(template.mock_story_data.scenes) && template.mock_story_data.scenes.length > 0 ? "flex-1" : "w-full"}
-                          onClick={() => setSelectedStory(template)}
-                        >
-                          <BookOpen className="w-3 h-3 mr-1" />
-                          Generate
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )
-            })}
-          </div>
+            {/* All Stories section */}
+            <section className="space-y-3">
+              <h2
+                className="font-bold text-2xl md:text-3xl px-1 text-foreground"
+                style={{ fontFamily: "var(--font-display)" }}
+              >
+                All Stories
+              </h2>
+              <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
+                {templates.map((template) => (
+                  <LibraryCard
+                    key={template.id}
+                    template={template}
+                    failedThumbnails={failedThumbnails}
+                    onThumbnailError={handleThumbnailError}
+                    onPreview={handlePreview}
+                    onGenerate={handleGenerate}
+                  />
+                ))}
+              </div>
+            </section>
+          </>
         )}
 
-        <Card className="p-4 md:p-6 bg-muted/50">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary shrink-0" />
-              <h4 className="font-semibold text-sm md:text-base">More stories coming soon!</h4>
+        {/* More stories coming soon — width matches card row */}
+        <div className="rounded-2xl bg-card border border-border p-5 md:p-6 w-[70vw] sm:w-[calc(2*45vw+1rem)] md:w-[calc(3*280px+2*1rem)] lg:w-[calc(3*260px+2*1rem)]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary shrink-0" />
+                <h4 className="font-semibold text-sm md:text-base text-foreground">
+                  More stories coming soon!
+                </h4>
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Stay tuned as we add many more adventures and educational stories.
+              </p>
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              Stay tuned as we add many more adventures and educational stories.
-            </p>
             <Button
-              variant="outline"
               size="sm"
               onClick={() => setShowFeedbackDialog(true)}
-              className="w-full md:w-auto"
+              className="shrink-0 w-full sm:w-auto"
+              variant="outline"
             >
               <Lightbulb className="w-4 h-4 mr-2" />
               Submit a story idea
             </Button>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Floating Action Button */}
       {templates.length > 0 && (
         <div
           className="fixed left-4 right-4 z-20 flex justify-center"
-          style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
+          style={{ bottom: "calc(4rem + env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
         >
           <Button
             onClick={() => setShowTemplatePicker(true)}
-            className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0"
-            style={{ backgroundColor: 'rgba(120, 53, 15, 0.85)', color: 'white' }}
+            className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0 bg-primary text-primary-foreground"
           >
             <Sparkles className="w-4 h-4" />
             <span className="font-semibold text-sm">Create New Storybook</span>
@@ -262,38 +395,51 @@ export function StoryLibraryTab() {
       <Dialog open={showTemplatePicker} onOpenChange={setShowTemplatePicker}>
         <DialogContent className="max-w-sm max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>Choose a Story</DialogTitle>
-            <DialogDescription>Select a story template to personalize</DialogDescription>
+            <DialogTitle className="text-xl">
+              <span className="text-primary">Choose</span> a Story
+            </DialogTitle>
+            <DialogDescription>Pick a template to create a personalized storybook</DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-4 overflow-y-auto max-h-[50vh]">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => {
-                  setShowTemplatePicker(false)
-                  setSelectedStory(template)
-                }}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors text-left w-full"
-              >
-                {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
-                  <img
-                    src={template.thumbnail_url}
-                    alt={template.title}
-                    className="w-12 h-16 object-cover rounded shrink-0"
-                  />
-                ) : (
-                  <div className="w-12 h-16 bg-secondary rounded flex items-center justify-center shrink-0">
-                    <BookOpen className="w-5 h-5 text-muted-foreground" />
+            {templates.map((template) => {
+              const tagline = getTagline(template.title)
+              return (
+                <button
+                  key={template.id}
+                  onClick={() => {
+                    setShowTemplatePicker(false)
+                    setSelectedStory(template)
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left w-full group"
+                >
+                  {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
+                    <img
+                      src={template.thumbnail_url}
+                      alt={template.title}
+                      className="w-14 h-[4.5rem] object-cover rounded-lg shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-[4.5rem] bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                      <BookOpen className="w-6 h-6 text-primary" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                      {template.title}
+                    </h4>
+                    <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
+                      <span className={tagline.color}>{tagline.verb}</span>
+                      <span className="text-muted-foreground"> · {tagline.subject}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                      {template.description?.replace(/\{character_name\}/g, "your child") ||
+                        "A personalized adventure"}
+                    </p>
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm truncate">{template.title}</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {template.description?.replace(/\{character_name\}/g, 'your child') || 'A personalized adventure'}
-                  </p>
-                </div>
-              </button>
-            ))}
+                  <Sparkles className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
+                </button>
+              )
+            })}
           </div>
         </DialogContent>
       </Dialog>
@@ -309,8 +455,13 @@ export function StoryLibraryTab() {
       <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Submit Story Idea</DialogTitle>
-            <DialogDescription>Tell us what kind of story you'd like to see in Twinklebot!</DialogDescription>
+            <DialogTitle className="text-xl">
+              <Lightbulb className="w-5 h-5 text-primary inline mr-2" />
+              Submit a <span className="text-primary">Story Idea</span>
+            </DialogTitle>
+            <DialogDescription>
+              What kind of adventure should we create next? We&apos;d love to hear your ideas!
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <Textarea
@@ -321,10 +472,17 @@ export function StoryLibraryTab() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowFeedbackDialog(false)} disabled={submittingFeedback}>
+            <Button
+              variant="outline"
+              onClick={() => setShowFeedbackDialog(false)}
+              disabled={submittingFeedback}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSubmitFeedback} disabled={!feedbackText.trim() || submittingFeedback}>
+            <Button
+              onClick={handleSubmitFeedback}
+              disabled={!feedbackText.trim() || submittingFeedback}
+            >
               {submittingFeedback ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

@@ -1,6 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Lora } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
 import { QueryProvider } from "@/lib/providers/query-provider"
@@ -9,6 +9,7 @@ import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const _lora = Lora({ subsets: ["latin"], weight: ["400", "600", "700"], variable: "--font-display" })
 
 export const metadata: Metadata = {
   title: "Twinklebot - Personalized Storybooks for Kids",
@@ -59,8 +60,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
+    <html lang="en" className="dark">
+      <body className={`font-sans antialiased ${_lora.variable}`}>
         <CapacitorInitializer />
         <QueryProvider>
           <AuthProvider>

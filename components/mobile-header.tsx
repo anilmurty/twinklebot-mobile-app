@@ -33,11 +33,16 @@ export function MobileHeader({ activeTab }: MobileHeaderProps) {
           width={400}
           height={96}
           className="shrink-0 h-9 w-auto"
+          style={{ filter: "brightness(1.6) saturate(1.2)" }}
           priority
         />
         <div className="flex flex-col justify-center items-end h-9">
-          <span className="text-sm font-semibold text-muted-foreground leading-tight">{title}</span>
-          <span className="text-xs text-muted-foreground/70 leading-tight">{subtitle}</span>
+          <span className="text-sm font-semibold leading-tight text-foreground">
+            {title}
+          </span>
+          <span className="text-xs leading-tight text-muted-foreground">
+            {subtitle}
+          </span>
         </div>
       </div>
     </header>
