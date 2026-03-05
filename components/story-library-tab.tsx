@@ -128,7 +128,7 @@ function LibraryCard({
 
       {/* Title + tagline below image */}
       <div className="mt-2.5 px-1">
-        <h3 className="font-semibold text-base leading-tight truncate text-foreground">
+        <h3 className="font-semibold text-base leading-tight line-clamp-2 text-foreground">
           {template.title}
         </h3>
         <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">

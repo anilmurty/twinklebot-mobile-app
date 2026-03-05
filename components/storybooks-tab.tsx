@@ -512,7 +512,7 @@ export function StorybooksTab() {
                         </div>
                         {/* Title + character below image */}
                         <div className="mt-2.5 px-1">
-                          <h3 className="font-semibold text-base leading-tight truncate text-foreground">
+                          <h3 className="font-semibold text-base leading-tight line-clamp-2 text-foreground">
                             {storybook.title}
                           </h3>
                           <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
@@ -595,7 +595,7 @@ export function StorybooksTab() {
                         </div>
                         {/* Title + character below image */}
                         <div className="mt-2.5 px-1">
-                          <h3 className="font-semibold text-base leading-tight truncate text-foreground">
+                          <h3 className="font-semibold text-base leading-tight line-clamp-2 text-foreground">
                             {storybook.title}
                           </h3>
                           <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
