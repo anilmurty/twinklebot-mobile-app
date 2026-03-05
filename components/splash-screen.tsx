@@ -7,18 +7,70 @@ interface SplashScreenProps {
   onFadeComplete?: () => void
 }
 
-const sparkles = [
-  { x: -70, y: -50, size: 10, delay: 0.3 },
-  { x: 80, y: -65, size: 8, delay: 0.8 },
-  { x: -90, y: 35, size: 7, delay: 1.3 },
-  { x: 95, y: 55, size: 9, delay: 0.6 },
-  { x: -35, y: -90, size: 6, delay: 1.6 },
-  { x: 55, y: 90, size: 8, delay: 1.0 },
-  { x: -95, y: -15, size: 5, delay: 1.9 },
-  { x: 100, y: -10, size: 7, delay: 0.4 },
+// Full-page sparkles spread across the viewport using % positioning
+// anim: "sparkle" (spin), "drift" (slower rotate), "pulse" (gentle throb)
+const pageSparkles: {
+  left: string; top: string; size: number; delay: number;
+  color: string; anim: "sparkle" | "drift" | "pulse"
+}[] = [
+  // Top region
+  { left: "8%",  top: "6%",   size: 7,  delay: 0.2, color: "#f59e0b", anim: "sparkle" },
+  { left: "25%", top: "4%",   size: 5,  delay: 1.4, color: "#fbbf24", anim: "pulse" },
+  { left: "45%", top: "8%",   size: 9,  delay: 0.6, color: "#fcd34d", anim: "drift" },
+  { left: "70%", top: "5%",   size: 6,  delay: 1.8, color: "#f9a8d4", anim: "sparkle" },
+  { left: "88%", top: "7%",   size: 8,  delay: 0.3, color: "#f59e0b", anim: "pulse" },
+
+  // Upper area
+  { left: "5%",  top: "15%",  size: 6,  delay: 1.0, color: "#93c5fd", anim: "drift" },
+  { left: "18%", top: "18%",  size: 10, delay: 0.5, color: "#f59e0b", anim: "sparkle" },
+  { left: "35%", top: "14%",  size: 5,  delay: 2.0, color: "#fbbf24", anim: "pulse" },
+  { left: "60%", top: "16%",  size: 7,  delay: 0.9, color: "#c4b5fd", anim: "sparkle" },
+  { left: "78%", top: "13%",  size: 8,  delay: 1.5, color: "#fcd34d", anim: "drift" },
+  { left: "92%", top: "19%",  size: 5,  delay: 0.1, color: "#f9a8d4", anim: "pulse" },
+
+  // Upper-middle
+  { left: "10%", top: "28%",  size: 8,  delay: 1.7, color: "#fbbf24", anim: "sparkle" },
+  { left: "30%", top: "25%",  size: 6,  delay: 0.4, color: "#93c5fd", anim: "drift" },
+  { left: "50%", top: "22%",  size: 4,  delay: 1.2, color: "#f59e0b", anim: "pulse" },
+  { left: "75%", top: "26%",  size: 9,  delay: 0.7, color: "#fcd34d", anim: "sparkle" },
+  { left: "90%", top: "30%",  size: 5,  delay: 2.1, color: "#c4b5fd", anim: "drift" },
+
+  // Near robot - left side
+  { left: "6%",  top: "40%",  size: 7,  delay: 0.8, color: "#f59e0b", anim: "sparkle" },
+  { left: "15%", top: "45%",  size: 11, delay: 1.3, color: "#fbbf24", anim: "drift" },
+  { left: "12%", top: "55%",  size: 5,  delay: 0.2, color: "#f9a8d4", anim: "pulse" },
+  { left: "4%",  top: "60%",  size: 8,  delay: 1.6, color: "#93c5fd", anim: "sparkle" },
+
+  // Near robot - right side
+  { left: "85%", top: "38%",  size: 6,  delay: 0.5, color: "#c4b5fd", anim: "pulse" },
+  { left: "92%", top: "45%",  size: 10, delay: 1.1, color: "#f59e0b", anim: "sparkle" },
+  { left: "88%", top: "55%",  size: 7,  delay: 0.3, color: "#fcd34d", anim: "drift" },
+  { left: "95%", top: "62%",  size: 5,  delay: 1.9, color: "#fbbf24", anim: "pulse" },
+
+  // Below robot
+  { left: "10%", top: "70%",  size: 9,  delay: 0.6, color: "#fcd34d", anim: "drift" },
+  { left: "25%", top: "73%",  size: 6,  delay: 1.4, color: "#f59e0b", anim: "sparkle" },
+  { left: "42%", top: "75%",  size: 5,  delay: 0.9, color: "#f9a8d4", anim: "pulse" },
+  { left: "62%", top: "74%",  size: 7,  delay: 2.2, color: "#93c5fd", anim: "sparkle" },
+  { left: "80%", top: "72%",  size: 8,  delay: 0.4, color: "#fbbf24", anim: "drift" },
+  { left: "93%", top: "75%",  size: 5,  delay: 1.7, color: "#c4b5fd", anim: "pulse" },
+
+  // Lower area
+  { left: "7%",  top: "82%",  size: 6,  delay: 1.0, color: "#f59e0b", anim: "sparkle" },
+  { left: "20%", top: "85%",  size: 8,  delay: 0.2, color: "#fcd34d", anim: "drift" },
+  { left: "38%", top: "83%",  size: 5,  delay: 1.5, color: "#c4b5fd", anim: "pulse" },
+  { left: "55%", top: "86%",  size: 7,  delay: 0.7, color: "#fbbf24", anim: "sparkle" },
+  { left: "72%", top: "84%",  size: 10, delay: 1.8, color: "#f9a8d4", anim: "drift" },
+  { left: "90%", top: "82%",  size: 6,  delay: 0.1, color: "#f59e0b", anim: "pulse" },
+
+  // Bottom region
+  { left: "15%", top: "92%",  size: 7,  delay: 0.8, color: "#93c5fd", anim: "sparkle" },
+  { left: "35%", top: "94%",  size: 5,  delay: 2.0, color: "#f59e0b", anim: "drift" },
+  { left: "58%", top: "91%",  size: 8,  delay: 1.2, color: "#fcd34d", anim: "pulse" },
+  { left: "82%", top: "93%",  size: 6,  delay: 0.5, color: "#fbbf24", anim: "sparkle" },
 ]
 
-function Sparkle({ size, color = "#f59e0b" }: { size: number; color?: string }) {
+function Sparkle({ size, color }: { size: number; color: string }) {
   return (
     <svg viewBox="0 0 20 20" width={size} height={size}>
       <path
@@ -28,6 +80,12 @@ function Sparkle({ size, color = "#f59e0b" }: { size: number; color?: string }) 
     </svg>
   )
 }
+
+const animClass = {
+  sparkle: "splash-sparkle",
+  drift: "splash-sparkle-drift",
+  pulse: "splash-sparkle-pulse",
+} as const
 
 export function SplashScreen({ visible, onFadeComplete }: SplashScreenProps) {
   const [mounted, setMounted] = useState(true)
@@ -46,87 +104,82 @@ export function SplashScreen({ visible, onFadeComplete }: SplashScreenProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden"
       style={{
         backgroundColor: "oklch(0.18 0.02 80)",
         opacity: visible ? 1 : 0,
         transition: "opacity 800ms ease-out",
       }}
     >
-      {/* Robot + sparkles container */}
-      <div className="relative">
-        {/* Sparkle stars */}
-        {sparkles.map((s, i) => (
-          <div
-            key={i}
-            className="splash-sparkle absolute"
-            style={{
-              left: "50%",
-              top: "50%",
-              marginLeft: s.x,
-              marginTop: s.y,
-              animationDelay: `${s.delay}s`,
-            }}
-          >
-            <Sparkle size={s.size} />
-          </div>
-        ))}
-
-        {/* Robot SVG */}
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 1024 1024"
-          className="w-[180px] h-[180px] md:w-[220px] md:h-[220px]"
-          style={{ shapeRendering: "geometricPrecision" }}
+      {/* Full-page sparkle field */}
+      {pageSparkles.map((s, i) => (
+        <div
+          key={i}
+          className={`${animClass[s.anim]} absolute`}
+          style={{
+            left: s.left,
+            top: s.top,
+            animationDelay: `${s.delay}s`,
+          }}
         >
-          <defs>
-            <style>{`
-              .splash-fil1 { fill: #78350f }
-              .splash-fil3 { fill: #d97706 }
-              .splash-fil2 { fill: #f59e0b }
-            `}</style>
-          </defs>
-          <g transform="translate(512, 490) scale(1.55) translate(-1287, -730)">
-            {/* Mouth (animated smile) */}
-            <g className="splash-smile" style={{ transformOrigin: "1296px 770px" }}>
-              <path
-                className="splash-fil1"
-                d="M1350.08 766.92c-14.49,13.87 -33.63,21.56 -53.68,21.56 -20.06,0 -39.21,-7.68 -53.69,-21.56 -3.86,-3.7 -4.08,-9.86 -0.5,-13.83l8.29 -9.15c1.86,-2.06 4.25,-3.17 7.03,-3.26 2.74,-0.09 5.26,0.89 7.23,2.8 8.51,8.24 19.79,12.8 31.64,12.8 11.84,0 23.13,-4.56 31.63,-12.8 1.97,-1.91 4.49,-2.89 7.23,-2.8 2.78,0.09 5.17,1.2 7.04,3.26l8.28 9.15c3.58,3.97 3.36,10.13 -0.5,13.83z"
-              />
-            </g>
-            {/* Right eye (winking) */}
-            <g className="splash-wink-eye" style={{ transformOrigin: "1411px 669px" }}>
-              <path
-                className="splash-fil1"
-                d="M1411.09 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
-              />
-            </g>
-            {/* Left eye */}
+          <Sparkle size={s.size} color={s.color} />
+        </div>
+      ))}
+
+      {/* Robot SVG */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 1024 1024"
+        className="relative z-10 w-[180px] h-[180px] md:w-[220px] md:h-[220px]"
+        style={{ shapeRendering: "geometricPrecision" }}
+      >
+        <defs>
+          <style>{`
+            .splash-fil1 { fill: #78350f }
+            .splash-fil3 { fill: #d97706 }
+            .splash-fil2 { fill: #f59e0b }
+          `}</style>
+        </defs>
+        <g transform="translate(512, 490) scale(1.55) translate(-1287, -730)">
+          {/* Mouth (animated smile) */}
+          <g className="splash-smile" style={{ transformOrigin: "1296px 770px" }}>
             <path
               className="splash-fil1"
-              d="M1183.73 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
-            />
-            {/* Small star */}
-            <path
-              className="splash-fil2"
-              d="M1186.25 930.87l21.8 10.68 10.68 21.8c1.29,2.56 3.74,3.85 6.2,3.85 2.46,0 4.92,-1.29 6.2,-3.85l10.68 -21.8 21.8 -10.68c5.12,-2.56 5.12,-9.83 0,-12.39l-21.8 -10.69 -10.68 -21.79c-2.57,-5.13 -9.83,-5.13 -12.4,0l-10.68 21.79 -21.8 10.69c-5.12,2.56 -5.12,9.83 0,12.39z"
-            />
-            {/* Large star */}
-            <path
-              className="splash-fil2"
-              d="M1032.8 863.81l49.84 24.43 24.44 49.85c5.86,11.72 22.48,11.72 28.34,0l24.43 -49.85 49.85 -24.43c11.72,-5.86 11.72,-22.48 0,-28.34l-49.85 -24.44 -24.43 -49.84c-5.86,-11.73 -22.48,-11.73 -28.34,0l-24.44 49.84 -49.84 24.44c-5.87,2.93 -8.8,8.55 -8.8,14.17 0,5.62 2.93,11.24 8.8,14.17z"
-            />
-            {/* Body */}
-            <path
-              className="splash-fil3"
-              d="M1377.01 492.5l131.28 0c9.37,0 17.87,4.16 24.02,10.86 6.14,6.69 9.96,15.95 9.96,26.16l0 361.98c0,10.21 -3.82,19.47 -9.96,26.16 -6.15,6.7 -14.65,10.86 -24.02,10.86l-131.28 0c-11.59,0 -24.78,0.28 -36.82,1.97 -5.29,0.74 -10.53,1.75 -15.51,3.11 -3.97,1.09 -7.8,0.21 -11.03,-2.53 -3.22,-2.74 -4.94,-6.57 -4.94,-11.03l0 -16c0,-6.63 4.11,-12.22 10.05,-13.66 5.41,-1.3 10.91,-2.31 16.41,-3.08 15.2,-2.13 29.57,-2.49 41.84,-2.49l117.11 0c4.42,0 8.02,-3.93 8.02,-8.75l0 -331.11c0,-4.81 -3.6,-8.74 -8.02,-8.74l-117.11 0c-10.32,0 -19.58,3.28 -27.52,8.79 -9.34,6.48 -17.19,16.15 -23.12,27.43 -3.06,5.81 -7.34,10.44 -12.46,13.66l-0.08 0c-5.1,3.2 -10.89,4.9 -16.99,4.88 -6.21,-0.02 -12.04,-1.77 -17.13,-5.02 -5.14,-3.29 -9.41,-7.97 -12.42,-13.79 -5.76,-11.14 -13.47,-20.71 -22.8,-27.14 -8.09,-5.58 -17.54,-8.89 -28.14,-8.89l0 0.08 -115.65 0c-4.42,0 -8.03,3.93 -8.03,8.74l0 179.54c0,7.7 -5.76,13.98 -12.84,13.98l-14.44 0c-7.08,0 -12.84,-6.28 -12.84,-13.98l0 -194.97c0,-10.21 3.81,-19.47 9.96,-26.16 6.15,-6.7 14.65,-10.86 24.02,-10.86l129.82 0 0 0.09c18.7,0 35.3,5.8 49.46,15.55 12.44,8.57 22.88,20.1 31.12,33.32 8.29,-13.13 18.76,-24.61 31.08,-33.16 14.27,-9.91 30.77,-15.8 49,-15.8z"
+              d="M1350.08 766.92c-14.49,13.87 -33.63,21.56 -53.68,21.56 -20.06,0 -39.21,-7.68 -53.69,-21.56 -3.86,-3.7 -4.08,-9.86 -0.5,-13.83l8.29 -9.15c1.86,-2.06 4.25,-3.17 7.03,-3.26 2.74,-0.09 5.26,0.89 7.23,2.8 8.51,8.24 19.79,12.8 31.64,12.8 11.84,0 23.13,-4.56 31.63,-12.8 1.97,-1.91 4.49,-2.89 7.23,-2.8 2.78,0.09 5.17,1.2 7.04,3.26l8.28 9.15c3.58,3.97 3.36,10.13 -0.5,13.83z"
             />
           </g>
-        </svg>
-      </div>
+          {/* Right eye (winking) */}
+          <g className="splash-wink-eye" style={{ transformOrigin: "1411px 669px" }}>
+            <path
+              className="splash-fil1"
+              d="M1411.09 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
+            />
+          </g>
+          {/* Left eye */}
+          <path
+            className="splash-fil1"
+            d="M1183.73 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
+          />
+          {/* Small star */}
+          <path
+            className="splash-fil2"
+            d="M1186.25 930.87l21.8 10.68 10.68 21.8c1.29,2.56 3.74,3.85 6.2,3.85 2.46,0 4.92,-1.29 6.2,-3.85l10.68 -21.8 21.8 -10.68c5.12,-2.56 5.12,-9.83 0,-12.39l-21.8 -10.69 -10.68 -21.79c-2.57,-5.13 -9.83,-5.13 -12.4,0l-10.68 21.79 -21.8 10.69c-5.12,2.56 -5.12,9.83 0,12.39z"
+          />
+          {/* Large star */}
+          <path
+            className="splash-fil2"
+            d="M1032.8 863.81l49.84 24.43 24.44 49.85c5.86,11.72 22.48,11.72 28.34,0l24.43 -49.85 49.85 -24.43c11.72,-5.86 11.72,-22.48 0,-28.34l-49.85 -24.44 -24.43 -49.84c-5.86,-11.73 -22.48,-11.73 -28.34,0l-24.44 49.84 -49.84 24.44c-5.87,2.93 -8.8,8.55 -8.8,14.17 0,5.62 2.93,11.24 8.8,14.17z"
+          />
+          {/* Body */}
+          <path
+            className="splash-fil3"
+            d="M1377.01 492.5l131.28 0c9.37,0 17.87,4.16 24.02,10.86 6.14,6.69 9.96,15.95 9.96,26.16l0 361.98c0,10.21 -3.82,19.47 -9.96,26.16 -6.15,6.7 -14.65,10.86 -24.02,10.86l-131.28 0c-11.59,0 -24.78,0.28 -36.82,1.97 -5.29,0.74 -10.53,1.75 -15.51,3.11 -3.97,1.09 -7.8,0.21 -11.03,-2.53 -3.22,-2.74 -4.94,-6.57 -4.94,-11.03l0 -16c0,-6.63 4.11,-12.22 10.05,-13.66 5.41,-1.3 10.91,-2.31 16.41,-3.08 15.2,-2.13 29.57,-2.49 41.84,-2.49l117.11 0c4.42,0 8.02,-3.93 8.02,-8.75l0 -331.11c0,-4.81 -3.6,-8.74 -8.02,-8.74l-117.11 0c-10.32,0 -19.58,3.28 -27.52,8.79 -9.34,6.48 -17.19,16.15 -23.12,27.43 -3.06,5.81 -7.34,10.44 -12.46,13.66l-0.08 0c-5.1,3.2 -10.89,4.9 -16.99,4.88 -6.21,-0.02 -12.04,-1.77 -17.13,-5.02 -5.14,-3.29 -9.41,-7.97 -12.42,-13.79 -5.76,-11.14 -13.47,-20.71 -22.8,-27.14 -8.09,-5.58 -17.54,-8.89 -28.14,-8.89l0 0.08 -115.65 0c-4.42,0 -8.03,3.93 -8.03,8.74l0 179.54c0,7.7 -5.76,13.98 -12.84,13.98l-14.44 0c-7.08,0 -12.84,-6.28 -12.84,-13.98l0 -194.97c0,-10.21 3.81,-19.47 9.96,-26.16 6.15,-6.7 14.65,-10.86 24.02,-10.86l129.82 0 0 0.09c18.7,0 35.3,5.8 49.46,15.55 12.44,8.57 22.88,20.1 31.12,33.32 8.29,-13.13 18.76,-24.61 31.08,-33.16 14.27,-9.91 30.77,-15.8 49,-15.8z"
+          />
+        </g>
+      </svg>
 
       {/* Logo text matching app branding */}
-      <div className="splash-text-fade mt-6">
+      <div className="splash-text-fade relative z-10 mt-6">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="600 600 1640 260"
