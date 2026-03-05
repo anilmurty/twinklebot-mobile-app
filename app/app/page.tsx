@@ -1,22 +1,30 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { MobileLayout } from "@/components/mobile-layout"
 import { DesktopLayout } from "@/components/desktop-layout"
 import { LandingPage } from "@/components/landing-page"
+import { SplashScreen } from "@/components/splash-screen"
 import { useAuth } from "@/lib/auth-context"
 import { useSearchParams } from "next/navigation"
 import { useIsMobile } from "@/lib/utils/device-detection"
 import { isDesignMode } from "@/lib/designMode"
+import { usePrefetch } from "@/lib/hooks/use-prefetch"
 
 function AppContent() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "profile">("storybooks")
+  const [splashDismissed, setSplashDismissed] = useState(false)
 
-  // ✅ DESIGN_MODE: Use centralized design mode check
   const designMode = isDesignMode()
+  const dataReady = usePrefetch(!loading && !!user)
+  const showSplash = !designMode && (loading || (!!user && !dataReady))
+
+  const handleFadeComplete = useCallback(() => {
+    setSplashDismissed(true)
+  }, [])
 
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -25,10 +33,8 @@ function AppContent() {
     }
   }, [searchParams])
 
-  // ✅ DESIGN_MODE: In design mode, always show app UI (bypass auth check)
-  // This allows v0.dev to preview the app without requiring authentication
+  // Design mode: bypass auth, no splash
   if (designMode) {
-    // Render mobile or desktop layout based on device detection
     if (isMobile) {
       return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
     } else {
@@ -36,42 +42,35 @@ function AppContent() {
     }
   }
 
+  // Auth still loading — show splash only
   if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    )
+    return <SplashScreen visible={true} />
   }
 
+  // No user — landing page immediately
   if (!user) {
     return <LandingPage />
   }
 
-  // Render mobile or desktop layout based on device detection
-  if (isMobile) {
-    return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
-  } else {
-    return <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
-  }
+  // User exists — render app layout with splash overlay on top while data loads
+  const layout = isMobile
+    ? <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
+    : <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
+
+  return (
+    <>
+      {layout}
+      {!splashDismissed && (
+        <SplashScreen visible={showSplash} onFadeComplete={handleFadeComplete} />
+      )}
+    </>
+  )
 }
 
 export default function AppPage() {
   return (
-    <Suspense fallback={
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<SplashScreen visible={true} />}>
       <AppContent />
     </Suspense>
   )
 }
-
-
