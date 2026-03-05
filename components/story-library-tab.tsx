@@ -424,14 +424,14 @@ export function StoryLibraryTab() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                    <h4 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                       {template.title}
                     </h4>
                     <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
                       <span className="text-muted-foreground">{tagline.verb}</span>
                       <span className={tagline.color}> · {tagline.subject}</span>
                     </p>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
                       {template.description?.replace(/\{character_name\}/g, "your child") ||
                         "A personalized adventure"}
                     </p>
