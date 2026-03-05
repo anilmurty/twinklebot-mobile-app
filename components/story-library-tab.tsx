@@ -46,13 +46,13 @@ function getDisplayCategory(title: string): string {
 
 function getTagline(title: string): { verb: string; subject: string; color: string } {
   if (title.includes("Counting"))
-    return { verb: "TEACHES", subject: "COUNTING 1-10", color: "text-blue-400" }
+    return { verb: "TEACHES", subject: "COUNTING 1-10", color: "text-amber-400" }
   if (title.includes("Alphabet Adventure 1") || title.includes("Alphabet") && title.includes("A"))
-    return { verb: "TEACHES", subject: "LETTERS A-I", color: "text-green-400" }
+    return { verb: "TEACHES", subject: "LETTERS A-I", color: "text-amber-400" }
   if (title.includes("Alphabet Adventure 2") || title.includes("Alphabet") && title.includes("J"))
-    return { verb: "TEACHES", subject: "LETTERS J-R", color: "text-green-400" }
+    return { verb: "TEACHES", subject: "LETTERS J-R", color: "text-amber-400" }
   if (title.includes("Alphabet Adventure 3") || title.includes("Alphabet") && title.includes("S"))
-    return { verb: "TEACHES", subject: "LETTERS S-Z", color: "text-green-400" }
+    return { verb: "TEACHES", subject: "LETTERS S-Z", color: "text-amber-400" }
   if (title.includes("Zoo"))
     return { verb: "EXPLORES", subject: "ANIMALS & NATURE", color: "text-amber-400" }
   return { verb: "EXPLORES", subject: "ADVENTURE", color: "text-amber-400" }
