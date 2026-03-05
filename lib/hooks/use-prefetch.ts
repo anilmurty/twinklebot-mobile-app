@@ -6,7 +6,8 @@ import { storybookKeys, characterKeys, templateKeys } from "@/lib/queries"
 import { storybooksApi, charactersApi, templatesApi } from "@/lib/api-client"
 
 const SAFETY_TIMEOUT_MS = 4000
-const MAX_PRELOAD_IMAGES = 6
+const MIN_DISPLAY_MS = 1800
+const MAX_PRELOAD_IMAGES = 12
 
 export function usePrefetch(userReady: boolean): boolean {
   const [dataReady, setDataReady] = useState(false)
@@ -16,6 +17,8 @@ export function usePrefetch(userReady: boolean): boolean {
   useEffect(() => {
     if (!userReady || started.current) return
     started.current = true
+
+    const startTime = Date.now()
 
     const safetyTimer = setTimeout(() => {
       setDataReady(true)
@@ -48,6 +51,13 @@ export function usePrefetch(userReady: boolean): boolean {
         }
       }
 
+      const charactersResult = results[1]
+      if (charactersResult.status === "fulfilled" && charactersResult.value?.characters) {
+        for (const ch of charactersResult.value.characters) {
+          if (ch.front_photo_url) urls.push(ch.front_photo_url)
+        }
+      }
+
       const templatesResult = results[2]
       if (templatesResult.status === "fulfilled" && templatesResult.value?.templates) {
         for (const t of templatesResult.value.templates) {
@@ -60,8 +70,16 @@ export function usePrefetch(userReady: boolean): boolean {
         img.src = url
       })
 
+      // Ensure minimum display time so animations can play
+      const elapsed = Date.now() - startTime
+      const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed)
+
       clearTimeout(safetyTimer)
-      setDataReady(true)
+      if (remaining > 0) {
+        setTimeout(() => setDataReady(true), remaining)
+      } else {
+        setDataReady(true)
+      }
     })
 
     return () => clearTimeout(safetyTimer)

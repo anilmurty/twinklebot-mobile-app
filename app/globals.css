@@ -163,7 +163,18 @@
 }
 
 .splash-wink-eye {
-  animation: splash-wink 300ms ease-in-out 500ms both;
+  animation: splash-wink 400ms ease-in-out 700ms both;
+}
+
+@keyframes splash-smile {
+  0%   { transform: scale(1, 1); }
+  40%  { transform: scale(1.08, 1.2); }
+  60%  { transform: scale(1.08, 1.2); }
+  100% { transform: scale(1, 1); }
+}
+
+.splash-smile {
+  animation: splash-smile 400ms ease-in-out 700ms both;
 }
 
 @keyframes splash-text-fade {
@@ -172,5 +183,14 @@
 }
 
 .splash-text-fade {
-  animation: splash-text-fade 400ms ease-out 600ms both;
+  animation: splash-text-fade 500ms ease-out 900ms both;
+}
+
+@keyframes splash-sparkle {
+  0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1) rotate(180deg); opacity: 1; }
+}
+
+.splash-sparkle {
+  animation: splash-sparkle 1.6s ease-in-out infinite;
 }
