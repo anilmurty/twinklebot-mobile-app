@@ -12,6 +12,7 @@ export function LandingPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
 
   const handleSignInWithGoogle = async () => {
@@ -36,6 +37,10 @@ export function LandingPage() {
       setIsLoading(true)
       setError(null)
       if (isSignUp) {
+        if (password !== confirmPassword) {
+          setError("Passwords do not match")
+          return
+        }
         await signUpWithEmail(email, password)
         alert("Account created! Please check your email to verify your account.")
       } else {
@@ -98,6 +103,13 @@ export function LandingPage() {
                   </Button>
                 </div>
 
+                <p className="text-center text-xs text-white/60 mt-4">
+                  By using TwinkleBot you agree to the{" "}
+                  <a href="https://www.twinklebot.app/terms" className="underline text-white/80">Terms of Service</a>
+                  {" "}and the{" "}
+                  <a href="https://www.twinklebot.app/privacy" className="underline text-white/80">Privacy Policy</a>
+                </p>
+
                 {/* How It Works - compact version */}
                 <div className="mt-6 bg-white/20 backdrop-blur-sm rounded-3xl p-5 shadow-2xl">
                   <p className="text-xs text-white/70 text-center mb-3 uppercase tracking-wide font-medium">How it works</p>
@@ -143,6 +155,16 @@ export function LandingPage() {
                     className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 placeholder:text-gray-500"
                   />
 
+                  {isSignUp && (
+                    <input
+                      type="password"
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 placeholder:text-gray-500"
+                    />
+                  )}
+
                   <Button
                     onClick={handleEmailAuth}
                     disabled={isLoading}
@@ -167,6 +189,13 @@ export function LandingPage() {
                   >
                     ← Back to login options
                   </button>
+
+                  <p className="text-center text-xs text-white/60">
+                    By using TwinkleBot you agree to the{" "}
+                    <a href="https://www.twinklebot.app/terms" className="underline text-white/80">Terms of Service</a>
+                    {" "}and the{" "}
+                    <a href="https://www.twinklebot.app/privacy" className="underline text-white/80">Privacy Policy</a>
+                  </p>
                 </div>
               </>
             )}

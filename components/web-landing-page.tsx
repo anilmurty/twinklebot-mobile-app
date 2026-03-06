@@ -25,6 +25,7 @@ export function WebLandingPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
@@ -50,6 +51,10 @@ export function WebLandingPage() {
       setIsLoading(true)
       setError(null)
       if (isSignUp) {
+        if (password !== confirmPassword) {
+          setError("Passwords do not match")
+          return
+        }
         await signUpWithEmail(email, password)
         alert("Account created! Please check your email to verify your account.")
       } else {
@@ -621,6 +626,16 @@ export function WebLandingPage() {
                 className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
               />
 
+              {isSignUp && (
+                <input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
+                />
+              )}
+
               <Button
                 onClick={handleEmailAuth}
                 disabled={isLoading}
@@ -635,6 +650,13 @@ export function WebLandingPage() {
               >
                 {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
               </button>
+
+              <p className="text-center text-xs text-muted-foreground">
+                By using TwinkleBot you agree to the{" "}
+                <a href="https://www.twinklebot.app/terms" className="underline hover:text-foreground">Terms of Service</a>
+                {" "}and the{" "}
+                <a href="https://www.twinklebot.app/privacy" className="underline hover:text-foreground">Privacy Policy</a>
+              </p>
             </div>
           </div>
         </div>
