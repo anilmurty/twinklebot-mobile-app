@@ -32,15 +32,17 @@ interface Template {
 // --- Category definitions ---
 
 const CATEGORIES = [
-  { id: "math", label: "Math Learning" },
   { id: "language", label: "Language Learning" },
+  { id: "math", label: "Math Learning" },
   { id: "world", label: "World Knowledge" },
+  { id: "scifi", label: "Sci-Fi & Fantasy" },
 ] as const
 
 function getDisplayCategory(title: string): string {
   if (title.includes("Count")) return "math"
   if (title.includes("Alphabet")) return "language"
   if (title.includes("Zoo")) return "world"
+  if (title.includes("Mission") || title.includes("Moon")) return "scifi"
   return "world"
 }
 
@@ -55,6 +57,8 @@ function getTagline(title: string): { verb: string; subject: string; color: stri
     return { verb: "TEACHES", subject: "LETTERS S-Z", color: "text-amber-400" }
   if (title.includes("Zoo"))
     return { verb: "EXPLORES", subject: "ANIMALS & NATURE", color: "text-amber-400" }
+  if (title.includes("Moon"))
+    return { verb: "EXPLORES", subject: "SPACE & SCIENCE", color: "text-amber-400" }
   return { verb: "EXPLORES", subject: "ADVENTURE", color: "text-amber-400" }
 }
 
@@ -311,19 +315,6 @@ export function StoryLibraryTab() {
           </Card>
         ) : (
           <>
-            {/* Category sections */}
-            {categorizedTemplates.map((cat) => (
-              <CategorySection
-                key={cat.id}
-                label={cat.label}
-                templates={cat.templates}
-                failedThumbnails={failedThumbnails}
-                onThumbnailError={handleThumbnailError}
-                onPreview={handlePreview}
-                onGenerate={handleGenerate}
-              />
-            ))}
-
             {/* All Stories section */}
             <section className="space-y-3">
               <h2
@@ -345,6 +336,21 @@ export function StoryLibraryTab() {
                 ))}
               </div>
             </section>
+
+            <hr className="mx-4 md:mx-8 border-t border-border/40" />
+
+            {/* Category sections */}
+            {categorizedTemplates.map((cat) => (
+              <CategorySection
+                key={cat.id}
+                label={cat.label}
+                templates={cat.templates}
+                failedThumbnails={failedThumbnails}
+                onThumbnailError={handleThumbnailError}
+                onPreview={handlePreview}
+                onGenerate={handleGenerate}
+              />
+            ))}
           </>
         )}
 

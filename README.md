@@ -83,6 +83,38 @@ AI-powered personalized storybook generator for kids. Parents upload photos of t
    pnpm dev
    \`\`\`
 
+## Mobile App (Capacitor)
+
+The native iOS/Android app is a thin Capacitor shell that loads the live web app at `https://www.twinklebot.app/app`. No local web build is required for the native app.
+
+### iOS
+
+1. Sync the Capacitor config to the native project:
+   ```bash
+   npx cap sync
+   ```
+
+2. Open the project in Xcode:
+   ```bash
+   npx cap open ios
+   ```
+
+3. In Xcode, select your target device/simulator and press the play button to build and run.
+
+### Android
+
+1. Sync the Capacitor config:
+   ```bash
+   npx cap sync
+   ```
+
+2. Open in Android Studio:
+   ```bash
+   npx cap open android
+   ```
+
+3. Build and run from Android Studio.
+
 ## API Endpoints
 
 ### Authentication
