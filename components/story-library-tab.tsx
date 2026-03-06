@@ -85,7 +85,7 @@ function LibraryCard({
   const tagline = getTagline(template.title)
 
   return (
-    <div className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+    <div className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group flex flex-col">
       {/* Image area */}
       <div
         className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
@@ -131,7 +131,7 @@ function LibraryCard({
       </div>
 
       {/* Title + tagline below image */}
-      <div className="mt-2.5 px-1">
+      <div className="mt-2.5 px-1 flex-1">
         <h3 className="font-semibold text-base leading-tight line-clamp-2 text-foreground">
           {template.title}
         </h3>
