@@ -271,7 +271,7 @@ export function CharactersTab() {
                         </button>
                         <button
                           onClick={() => handleDeleteClick(character.id, character.name)}
-                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-destructive/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          className="shrink-0 w-8 h-8 flex items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors"
                           title="Delete character"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

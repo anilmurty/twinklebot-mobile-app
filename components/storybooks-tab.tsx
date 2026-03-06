@@ -512,7 +512,7 @@ export function StorybooksTab() {
                         </div>
                         {/* Title + character below image */}
                         <div className="mt-2.5 px-1">
-                          <h3 className="font-semibold text-base leading-tight line-clamp-2 text-foreground">
+                          <h3 className="font-semibold text-base leading-tight line-clamp-2 min-h-[2lh] text-foreground">
                             {storybook.title}
                           </h3>
                           <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
@@ -535,7 +535,7 @@ export function StorybooksTab() {
                           )}
                           <button
                             onClick={() => handleDeleteClick(storybook.id, storybook.title)}
-                            className="shrink-0 h-8 w-9 flex items-center justify-center rounded-md border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/15 transition-colors"
+                            className="shrink-0 h-8 w-9 flex items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -595,7 +595,7 @@ export function StorybooksTab() {
                         </div>
                         {/* Title + character below image */}
                         <div className="mt-2.5 px-1">
-                          <h3 className="font-semibold text-base leading-tight line-clamp-2 text-foreground">
+                          <h3 className="font-semibold text-base leading-tight line-clamp-2 min-h-[2lh] text-foreground">
                             {storybook.title}
                           </h3>
                           <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
@@ -623,7 +623,7 @@ export function StorybooksTab() {
                           </Button>
                           <button
                             onClick={() => handleDeleteClick(storybook.id, storybook.title)}
-                            className="shrink-0 h-8 w-9 flex items-center justify-center rounded-md border border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/15 transition-colors"
+                            className="shrink-0 h-8 w-9 flex items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

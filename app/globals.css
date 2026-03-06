@@ -214,3 +214,42 @@
 .splash-sparkle-pulse {
   animation: splash-sparkle-pulse 2s ease-in-out infinite;
 }
+
+/* Star twinkle — synced with the wink/smile at 700ms */
+@keyframes splash-star-twinkle {
+  0%   { transform: scale(1); opacity: 1; }
+  15%  { transform: scale(1.6); opacity: 0.3; }
+  35%  { transform: scale(0.4); opacity: 1; }
+  55%  { transform: scale(1.5); opacity: 0.4; }
+  75%  { transform: scale(0.7); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.splash-star-twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: splash-star-twinkle 800ms ease-in-out 650ms both;
+}
+
+/* Shooting stars — bright white streaks across the screen */
+@keyframes splash-shoot-bl-tr {
+  0%   { transform: translate(-60vw, 50vh) rotate(-45deg); opacity: 0; }
+  4%   { opacity: 1; }
+  70%  { opacity: 0.7; }
+  100% { transform: translate(60vw, -50vh) rotate(-45deg); opacity: 0; }
+}
+
+@keyframes splash-shoot-br-tl {
+  0%   { transform: translate(60vw, 50vh) rotate(-135deg); opacity: 0; }
+  4%   { opacity: 1; }
+  70%  { opacity: 0.7; }
+  100% { transform: translate(-60vw, -50vh) rotate(-135deg); opacity: 0; }
+}
+
+.splash-shoot-bl-tr {
+  animation: splash-shoot-bl-tr 700ms linear 550ms both;
+}
+
+.splash-shoot-br-tl {
+  animation: splash-shoot-br-tl 700ms linear 700ms both;
+}

@@ -126,6 +126,32 @@ export function SplashScreen({ visible, onFadeComplete }: SplashScreenProps) {
         </div>
       ))}
 
+      {/* Shooting stars */}
+      <div
+        className="splash-shoot-bl-tr absolute"
+        style={{
+          left: "50%",
+          top: "50%",
+          width: "120px",
+          height: "2px",
+          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.7) 60%, white 100%)",
+          borderRadius: "2px",
+          boxShadow: "0 0 8px 3px rgba(255,255,255,0.4)",
+        }}
+      />
+      <div
+        className="splash-shoot-br-tl absolute"
+        style={{
+          left: "50%",
+          top: "50%",
+          width: "120px",
+          height: "2px",
+          background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 30%, rgba(255,255,255,0.7) 60%, white 100%)",
+          borderRadius: "2px",
+          boxShadow: "0 0 8px 3px rgba(255,255,255,0.4)",
+        }}
+      />
+
       {/* Robot SVG */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -160,14 +186,16 @@ export function SplashScreen({ visible, onFadeComplete }: SplashScreenProps) {
             className="splash-fil1"
             d="M1183.73 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
           />
-          {/* Small star */}
+          {/* Small star (twinkles with wink) */}
           <path
-            className="splash-fil2"
+            className="splash-fil2 splash-star-twinkle"
+            style={{ animationDelay: "750ms" }}
             d="M1186.25 930.87l21.8 10.68 10.68 21.8c1.29,2.56 3.74,3.85 6.2,3.85 2.46,0 4.92,-1.29 6.2,-3.85l10.68 -21.8 21.8 -10.68c5.12,-2.56 5.12,-9.83 0,-12.39l-21.8 -10.69 -10.68 -21.79c-2.57,-5.13 -9.83,-5.13 -12.4,0l-10.68 21.79 -21.8 10.69c-5.12,2.56 -5.12,9.83 0,12.39z"
           />
-          {/* Large star */}
+          {/* Large star (twinkles with wink) */}
           <path
-            className="splash-fil2"
+            className="splash-fil2 splash-star-twinkle"
+            style={{ animationDelay: "600ms" }}
             d="M1032.8 863.81l49.84 24.43 24.44 49.85c5.86,11.72 22.48,11.72 28.34,0l24.43 -49.85 49.85 -24.43c11.72,-5.86 11.72,-22.48 0,-28.34l-49.85 -24.44 -24.43 -49.84c-5.86,-11.73 -22.48,-11.73 -28.34,0l-24.44 49.84 -49.84 24.44c-5.87,2.93 -8.8,8.55 -8.8,14.17 0,5.62 2.93,11.24 8.8,14.17z"
           />
           {/* Body */}
