@@ -69,23 +69,23 @@ export function WebLandingPage() {
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const coverUrl = (slug: string) =>
-    `${supabaseUrl}/storage/v1/object/public/story-template-assets/${slug}/cover.png`
+  const assetUrl = (path: string) =>
+    `${supabaseUrl}/storage/v1/object/public/story-template-assets/${path}`
 
   // --- Top row: scrolls left (clockwise) ---
   const topRowStories = [
-    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: coverUrl("day-at-the-zoo") },
-    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: coverUrl("counting-adventures") },
-    { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: coverUrl("alphabet-adventures-a-i") },
-    // TODO: add more slugs here once cover images are uploaded
+    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/cover.jpg") },
+    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/cover.jpg") },
+    { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/cover-a-through-i.png") },
+    { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/cover.jpg") },
   ]
 
   // --- Bottom row: scrolls right (anti-clockwise) ---
   const bottomRowStories = [
-    { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: coverUrl("alphabet-adventures-j-r") },
-    { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: coverUrl("alphabet-adventures-s-z") },
-    { title: "Mission To The Moon", description: "A space adventure", image: coverUrl("mission-to-the-moon") },
-    // TODO: add more slugs here once cover images are uploaded
+    { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: assetUrl("alphabet-general/cover-j-through-r.png") },
+    { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: assetUrl("alphabet-general/cover-s-through-z.png") },
+    { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/cover.jpg") },
+    { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/cover.jpg") },
   ]
 
   return (
