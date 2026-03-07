@@ -400,11 +400,11 @@ export function WebLandingPage() {
                   <h3 className="text-sm sm:text-base font-normal uppercase tracking-widest text-primary mb-4 pl-2">
                     {cat.label}
                   </h3>
-                  <div className="relative overflow-hidden">
+                  <div className="relative overflow-hidden group/row">
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-24 z-10 bg-gradient-to-r from-card/80 to-transparent" />
                     <div className="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-24 z-10 bg-gradient-to-l from-card/80 to-transparent" />
                     <div
-                      className="flex gap-6 w-max hover:[animation-play-state:paused]"
+                      className="flex gap-6 w-max group-hover/row:[animation-play-state:paused]"
                       style={{ animation: `${direction} ${duration} linear infinite` }}
                     >
                       {[...stories, ...stories].map((story, i) => (
@@ -423,7 +423,7 @@ export function WebLandingPage() {
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
                             <h3 className="text-xl font-bold mb-1 text-white">{story.title}</h3>
-                            <p className="text-primary text-sm">{story.description}</p>
+                            <p className="text-white/80 text-sm">{story.description}</p>
                           </div>
                         </div>
                       ))}
