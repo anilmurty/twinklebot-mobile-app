@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -30,6 +30,15 @@ export function WebLandingPage() {
   const [error, setError] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [heroIndex, setHeroIndex] = useState(0)
+  const heroImages = ["/hero-1.png", "/hero-2.png", "/hero-3.png"]
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % heroImages.length)
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [heroImages.length])
 
   // Toggle to show/hide pricing section (for A/B testing)
   const showPricing = false
@@ -236,15 +245,18 @@ export function WebLandingPage() {
 
       {/* Hero Section — Desktop: full-bleed image with text on dark left; Mobile: stacked */}
       <section className="relative">
-        {/* Desktop: full-bleed background image */}
+        {/* Desktop: full-bleed background image with crossfade */}
         <div className="hidden lg:block relative min-h-[600px] xl:min-h-[680px]">
-          <Image
-            src="/landing-hero.png"
-            alt="Parent and child experiencing TwinkleBot storybooks"
-            fill
-            className="object-cover object-center"
-            priority
-          />
+          {heroImages.map((src, i) => (
+            <Image
+              key={src}
+              src={src}
+              alt="Parent and child experiencing TwinkleBot storybooks"
+              fill
+              className={`object-cover object-center transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
+              priority={i === 0}
+            />
+          ))}
           {/* Text overlay on the dark left side */}
           <div className="absolute inset-0 flex items-center">
             <div className="max-w-7xl mx-auto w-full px-8 lg:px-12">
@@ -357,15 +369,18 @@ export function WebLandingPage() {
             </div>
           </div>
 
-          {/* Hero image below text on mobile */}
+          {/* Hero image below text on mobile — crossfade carousel */}
           <div className="relative w-full aspect-[16/9]">
-            <Image
-              src="/landing-hero.png"
-              alt="Parent and child experiencing TwinkleBot storybooks"
-              fill
-              className="object-cover object-right"
-              priority
-            />
+            {heroImages.map((src, i) => (
+              <Image
+                key={src}
+                src={src}
+                alt="Parent and child experiencing TwinkleBot storybooks"
+                fill
+                className={`object-cover object-right transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
+                priority={i === 0}
+              />
+            ))}
           </div>
         </div>
       </section>
