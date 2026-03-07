@@ -249,13 +249,22 @@ export async function POST(request: NextRequest) {
     // Get template
     const { data: template } = await supabaseAdmin
       .from('story_templates')
-      .select('id, title, scene_count')
+      .select('id, title, scene_count, script_data')
       .eq('id', template_id)
       .eq('is_active', true)
       .single()
 
     if (!template) {
       return NextResponse.json({ error: 'Template not found' }, { status: 404 })
+    }
+
+    // Guard: reject coming-soon templates (empty scenes)
+    const templateScenes = (template as any).script_data?.scenes
+    if (!templateScenes || !Array.isArray(templateScenes) || templateScenes.length === 0) {
+      return NextResponse.json(
+        { error: 'This story is coming soon and not yet available for generation' },
+        { status: 400 }
+      )
     }
 
     // Fetch profile for monthly limit info

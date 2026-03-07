@@ -125,6 +125,13 @@ function getMockData<T>(endpoint: string, method: string = 'GET'): T | null {
     }
   }
 
+  // Mock story-interest data
+  if (endpoint.startsWith('/story-interest')) {
+    if (method === 'POST' || method === 'DELETE') {
+      return { success: true } as T
+    }
+  }
+
   // Mock templates data
   if (endpoint.startsWith('/story-templates') && method === 'GET') {
     if (endpoint === '/story-templates') {
@@ -320,6 +327,19 @@ export const storybooksApi = {
 export const characterLooksApi = {
   list: (templateId: number, gender: 'male' | 'female') =>
     apiRequest<{ looks: any[] }>(`/character-looks?template_id=${templateId}&gender=${gender}`),
+}
+
+// Story Interest API (Notify Me)
+export const storyInterestApi = {
+  notify: (templateId: number) =>
+    apiRequest<{ success: boolean }>('/story-interest', {
+      method: 'POST',
+      body: JSON.stringify({ template_id: templateId }),
+    }),
+  remove: (templateId: number) =>
+    apiRequest<void>(`/story-interest?template_id=${templateId}`, {
+      method: 'DELETE',
+    }),
 }
 
 // Story Templates API

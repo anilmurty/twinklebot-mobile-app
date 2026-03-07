@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/auth'
 
 /**
  * GET /api/v1/story-templates
@@ -98,6 +99,25 @@ export async function GET(request: NextRequest) {
           result.thumbnail_url = null
         }
 
+        // Derive mock_story_data from script_data when missing
+        // This allows preview to work for any template that has script_data with base_photo
+        if ((!result.mock_story_data || !result.mock_story_data.scenes || result.mock_story_data.scenes.length === 0)
+            && result.script_data?.scenes?.length > 0) {
+          // Extract folder prefix from thumbnail_url (e.g. "/field-trip-to-the-fire-station/cover.png" → "field-trip-to-the-fire-station")
+          const folderPrefix = template.thumbnail_url
+            ? template.thumbnail_url.replace(/^\//, '').split('/')[0]
+            : ''
+          result.mock_story_data = {
+            character_name: 'Alex',
+            scenes: result.script_data.scenes.map((scene: any) => ({
+              scene_number: scene.scene_number,
+              headline: scene.headline,
+              script_text: scene.script_text,
+              image_url: folderPrefix ? `/${folderPrefix}/${scene.base_photo}` : scene.base_photo,
+            })),
+          }
+        }
+
         // Process mock_story_data image URLs if present
         if (result.mock_story_data && result.mock_story_data.scenes) {
           const { getStorageUrl } = await import('@/lib/supabase/storage')
@@ -125,11 +145,53 @@ export async function GET(request: NextRequest) {
       })
     )
 
+    // Compute coming-soon status and interest data
+    // Aggregate interest counts per template
+    const { data: interestCounts } = await supabaseAdmin
+      .from('story_interest')
+      .select('template_id')
+
+    const interestCountMap: Record<number, number> = {}
+    if (interestCounts) {
+      for (const row of interestCounts) {
+        interestCountMap[row.template_id] = (interestCountMap[row.template_id] || 0) + 1
+      }
+    }
+
+    // Check if request has auth — if so, look up user's interests
+    let userInterestSet = new Set<number>()
+    const user = await getAuthUser(request)
+    if (user) {
+      const userId = user.data.user?.id
+      if (userId) {
+        const { data: userInterests } = await supabaseAdmin
+          .from('story_interest')
+          .select('template_id')
+          .eq('user_id', userId)
+
+        if (userInterests) {
+          userInterestSet = new Set(userInterests.map((r) => r.template_id))
+        }
+      }
+    }
+
+    // Attach coming-soon fields to each template
+    const templatesWithComingSoon = templatesWithUrls.map((t: any) => {
+      const scenes = t.script_data?.scenes
+      const isComingSoon = !scenes || !Array.isArray(scenes) || scenes.length === 0
+      return {
+        ...t,
+        is_coming_soon: isComingSoon,
+        user_interested: userInterestSet.has(t.id),
+        interest_count: interestCountMap[t.id] || 0,
+      }
+    })
+
     // Add caching headers - templates rarely change
     // s-maxage: CDN cache for 5 minutes
     // stale-while-revalidate: serve stale content while revalidating for 10 minutes
     return NextResponse.json(
-      { templates: templatesWithUrls || [] },
+      { templates: templatesWithComingSoon || [] },
       {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',

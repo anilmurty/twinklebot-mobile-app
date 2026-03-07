@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { templatesApi, characterLooksApi } from '@/lib/api-client'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { templatesApi, characterLooksApi, storyInterestApi } from '@/lib/api-client'
 
 // Query keys for templates
 export const templateKeys = {
@@ -53,6 +53,20 @@ export function useCharacterLooks(templateId: number, gender: 'male' | 'female')
     queryFn: () => characterLooksApi.list(templateId, gender),
     enabled: !!templateId && !!gender,
     staleTime: 30 * 60 * 1000, // 30 minutes
+  })
+}
+
+/**
+ * Hook to record interest in a coming-soon template ("Notify Me")
+ * On success, invalidates template lists to refresh interest state
+ */
+export function useNotifyInterest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (templateId: number) => storyInterestApi.notify(templateId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: templateKeys.lists() })
+    },
   })
 }
 

@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
 import { QueryProvider } from "@/lib/providers/query-provider"
 import { CapacitorInitializer } from "@/components/capacitor-initializer"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -68,6 +69,7 @@ export default function RootLayout({
             {children}
           </AuthProvider>
         </QueryProvider>
+        <Toaster position="top-center" duration={3000} theme="dark" />
         <Analytics />
       </body>
     </html>

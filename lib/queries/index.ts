@@ -34,6 +34,7 @@ export {
   useTemplates,
   useTemplate,
   useCharacterLooks,
+  useNotifyInterest,
 } from './use-templates'
 
 // Profile & Subscriptions

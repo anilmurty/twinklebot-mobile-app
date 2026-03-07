@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { BookOpen, Loader2, Lightbulb, Eye, Sparkles } from "lucide-react"
+import { BookOpen, Loader2, Lightbulb, Eye, Sparkles, Bell, BellRing } from "lucide-react"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
 import {
   Dialog,
@@ -15,7 +15,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { useTemplates } from "@/lib/queries"
+import { useTemplates, useNotifyInterest } from "@/lib/queries"
+import { useAuth } from "@/lib/auth-context"
+import { toast } from "sonner"
 
 interface Template {
   id: number
@@ -27,6 +29,10 @@ interface Template {
     scenes?: any[]
     character_name?: string
   }
+  category?: string
+  is_coming_soon?: boolean
+  user_interested?: boolean
+  interest_count?: number
 }
 
 // --- Category definitions ---
@@ -38,7 +44,24 @@ const CATEGORIES = [
   { id: "scifi", label: "Sci-Fi & Fantasy" },
 ] as const
 
-function getDisplayCategory(title: string): string {
+function getDisplayCategory(title: string, dbCategory?: string): string {
+  // Prefer DB category when it matches a known category id
+  if (dbCategory) {
+    const knownIds = CATEGORIES.map((c) => c.id) as readonly string[]
+    // Map DB categories to display category ids
+    const categoryMap: Record<string, string> = {
+      adventure: "world",
+      numbers: "math",
+      letters: "language",
+      scifi: "scifi",
+      math: "math",
+      language: "language",
+      world: "world",
+    }
+    const mapped = categoryMap[dbCategory]
+    if (mapped && knownIds.includes(mapped)) return mapped
+  }
+  // Fallback: infer from title
   if (title.includes("Count")) return "math"
   if (title.includes("Alphabet")) return "language"
   if (title.includes("Zoo")) return "world"
@@ -59,6 +82,10 @@ function getTagline(title: string): { verb: string; subject: string; color: stri
     return { verb: "EXPLORES", subject: "ANIMALS & NATURE", color: "text-amber-400" }
   if (title.includes("Moon"))
     return { verb: "EXPLORES", subject: "SPACE & SCIENCE", color: "text-amber-400" }
+  if (title.includes("Fire Station"))
+    return { verb: "EXPLORES", subject: "COMMUNITY HELPERS", color: "text-amber-400" }
+  if (title.includes("Farmer"))
+    return { verb: "TEACHES", subject: "MATH CONCEPTS", color: "text-amber-400" }
   return { verb: "EXPLORES", subject: "ADVENTURE", color: "text-amber-400" }
 }
 
@@ -70,12 +97,16 @@ function LibraryCard({
   onThumbnailError,
   onPreview,
   onGenerate,
+  onNotify,
+  notifyingId,
 }: {
   template: Template
   failedThumbnails: Set<number>
   onThumbnailError: (id: number) => void
   onPreview: (template: Template) => void
   onGenerate: (template: Template) => void
+  onNotify: (template: Template) => void
+  notifyingId: number | null
 }) {
   const thumbnail = template.thumbnail_url
   const hasMock =
@@ -83,19 +114,24 @@ function LibraryCard({
     Array.isArray(template.mock_story_data.scenes) &&
     template.mock_story_data.scenes.length > 0
   const tagline = getTagline(template.title)
+  const isComingSoon = template.is_coming_soon
+  const isNotified = template.user_interested
 
   return (
     <div className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group flex flex-col">
       {/* Image area */}
       <div
-        className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
-        onClick={() => (hasMock ? onPreview(template) : onGenerate(template))}
+        className={`relative aspect-[3/4] rounded-2xl overflow-hidden ${isComingSoon ? "cursor-default" : "cursor-pointer"}`}
+        onClick={() => {
+          if (isComingSoon) return
+          hasMock ? onPreview(template) : onGenerate(template)
+        }}
       >
         {thumbnail && !failedThumbnails.has(template.id) ? (
           <img
             src={thumbnail}
             alt={template.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className={`w-full h-full object-cover transition-transform duration-300 ${isComingSoon ? "" : "group-hover:scale-105"}`}
             onError={() => onThumbnailError(template.id)}
           />
         ) : (
@@ -105,29 +141,31 @@ function LibraryCard({
         )}
         {/* Bottom gradient overlay */}
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-        {/* Desktop hover overlay */}
-        <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center gap-2">
-          {hasMock && (
+        {/* Desktop hover overlay — hidden for coming-soon */}
+        {!isComingSoon && (
+          <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center gap-2">
+            {hasMock && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onPreview(template)
+                }}
+                className="px-4 py-2 rounded-full bg-white/90 text-gray-900 text-sm font-semibold hover:bg-white transition-colors"
+              >
+                Preview
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                onPreview(template)
+                onGenerate(template)
               }}
-              className="px-4 py-2 rounded-full bg-white/90 text-gray-900 text-sm font-semibold hover:bg-white transition-colors"
+              className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
             >
-              Preview
+              Generate
             </button>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onGenerate(template)
-            }}
-            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            Generate
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Title + tagline below image */}
@@ -141,28 +179,90 @@ function LibraryCard({
         </p>
       </div>
 
-      {/* Mobile buttons below tagline */}
-      <div className="flex gap-2 mt-2 px-1 md:hidden">
-        {hasMock && (
+      {/* Buttons below tagline */}
+      {isComingSoon ? (
+        <div className="flex gap-2 mt-2 px-1">
           <Button
             size="sm"
             variant="outline"
-            className="flex-1 h-8 text-xs border-white/20 text-white/80 hover:bg-white/10"
-            onClick={() => onPreview(template)}
+            className="flex-1 h-8 text-xs border-white/20 text-white/40 cursor-default"
+            disabled
           >
-            <Eye className="w-3 h-3 mr-1" />
-            Preview
+            Coming Soon
           </Button>
-        )}
-        <Button
-          size="sm"
-          className={`${hasMock ? "flex-1" : "w-full"} h-8 text-xs`}
-          onClick={() => onGenerate(template)}
-        >
-          <BookOpen className="w-3 h-3 mr-1" />
-          Generate
-        </Button>
-      </div>
+          {isNotified ? (
+            <Button
+              size="sm"
+              className="flex-1 h-8 text-xs bg-emerald-600 hover:bg-emerald-600 text-white cursor-default"
+              disabled
+            >
+              <BellRing className="w-3 h-3 mr-1" />
+              Notified
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="flex-1 h-8 text-xs"
+              onClick={() => onNotify(template)}
+              disabled={notifyingId === template.id}
+            >
+              {notifyingId === template.id ? (
+                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+              ) : (
+                <Bell className="w-3 h-3 mr-1" />
+              )}
+              Notify Me
+            </Button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Mobile buttons */}
+          <div className="flex gap-2 mt-2 px-1 md:hidden">
+            {hasMock && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs border-white/20 text-white/80 hover:bg-white/10"
+                onClick={() => onPreview(template)}
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Preview
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className={`${hasMock ? "flex-1" : "w-full"} h-8 text-xs`}
+              onClick={() => onGenerate(template)}
+            >
+              <BookOpen className="w-3 h-3 mr-1" />
+              Generate
+            </Button>
+          </div>
+          {/* Desktop buttons (hidden on mobile since hover overlay handles it, but show for consistency) */}
+          <div className="hidden md:flex gap-2 mt-2 px-1">
+            {hasMock && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1 h-8 text-xs border-white/20 text-white/80 hover:bg-white/10"
+                onClick={() => onPreview(template)}
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Preview
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className={`${hasMock ? "flex-1" : "w-full"} h-8 text-xs`}
+              onClick={() => onGenerate(template)}
+            >
+              <BookOpen className="w-3 h-3 mr-1" />
+              Generate
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -176,6 +276,8 @@ function CategorySection({
   onThumbnailError,
   onPreview,
   onGenerate,
+  onNotify,
+  notifyingId,
 }: {
   label: string
   templates: Template[]
@@ -183,6 +285,8 @@ function CategorySection({
   onThumbnailError: (id: number) => void
   onPreview: (template: Template) => void
   onGenerate: (template: Template) => void
+  onNotify: (template: Template) => void
+  notifyingId: number | null
 }) {
   if (templates.length === 0) return null
 
@@ -203,6 +307,8 @@ function CategorySection({
             onThumbnailError={onThumbnailError}
             onPreview={onPreview}
             onGenerate={onGenerate}
+            onNotify={onNotify}
+            notifyingId={notifyingId}
           />
         ))}
       </div>
@@ -215,6 +321,7 @@ function CategorySection({
 export function StoryLibraryTab() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user } = useAuth()
 
   const {
     data: templatesData,
@@ -231,6 +338,9 @@ export function StoryLibraryTab() {
   const [feedbackText, setFeedbackText] = useState("")
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+  const [notifyingId, setNotifyingId] = useState<number | null>(null)
+
+  const notifyMutation = useNotifyInterest()
 
   // Check for templateId in URL params to auto-open generate modal (from preview page)
   useEffect(() => {
@@ -272,6 +382,27 @@ export function StoryLibraryTab() {
     setSelectedStory(template)
   }, [])
 
+  const handleNotify = useCallback(
+    (template: Template) => {
+      if (!user) {
+        toast.info("Sign in to get notified when new stories are ready!")
+        return
+      }
+      setNotifyingId(template.id)
+      notifyMutation.mutate(template.id, {
+        onSuccess: () => {
+          toast.success(`We'll notify you when ${template.title} is ready!`)
+          setNotifyingId(null)
+        },
+        onError: () => {
+          toast.error("Something went wrong. Please try again.")
+          setNotifyingId(null)
+        },
+      })
+    },
+    [user, notifyMutation]
+  )
+
   const handleSubmitFeedback = async () => {
     if (!feedbackText.trim()) return
 
@@ -291,7 +422,7 @@ export function StoryLibraryTab() {
   // Group templates by category
   const categorizedTemplates = CATEGORIES.map((cat) => ({
     ...cat,
-    templates: templates.filter((t) => getDisplayCategory(t.title) === cat.id),
+    templates: templates.filter((t) => getDisplayCategory(t.title, t.category) === cat.id),
   }))
 
   return (
@@ -332,6 +463,8 @@ export function StoryLibraryTab() {
                     onThumbnailError={handleThumbnailError}
                     onPreview={handlePreview}
                     onGenerate={handleGenerate}
+                    onNotify={handleNotify}
+                    notifyingId={notifyingId}
                   />
                 ))}
               </div>
@@ -349,6 +482,8 @@ export function StoryLibraryTab() {
                 onThumbnailError={handleThumbnailError}
                 onPreview={handlePreview}
                 onGenerate={handleGenerate}
+                onNotify={handleNotify}
+                notifyingId={notifyingId}
               />
             ))}
           </>
@@ -409,14 +544,25 @@ export function StoryLibraryTab() {
           <div className="grid gap-2 py-4 overflow-y-auto max-h-[50vh]">
             {templates.map((template) => {
               const tagline = getTagline(template.title)
+              const isComingSoon = template.is_coming_soon
+              const isNotified = template.user_interested
               return (
                 <button
                   key={template.id}
                   onClick={() => {
+                    if (isComingSoon) {
+                      handleNotify(template)
+                      return
+                    }
                     setShowTemplatePicker(false)
                     setSelectedStory(template)
                   }}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left w-full group"
+                  disabled={isComingSoon && isNotified}
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left w-full group ${
+                    isComingSoon && isNotified
+                      ? "border-emerald-500/30 bg-emerald-500/5 cursor-default"
+                      : "border-border hover:border-primary/50 hover:bg-primary/5"
+                  }`}
                 >
                   {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
                     <img
@@ -430,8 +576,13 @@ export function StoryLibraryTab() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors">
+                    <h4 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1.5">
                       {template.title}
+                      {isComingSoon && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase tracking-wide shrink-0">
+                          Soon
+                        </span>
+                      )}
                     </h4>
                     <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
                       <span className="text-muted-foreground">{tagline.verb}</span>
@@ -442,7 +593,15 @@ export function StoryLibraryTab() {
                         "A personalized adventure"}
                     </p>
                   </div>
-                  <Sparkles className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
+                  {isComingSoon ? (
+                    isNotified ? (
+                      <BellRing className="w-4 h-4 text-emerald-400 shrink-0" />
+                    ) : (
+                      <Bell className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
+                    )
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
+                  )}
                 </button>
               )
             })}
