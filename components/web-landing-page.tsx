@@ -234,81 +234,138 @@ export function WebLandingPage() {
         )}
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left: Copy */}
-            <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 text-primary text-sm font-medium mb-6">
-                <Sparkles className="w-4 h-4" />
-                AI-Powered Personalization
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ fontFamily: "var(--font-display)" }}>
-                <span className="text-primary">
-                  Storybooks Where
-                </span>
-                <br />
-                <span className="text-secondary">
-                  Your Child Is The Hero
-                </span>
-              </h1>
-
-              <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0">
-                Upload a photo, choose a story, and watch as AI creates a magical,
-                personalized storybook featuring your child as the main character.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/app">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
-                  >
-                    Create Your First Story
-                    <ChevronRight className="w-5 h-5 ml-1" />
-                  </Button>
-                </Link>
-                <a href="#how-it-works">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full sm:w-auto border-border text-foreground hover:bg-muted h-14 px-8 text-lg"
-                  >
-                    See How It Works
-                  </Button>
-                </a>
-              </div>
-
-              {/* Social proof */}
-              <div className="mt-10 flex items-center gap-2 justify-center lg:justify-start">
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                  ))}
+      {/* Hero Section — Desktop: full-bleed image with text on dark left; Mobile: stacked */}
+      <section className="relative">
+        {/* Desktop: full-bleed background image */}
+        <div className="hidden lg:block relative min-h-[600px] xl:min-h-[680px]">
+          <Image
+            src="/landing-hero.png"
+            alt="Parent and child experiencing TwinkleBot storybooks"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+          {/* Text overlay on the dark left side */}
+          <div className="absolute inset-0 flex items-center">
+            <div className="max-w-7xl mx-auto w-full px-8 lg:px-12">
+              <div className="max-w-lg">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6 backdrop-blur-sm">
+                  <Sparkles className="w-4 h-4" />
+                  AI-Powered Personalization
                 </div>
-                <p className="text-sm text-muted-foreground">Loved by parents everywhere</p>
+
+                <h1 className="text-5xl xl:text-6xl font-bold leading-tight mb-6" style={{ fontFamily: "var(--font-display)" }}>
+                  <span className="text-primary">
+                    Storybooks Where
+                  </span>
+                  <br />
+                  <span className="text-secondary">
+                    Your Child Is The Hero
+                  </span>
+                </h1>
+
+                <p className="text-lg xl:text-xl text-white/80 mb-8 max-w-md">
+                  Upload a photo, choose a story, and watch as AI creates a magical,
+                  personalized storybook featuring your child as the main character.
+                </p>
+
+                <div className="flex gap-4">
+                  <Link href="/app">
+                    <Button
+                      size="lg"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+                    >
+                      Create Your First Story
+                      <ChevronRight className="w-5 h-5 ml-1" />
+                    </Button>
+                  </Link>
+                  <a href="#how-it-works">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-white/30 text-white hover:bg-white/10 h-14 px-8 text-lg"
+                    >
+                      See How It Works
+                    </Button>
+                  </a>
+                </div>
+
+                <div className="mt-10 flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Star key={i} className="w-5 h-5 fill-primary text-primary" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-white/60">Loved by parents everywhere</p>
+                </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Right: Hero Image */}
-            <div className="relative">
-              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-black/40 border border-border/50">
-                <Image
-                  src="/landing-hero.jpg"
-                  alt="Parent and child experiencing TwinkleBot storybooks"
-                  width={600}
-                  height={450}
-                  className="w-full h-auto object-cover"
-                  priority
-                />
-              </div>
-
-              {/* Decorative elements */}
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/15 rounded-full blur-xl" />
-              <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-secondary/15 rounded-full blur-xl" />
+        {/* Mobile: stacked layout */}
+        <div className="lg:hidden">
+          <div className="pt-12 pb-8 px-4 sm:px-6 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 text-primary text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4" />
+              AI-Powered Personalization
             </div>
+
+            <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-6" style={{ fontFamily: "var(--font-display)" }}>
+              <span className="text-primary">
+                Storybooks Where
+              </span>
+              <br />
+              <span className="text-secondary">
+                Your Child Is The Hero
+              </span>
+            </h1>
+
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+              Upload a photo, choose a story, and watch as AI creates a magical,
+              personalized storybook featuring your child as the main character.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/app">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+                >
+                  Create Your First Story
+                  <ChevronRight className="w-5 h-5 ml-1" />
+                </Button>
+              </Link>
+              <a href="#how-it-works">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto border-border text-foreground hover:bg-muted h-14 px-8 text-lg"
+                >
+                  See How It Works
+                </Button>
+              </a>
+            </div>
+
+            <div className="mt-8 flex items-center gap-2 justify-center">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="w-5 h-5 fill-primary text-primary" />
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">Loved by parents everywhere</p>
+            </div>
+          </div>
+
+          {/* Hero image below text on mobile */}
+          <div className="relative w-full aspect-[16/9]">
+            <Image
+              src="/landing-hero.png"
+              alt="Parent and child experiencing TwinkleBot storybooks"
+              fill
+              className="object-cover object-right"
+              priority
+            />
           </div>
         </div>
       </section>
