@@ -267,11 +267,7 @@ export function WebLandingPage() {
                   </span>
                   <br />
                   <span className="text-white">
-                    Your Child Is
-                  </span>
-                  <br />
-                  <span className="text-white">
-                    A Hero
+                    Your Child Is The Hero
                   </span>
                 </h1>
 
@@ -373,7 +369,7 @@ export function WebLandingPage() {
       <section id="stories" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4" style={{ fontFamily: "var(--font-display)" }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4" style={{ fontFamily: "var(--font-display)" }}>
               Educational Stories Kids Love
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -401,7 +397,7 @@ export function WebLandingPage() {
               const duration = `${Math.max(40, stories.length * 5)}s`
               return (
                 <div key={cat.id}>
-                  <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4 pl-2" style={{ fontFamily: "var(--font-display)" }}>
+                  <h3 className="text-xl sm:text-2xl font-semibold italic text-foreground mb-4 pl-2" style={{ fontFamily: "var(--font-display)" }}>
                     {cat.label}
                   </h3>
                   <div className="relative overflow-hidden">
@@ -426,7 +422,7 @@ export function WebLandingPage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                            <h3 className="text-xl font-bold mb-1">{story.title}</h3>
+                            <h3 className="text-xl font-bold mb-1 text-primary">{story.title}</h3>
                             <p className="text-white/80 text-sm">{story.description}</p>
                           </div>
                         </div>
