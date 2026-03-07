@@ -397,7 +397,7 @@ export function WebLandingPage() {
               const duration = `${Math.max(40, stories.length * 5)}s`
               return (
                 <div key={cat.id}>
-                  <h3 className="text-xl sm:text-2xl font-semibold italic text-foreground mb-4 pl-2" style={{ fontFamily: "var(--font-display)" }}>
+                  <h3 className="text-sm sm:text-base font-normal uppercase tracking-widest text-primary mb-4 pl-2">
                     {cat.label}
                   </h3>
                   <div className="relative overflow-hidden">
@@ -410,7 +410,7 @@ export function WebLandingPage() {
                       {[...stories, ...stories].map((story, i) => (
                         <div
                           key={i}
-                          className="group relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px]"
+                          className="group relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer"
                         >
                           <div className="aspect-[4/3] relative">
                             <Image
@@ -422,8 +422,8 @@ export function WebLandingPage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                            <h3 className="text-xl font-bold mb-1 text-primary">{story.title}</h3>
-                            <p className="text-white/80 text-sm">{story.description}</p>
+                            <h3 className="text-xl font-bold mb-1 text-white">{story.title}</h3>
+                            <p className="text-primary text-sm">{story.description}</p>
                           </div>
                         </div>
                       ))}
