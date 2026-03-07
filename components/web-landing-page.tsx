@@ -261,25 +261,19 @@ export function WebLandingPage() {
           <div className="absolute inset-0 flex items-center">
             <div className="max-w-7xl mx-auto w-full px-8 lg:px-12">
               <div className="max-w-lg">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 text-primary text-sm font-medium mb-6 backdrop-blur-sm">
-                  <Sparkles className="w-4 h-4" />
-                  AI-Powered Personalization
-                </div>
-
-                <h1 className="text-5xl xl:text-6xl font-bold leading-tight mb-6" style={{ fontFamily: "var(--font-display)" }}>
+                <h1 className="text-5xl xl:text-6xl font-bold leading-tight mb-8" style={{ fontFamily: "var(--font-display)" }}>
                   <span className="text-primary">
                     Storybooks Where
                   </span>
                   <br />
                   <span className="text-white">
-                    Your Child Is The Hero
+                    Your Child Is
+                  </span>
+                  <br />
+                  <span className="text-white">
+                    A Hero
                   </span>
                 </h1>
-
-                <p className="text-lg xl:text-xl text-white/80 mb-8 max-w-md">
-                  Upload a photo, choose a story, and watch as AI creates a magical,
-                  personalized storybook featuring your child as the main character.
-                </p>
 
                 <div className="flex gap-4">
                   <Link href="/app">
@@ -315,14 +309,23 @@ export function WebLandingPage() {
           </div>
         </div>
 
-        {/* Mobile: stacked layout */}
+        {/* Mobile: stacked layout — image on top, text below */}
         <div className="lg:hidden">
-          <div className="pt-12 pb-8 px-4 sm:px-6 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/15 text-primary text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4" />
-              AI-Powered Personalization
-            </div>
+          {/* Hero image on top — crossfade carousel */}
+          <div className="relative w-full aspect-[16/9]">
+            {heroImages.map((src, i) => (
+              <Image
+                key={src}
+                src={src}
+                alt="Parent and child experiencing TwinkleBot storybooks"
+                fill
+                className={`object-cover object-right transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
+                priority={i === 0}
+              />
+            ))}
+          </div>
 
+          <div className="pt-8 pb-8 px-4 sm:px-6 text-center">
             <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-6" style={{ fontFamily: "var(--font-display)" }}>
               <span className="text-primary">
                 Storybooks Where
@@ -332,11 +335,6 @@ export function WebLandingPage() {
                 Your Child Is The Hero
               </span>
             </h1>
-
-            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Upload a photo, choose a story, and watch as AI creates a magical,
-              personalized storybook featuring your child as the main character.
-            </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/app">
@@ -367,20 +365,6 @@ export function WebLandingPage() {
               </div>
               <p className="text-sm text-muted-foreground">Loved by parents everywhere</p>
             </div>
-          </div>
-
-          {/* Hero image below text on mobile — crossfade carousel */}
-          <div className="relative w-full aspect-[16/9]">
-            {heroImages.map((src, i) => (
-              <Image
-                key={src}
-                src={src}
-                alt="Parent and child experiencing TwinkleBot storybooks"
-                fill
-                className={`object-cover object-right transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
-                priority={i === 0}
-              />
-            ))}
           </div>
         </div>
       </section>
