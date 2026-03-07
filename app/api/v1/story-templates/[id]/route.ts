@@ -69,6 +69,23 @@ export async function GET(
       }
     }
 
+    // Derive mock_story_data from script_data when missing
+    if ((!result.mock_story_data || !result.mock_story_data.scenes || result.mock_story_data.scenes.length === 0)
+        && result.script_data?.scenes?.length > 0) {
+      const folderPrefix = data.thumbnail_url
+        ? data.thumbnail_url.replace(/^\//, '').split('/')[0]
+        : ''
+      result.mock_story_data = {
+        character_name: 'Alex',
+        scenes: result.script_data.scenes.map((scene: any) => ({
+          scene_number: scene.scene_number,
+          headline: scene.headline,
+          script_text: scene.script_text,
+          image_url: folderPrefix ? `/${folderPrefix}/${scene.base_photo}` : scene.base_photo,
+        })),
+      }
+    }
+
     // Process mock_story_data image URLs if present
     if (result.mock_story_data && result.mock_story_data.scenes) {
       console.log(`[Template ${templateId}] Processing mock_story_data with ${result.mock_story_data.scenes.length} scenes`)
