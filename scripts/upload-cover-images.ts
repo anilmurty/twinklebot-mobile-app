@@ -7,11 +7,19 @@
  * 3. If the folder exists and already contains a file with the same name, skip it
  * 4. Otherwise, create the folder (if needed) and upload the file
  *
+ * Requires NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env.local
+ *
  * Usage:
  *   npx tsx scripts/upload-cover-images.ts <local-folder> <bucket-name>
  *
- * Example:
- *   npx tsx scripts/upload-cover-images.ts ./coming-soon-covers story-covers
+ * Example (uploading coming-soon cover images):
+ *   npx tsx scripts/upload-cover-images.ts /Users/anilmurty/Desktop/Twinklebot/base-scene-images-with-kid/Coming-Soon-Covers story-template-assets
+ *
+ * The script will:
+ *   - Find all .png files in the local folder (e.g. "a-day-in-my-body.png")
+ *   - Upload each to <bucket>/<name>/<name>.png (e.g. "story-template-assets/a-day-in-my-body/a-day-in-my-body.png")
+ *   - Skip files that already exist in the bucket
+ *   - Report OK/SKIP/ERROR for each file and a summary at the end
  */
 
 import { createClient } from '@supabase/supabase-js'
