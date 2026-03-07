@@ -74,18 +74,18 @@ export function WebLandingPage() {
 
   // --- Top row: scrolls left (clockwise) ---
   const topRowStories = [
-    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/cover.jpg") },
-    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/cover.jpg") },
+    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/cover.png") },
+    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/cover.png") },
     { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/cover-a-through-i.png") },
-    { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/cover.jpg") },
+    { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/cover.png") },
   ]
 
   // --- Bottom row: scrolls right (anti-clockwise) ---
   const bottomRowStories = [
     { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: assetUrl("alphabet-general/cover-j-through-r.png") },
     { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: assetUrl("alphabet-general/cover-s-through-z.png") },
-    { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/cover.jpg") },
-    { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/cover.jpg") },
+    { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/cover.png") },
+    { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/cover.png") },
   ]
 
   return (
