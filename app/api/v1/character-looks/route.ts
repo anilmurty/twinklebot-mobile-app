@@ -25,17 +25,37 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: looks, error } = await supabaseAdmin
+    // Try template-specific looks first
+    const { data: templateLooks, error: templateError } = await supabaseAdmin
       .from('character_looks')
       .select('*')
       .eq('template_id', parseInt(templateId))
       .eq('gender', gender)
       .eq('is_active', true)
-      .order('is_original', { ascending: false }) // Original option first
+      .order('is_original', { ascending: false })
       .order('display_order', { ascending: true })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (templateError) {
+      return NextResponse.json({ error: templateError.message }, { status: 500 })
+    }
+
+    // If no template-specific looks, fall back to generic looks (template_id IS NULL)
+    let looks = templateLooks
+    if (!looks || looks.length === 0) {
+      const { data: genericLooks, error: genericError } = await supabaseAdmin
+        .from('character_looks')
+        .select('*')
+        .is('template_id', null)
+        .eq('gender', gender)
+        .eq('is_active', true)
+        .order('is_original', { ascending: false })
+        .order('display_order', { ascending: true })
+
+      if (genericError) {
+        return NextResponse.json({ error: genericError.message }, { status: 500 })
+      }
+
+      looks = genericLooks
     }
 
     // Convert relative image paths to full Supabase Storage URLs

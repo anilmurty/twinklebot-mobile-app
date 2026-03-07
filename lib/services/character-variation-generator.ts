@@ -198,10 +198,11 @@ export async function generateCharacterVariations(
     imageInputArray = [signedBasePhotoUrl, attireImageUrl] // User photo first, then attire
     console.log(`Using custom look with attire image`)
   } else {
-    // Original look: use default prompt with just user photo
-    frontPrompt = gender === 'male'
-      ? "dress this little boy to look like he is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
-      : "dress this little girl to look like she is ready for a day at the zoo. keep facial features identical to the original image. white background and full length"
+    // Original look or no look selected: use prompt_modifier from DB if available, else default
+    const defaultPrompt = gender === 'male'
+      ? "keep this boy in their current outfit. keep facial and body features identical to the original image. white background, forward facing and full length"
+      : "keep this girl in their current outfit. keep facial and body features identical to the original image. white background, forward facing and full length"
+    frontPrompt = (selectedLook?.prompt_modifier) || defaultPrompt
     imageInputArray = [signedBasePhotoUrl] // Just user photo
     console.log(`Using original look (no attire image)`)
   }
