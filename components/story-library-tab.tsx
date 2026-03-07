@@ -72,23 +72,80 @@ function getDisplayCategory(title: string, dbCategory?: string): string {
 }
 
 function getTagline(title: string): { verb: string; subject: string; color: string } {
-  if (title.includes("Counting"))
-    return { verb: "TEACHES", subject: "COUNTING 1-10", color: "text-amber-400" }
-  if (title.includes("Alphabet Adventure 1") || title.includes("Alphabet") && title.includes("A"))
-    return { verb: "TEACHES", subject: "LETTERS A-I", color: "text-amber-400" }
-  if (title.includes("Alphabet Adventure 2") || title.includes("Alphabet") && title.includes("J"))
-    return { verb: "TEACHES", subject: "LETTERS J-R", color: "text-amber-400" }
-  if (title.includes("Alphabet Adventure 3") || title.includes("Alphabet") && title.includes("S"))
-    return { verb: "TEACHES", subject: "LETTERS S-Z", color: "text-amber-400" }
-  if (title.includes("Zoo"))
-    return { verb: "EXPLORES", subject: "ANIMALS & NATURE", color: "text-amber-400" }
-  if (title.includes("Moon"))
-    return { verb: "EXPLORES", subject: "SPACE & SCIENCE", color: "text-amber-400" }
-  if (title.includes("Fire Station"))
-    return { verb: "EXPLORES", subject: "COMMUNITY HELPERS", color: "text-amber-400" }
-  if (title.includes("Farmer"))
-    return { verb: "TEACHES", subject: "MATH CONCEPTS", color: "text-amber-400" }
-  return { verb: "EXPLORES", subject: "ADVENTURE", color: "text-amber-400" }
+  const c = "text-amber-400"
+  const taglines: Record<string, { verb: string; subject: string }> = {
+    // Language Learning
+    "Counting": { verb: "TEACHES", subject: "COUNTING 1-10" },
+    "Colors of the Carnival": { verb: "TEACHES", subject: "COLORS & WORDS" },
+    "Opposites at the Playground": { verb: "TEACHES", subject: "OPPOSITES" },
+    "Feelings Farm": { verb: "TEACHES", subject: "EMOTIONS & WORDS" },
+    "Day in My Body": { verb: "TEACHES", subject: "BODY & WORDS" },
+    "Vehicles on the Go": { verb: "TEACHES", subject: "LETTERS & VEHICLES" },
+    "Animals Around the World": { verb: "TEACHES", subject: "LETTERS & ANIMALS" },
+    "Action Heroes": { verb: "TEACHES", subject: "ACTION WORDS" },
+    "Five Senses": { verb: "TEACHES", subject: "SENSES & WORDS" },
+    "Weather Words": { verb: "TEACHES", subject: "WEATHER & WORDS" },
+    // Math Learning
+    "Farmer": { verb: "TEACHES", subject: "COUNTING & MONEY" },
+    "Bake Sale": { verb: "TEACHES", subject: "COUNTING & MONEY" },
+    "Birdhouse": { verb: "TEACHES", subject: "NUMBERS & MEASURING" },
+    "Camping Under the Stars": { verb: "TEACHES", subject: "COUNTING & PATTERNS" },
+    "Toy Store Sort": { verb: "TEACHES", subject: "SORTING & COUNTING" },
+    "Race Day": { verb: "TEACHES", subject: "NUMBERS & ORDERING" },
+    "Garden Grows": { verb: "TEACHES", subject: "COUNTING & MEASURING" },
+    "Pizza Party": { verb: "TEACHES", subject: "FRACTIONS & SHARING" },
+    "Aquarium Helper": { verb: "TEACHES", subject: "COUNTING & SORTING" },
+    "Shape City": { verb: "TEACHES", subject: "SHAPES & COUNTING" },
+    // World Knowledge
+    "Zoo": { verb: "EXPLORES", subject: "ANIMALS & NATURE" },
+    "Fire Station": { verb: "EXPLORES", subject: "COMMUNITY HELPERS" },
+    "Seed to Supermarket": { verb: "EXPLORES", subject: "FOOD SYSTEMS" },
+    "Under the Ocean": { verb: "EXPLORES", subject: "OCEAN LIFE" },
+    "Rainforest": { verb: "EXPLORES", subject: "NATURE & WILDLIFE" },
+    "Construction Site": { verb: "EXPLORES", subject: "BUILDING & JOBS" },
+    "10 Meals": { verb: "EXPLORES", subject: "FOOD & CULTURE" },
+    "Weather Station": { verb: "EXPLORES", subject: "WEATHER & SCIENCE" },
+    "Night Sky": { verb: "EXPLORES", subject: "SPACE & STARS" },
+    "Hospital Helper": { verb: "EXPLORES", subject: "HEALTH & HELPERS" },
+    "River": { verb: "EXPLORES", subject: "NATURE & GEOGRAPHY" },
+    // Pure Science
+    "Volcano": { verb: "EXPLORES", subject: "EARTH & GEOLOGY" },
+    "Inside the Human Body": { verb: "EXPLORES", subject: "HUMAN BODY" },
+    "Butterfly": { verb: "EXPLORES", subject: "METAMORPHOSIS" },
+    "Water Go": { verb: "EXPLORES", subject: "WATER CYCLE" },
+    "Earthquake": { verb: "EXPLORES", subject: "EARTH & GEOLOGY" },
+    "Light and Shadows": { verb: "EXPLORES", subject: "LIGHT & OPTICS" },
+    "Magnetic": { verb: "EXPLORES", subject: "MAGNETISM" },
+    "Life of a Seed": { verb: "EXPLORES", subject: "PLANTS & GROWTH" },
+    "Forces All Around": { verb: "EXPLORES", subject: "PHYSICS & FORCES" },
+    "Deep Freeze": { verb: "EXPLORES", subject: "ICE & CLIMATE" },
+    // Sci-Fi & Fantasy
+    "Moon": { verb: "EXPLORES", subject: "SPACE & SCIENCE" },
+    "Time Traveler": { verb: "EXPLORES", subject: "TIME & HISTORY" },
+    "Planet of the Colors": { verb: "EXPLORES", subject: "COLORS & SPACE" },
+    "Dream Architect": { verb: "EXPLORES", subject: "DREAMS & BUILDING" },
+    "Robot Best Friend": { verb: "EXPLORES", subject: "ROBOTS & TECH" },
+    "Guardians of the Forest": { verb: "EXPLORES", subject: "MAGIC & NATURE" },
+    "Cloud Castle": { verb: "EXPLORES", subject: "WEATHER & MAGIC" },
+    "Smallest Astronaut": { verb: "EXPLORES", subject: "MINIATURE WORLDS" },
+    "Portal Map": { verb: "EXPLORES", subject: "PORTALS & MAGIC" },
+    "Star Catcher": { verb: "EXPLORES", subject: "STARS & FRIENDSHIP" },
+  }
+
+  // Alphabet stories (check before general matching)
+  if (title.includes("Alphabet") && title.includes("A -"))
+    return { verb: "TEACHES", subject: "LETTERS A-I", color: c }
+  if (title.includes("Alphabet") && title.includes("J"))
+    return { verb: "TEACHES", subject: "LETTERS J-R", color: c }
+  if (title.includes("Alphabet") && title.includes("S"))
+    return { verb: "TEACHES", subject: "LETTERS S-Z", color: c }
+
+  // Match by substring in title
+  for (const [key, val] of Object.entries(taglines)) {
+    if (title.includes(key)) return { ...val, color: c }
+  }
+
+  return { verb: "EXPLORES", subject: "ADVENTURE", color: c }
 }
 
 // --- LibraryCard component ---
