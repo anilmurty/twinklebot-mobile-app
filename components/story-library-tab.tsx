@@ -41,6 +41,7 @@ const CATEGORIES = [
   { id: "language", label: "Language Learning" },
   { id: "math", label: "Math Learning" },
   { id: "world", label: "World Knowledge" },
+  { id: "science", label: "Pure Science" },
   { id: "scifi", label: "Sci-Fi & Fantasy" },
 ] as const
 
@@ -57,6 +58,7 @@ function getDisplayCategory(title: string, dbCategory?: string): string {
       math: "math",
       language: "language",
       world: "world",
+      science: "science",
     }
     const mapped = categoryMap[dbCategory]
     if (mapped && knownIds.includes(mapped)) return mapped
