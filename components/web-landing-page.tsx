@@ -68,22 +68,24 @@ export function WebLandingPage() {
     }
   }
 
-  const storyTemplates = [
-    {
-      title: "A Day at the Zoo",
-      description: "An adventure with friendly animals",
-      image: "/zoo-entrance-background.jpeg",
-    },
-    {
-      title: "Counting Adventures",
-      description: "Learn numbers 1-10 with fun",
-      image: "/colorful-counting-storybook-cover.jpg",
-    },
-    {
-      title: "Alphabet Adventures",
-      description: "Explore letters A to Z",
-      image: "/alphabet-learning-book-cover.jpg",
-    },
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const coverUrl = (slug: string) =>
+    `${supabaseUrl}/storage/v1/object/public/story-template-assets/${slug}/cover.png`
+
+  // --- Top row: scrolls left (clockwise) ---
+  const topRowStories = [
+    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: coverUrl("day-at-the-zoo") },
+    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: coverUrl("counting-adventures") },
+    { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: coverUrl("alphabet-adventures-a-i") },
+    // TODO: add more slugs here once cover images are uploaded
+  ]
+
+  // --- Bottom row: scrolls right (anti-clockwise) ---
+  const bottomRowStories = [
+    { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: coverUrl("alphabet-adventures-j-r") },
+    { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: coverUrl("alphabet-adventures-s-z") },
+    { title: "Mission To The Moon", description: "A space adventure", image: coverUrl("mission-to-the-moon") },
+    // TODO: add more slugs here once cover images are uploaded
   ]
 
   return (
@@ -270,27 +272,80 @@ export function WebLandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {storyTemplates.map((template, index) => (
+          {/* Carousel keyframes */}
+          <style jsx>{`
+            @keyframes scroll-left {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            @keyframes scroll-right {
+              0% { transform: translateX(-50%); }
+              100% { transform: translateX(0); }
+            }
+          `}</style>
+
+          <div className="space-y-6">
+            {/* Top row — scrolls left */}
+            <div className="relative overflow-hidden">
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-24 z-10 bg-gradient-to-r from-card/80 to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-24 z-10 bg-gradient-to-l from-card/80 to-transparent" />
               <div
-                key={index}
-                className="group relative rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-border/50"
+                className="flex gap-6 w-max hover:[animation-play-state:paused]"
+                style={{ animation: "scroll-left 35s linear infinite" }}
               >
-                <div className="aspect-[4/3] relative">
-                  <Image
-                    src={template.image}
-                    alt={template.title}
-                    fill
-                    className="object-cover transition-transform group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                  <h3 className="text-xl font-bold mb-1">{template.title}</h3>
-                  <p className="text-white/80 text-sm">{template.description}</p>
-                </div>
+                {[...topRowStories, ...topRowStories].map((story, i) => (
+                  <div
+                    key={i}
+                    className="group relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px]"
+                  >
+                    <div className="aspect-[4/3] relative">
+                      <Image
+                        src={story.image}
+                        alt={story.title}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <h3 className="text-xl font-bold mb-1">{story.title}</h3>
+                      <p className="text-white/80 text-sm">{story.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+
+            {/* Bottom row — scrolls right */}
+            <div className="relative overflow-hidden">
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-16 sm:w-24 z-10 bg-gradient-to-r from-card/80 to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-16 sm:w-24 z-10 bg-gradient-to-l from-card/80 to-transparent" />
+              <div
+                className="flex gap-6 w-max hover:[animation-play-state:paused]"
+                style={{ animation: "scroll-right 35s linear infinite" }}
+              >
+                {[...bottomRowStories, ...bottomRowStories].map((story, i) => (
+                  <div
+                    key={i}
+                    className="group relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px]"
+                  >
+                    <div className="aspect-[4/3] relative">
+                      <Image
+                        src={story.image}
+                        alt={story.title}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                      <h3 className="text-xl font-bold mb-1">{story.title}</h3>
+                      <p className="text-white/80 text-sm">{story.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="text-center mt-12">
