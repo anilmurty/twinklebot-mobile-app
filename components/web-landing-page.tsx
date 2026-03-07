@@ -271,7 +271,7 @@ export function WebLandingPage() {
                     Storybooks Where
                   </span>
                   <br />
-                  <span className="text-secondary">
+                  <span className="text-white">
                     Your Child Is The Hero
                   </span>
                 </h1>
@@ -328,7 +328,7 @@ export function WebLandingPage() {
                 Storybooks Where
               </span>
               <br />
-              <span className="text-secondary">
+              <span className="text-white">
                 Your Child Is The Hero
               </span>
             </h1>
