@@ -74,12 +74,12 @@ export function WebLandingPage() {
 
   // --- Top row: scrolls left (clockwise) ---
   const topRowStories = [
-    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/cover.png") },
-    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/cover.png") },
+    { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/day-at-the-zoo.png") },
+    { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/counting-general.png") },
     { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/cover-a-through-i.png") },
-    { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/cover.png") },
-    { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/cover.png") },
-    { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/cover.png") },
+    { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/field-trip-to-the-fire-station.png") },
+    { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/mission-to-the-moon.png") },
+    { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/visit-to-the-farmers-market.png") },
     { title: "A Day in My Body", description: "Explore how your body works", image: assetUrl("a-day-in-my-body/a-day-in-my-body.png") },
     { title: "A Day in the Life of a Seed", description: "Watch a seed grow", image: assetUrl("a-day-in-the-life-of-a-seed/a-day-in-the-life-of-a-seed.png") },
     { title: "Action Heroes", description: "Be a real-life hero", image: assetUrl("action-heroes/action-heroes.png") },
