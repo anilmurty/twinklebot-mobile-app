@@ -237,6 +237,17 @@ Key tables:
 - Check file paths match database URLs
 - Ensure service role key has storage access
 
+## Scripts
+
+- **`scripts/upload-cover-images.ts`** — Bulk upload `.png` cover images to a Supabase Storage bucket. Each image is placed in a folder named after the file (e.g. `my-story.png` → `<bucket>/my-story/my-story.png`). Skips files that already exist.
+  ```bash
+  npx tsx scripts/upload-cover-images.ts <local-folder> <bucket-name>
+  ```
+- **`scripts/cleanup-storybook-storage.ts`** — Removes orphaned files from the `storybook-scenes` bucket for storybooks that no longer have scenes in the database.
+  ```bash
+  npx tsx scripts/cleanup-storybook-storage.ts
+  ```
+
 ## Documentation
 
 - `tech-spec.md` - Complete technical specification
