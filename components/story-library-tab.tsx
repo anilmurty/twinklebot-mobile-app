@@ -78,12 +78,21 @@ function LibraryCard({
         }}
       >
         {thumbnail && !failedThumbnails.has(template.id) ? (
-          <img
-            src={thumbnail}
-            alt={template.title}
-            className={`w-full h-full object-cover transition-transform duration-300 ${isComingSoon ? "" : "group-hover:scale-105"}`}
-            onError={() => onThumbnailError(template.id)}
-          />
+          <>
+            <div className="absolute inset-0 bg-white/5 animate-pulse" />
+            <img
+              src={thumbnail}
+              alt={template.title}
+              loading="lazy"
+              decoding="async"
+              className={`relative w-full h-full object-cover transition-transform duration-300 ${isComingSoon ? "" : "group-hover:scale-105"}`}
+              onLoad={(e) => {
+                const prev = e.currentTarget.previousElementSibling as HTMLElement
+                if (prev) prev.style.display = "none"
+              }}
+              onError={() => onThumbnailError(template.id)}
+            />
+          </>
         ) : (
           <div className="w-full h-full bg-white/10 flex items-center justify-center">
             <BookOpen className="w-12 h-12 text-white/30" />
@@ -518,6 +527,8 @@ export function StoryLibraryTab() {
                     <img
                       src={template.thumbnail_url}
                       alt={template.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-14 h-[4.5rem] object-cover rounded-lg shrink-0"
                     />
                   ) : (

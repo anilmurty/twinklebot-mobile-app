@@ -7,7 +7,7 @@ import { storybooksApi, charactersApi, templatesApi } from "@/lib/api-client"
 
 const SAFETY_TIMEOUT_MS = 4000
 const MIN_DISPLAY_MS = 1800
-const MAX_PRELOAD_IMAGES = 12
+const MAX_PRELOAD_IMAGES = 30
 
 export function usePrefetch(userReady: boolean): boolean {
   const [dataReady, setDataReady] = useState(false)
@@ -42,7 +42,15 @@ export function usePrefetch(userReady: boolean): boolean {
       }),
     ]).then((results) => {
       // Preload thumbnail images (fire-and-forget)
+      // Prioritize template thumbnails (story library), then storybooks, then characters
       const urls: string[] = []
+
+      const templatesResult = results[2]
+      if (templatesResult.status === "fulfilled" && templatesResult.value?.templates) {
+        for (const t of templatesResult.value.templates) {
+          if (t.thumbnail_url) urls.push(t.thumbnail_url)
+        }
+      }
 
       const storybooksResult = results[0]
       if (storybooksResult.status === "fulfilled" && storybooksResult.value?.storybooks) {
@@ -55,13 +63,6 @@ export function usePrefetch(userReady: boolean): boolean {
       if (charactersResult.status === "fulfilled" && charactersResult.value?.characters) {
         for (const ch of charactersResult.value.characters) {
           if (ch.front_photo_url) urls.push(ch.front_photo_url)
-        }
-      }
-
-      const templatesResult = results[2]
-      if (templatesResult.status === "fulfilled" && templatesResult.value?.templates) {
-        for (const t of templatesResult.value.templates) {
-          if (t.thumbnail_url) urls.push(t.thumbnail_url)
         }
       }
 
