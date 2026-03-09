@@ -200,7 +200,7 @@ function getMockData<T>(endpoint: string, method: string = 'GET'): T | null {
 
 async function apiRequest<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit & { allowUnauthenticated?: boolean } = {}
 ): Promise<T> {
   // ✅ DESIGN_MODE: Return mock data in design mode
   const mockData = getMockData<T>(endpoint, options.method || 'GET')
@@ -209,18 +209,23 @@ async function apiRequest<T>(
   }
 
   const token = await getAuthToken()
-  
-  if (!token) {
+
+  if (!token && !options.allowUnauthenticated) {
     throw new Error('Not authenticated')
   }
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...options.headers as Record<string, string>,
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
+  const { allowUnauthenticated: _, ...fetchOptions } = options
   const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers,
-    },
+    ...fetchOptions,
+    headers,
   })
 
   if (!response.ok) {
@@ -344,8 +349,8 @@ export const storyInterestApi = {
 
 // Story Templates API
 export const templatesApi = {
-  list: () => apiRequest<{ templates: any[] }>('/story-templates'),
-  get: (id: number) => apiRequest<any>(`/story-templates/${id}`),
+  list: () => apiRequest<{ templates: any[] }>('/story-templates', { allowUnauthenticated: true }),
+  get: (id: number) => apiRequest<any>(`/story-templates/${id}`, { allowUnauthenticated: true }),
 }
 
 // Profile API
