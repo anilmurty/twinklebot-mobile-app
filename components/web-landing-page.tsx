@@ -107,7 +107,7 @@ export function WebLandingPage() {
       { title: "Race Day at the Track", description: "Ready, set, go!", image: assetUrl("race-day-at-the-track/race-day-at-the-track.png") },
       { title: "The Garden Grows", description: "Watch a garden bloom", image: assetUrl("the-garden-grows/the-garden-grows.png") },
       { title: "The Pizza Party Problem", description: "Solve a cheesy puzzle", image: assetUrl("the-pizza-party-problem/the-pizza-party-problem.png") },
-      { title: "The Aquarium Helper", description: "Care for sea creatures", image: assetUrl("the-acquarium helper/the-acquarium helper.png") },
+      { title: "The Aquarium Helper", description: "Care for sea creatures", image: assetUrl("the-acquarium%20helper/the-acquarium%20helper.png") },
       { title: "The Big Shape City", description: "Shapes are everywhere", image: assetUrl("the-big-shape-city/the-big-shape-city.png") },
       { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/visit-to-the-farmers-market.png") },
     ],
@@ -207,6 +207,7 @@ export function WebLandingPage() {
             <button
               className="md:hidden p-2 rounded-lg hover:bg-muted text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -243,6 +244,7 @@ export function WebLandingPage() {
         )}
       </header>
 
+      <main>
       {/* Hero Section — Desktop: full-bleed image with text on dark left; Mobile: stacked */}
       <section className="relative">
         {/* Desktop: full-bleed background image with crossfade */}
@@ -725,6 +727,8 @@ export function WebLandingPage() {
           </Link>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="relative border-t border-border bg-card/70 backdrop-blur-md py-12 px-4 sm:px-6 lg:px-8">
