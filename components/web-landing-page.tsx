@@ -80,7 +80,7 @@ export function WebLandingPage() {
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const assetUrl = (path: string) =>
-    `${supabaseUrl}/storage/v1/render/image/public/story-template-assets/${path}?width=640&quality=75`
+    `${supabaseUrl}/storage/v1/render/image/public/story-template-assets/${path}?quality=60`
 
   // All stories grouped by category (matching shared STORY_CATEGORIES)
   const storiesByCategory: Record<StoryCategoryId, { title: string; description: string; image: string }[]> = {
