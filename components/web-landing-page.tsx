@@ -85,9 +85,9 @@ export function WebLandingPage() {
   // All stories grouped by category (matching shared STORY_CATEGORIES)
   const storiesByCategory: Record<StoryCategoryId, { title: string; description: string; image: string }[]> = {
     language: [
-      { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/cover-a-through-i.png") },
-      { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: assetUrl("alphabet-general/cover-j-through-r.png") },
-      { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: assetUrl("alphabet-general/cover-s-through-z.png") },
+      { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/alphabet-general-a-through-i.png") },
+      { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: assetUrl("alphabet-general/alphabet-general-j-through-r.png") },
+      { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: assetUrl("alphabet-general/alphabet-general-s-through-z.png") },
       { title: "Colors of the Carnival", description: "A colorful celebration", image: assetUrl("colors-of-the-carnival/colors-of-the-carnival.png") },
       { title: "Opposites at the Playground", description: "Learn big and small", image: assetUrl("opposites-at-the-playground/opposites-at-the-playground.png") },
       { title: "The Feelings Farm", description: "Understand your emotions", image: assetUrl("the-feelings-farm/the-feelings-farm.png") },
