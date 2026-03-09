@@ -253,8 +253,10 @@ export function WebLandingPage() {
               src={src}
               alt="Parent and child experiencing TwinkleBot storybooks"
               fill
+              sizes="100vw"
               className={`object-cover object-center transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
               priority={i === 0}
+              {...(i === 0 ? { fetchPriority: "high" as const } : {})}
             />
           ))}
           {/* Text overlay on the dark left side */}
@@ -333,8 +335,10 @@ export function WebLandingPage() {
                 src={src}
                 alt="Parent and child experiencing TwinkleBot storybooks"
                 fill
+                sizes="100vw"
                 className={`object-cover object-right transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
                 priority={i === 0}
+                {...(i === 0 ? { fetchPriority: "high" as const } : {})}
               />
             ))}
             {/* App store buttons on the dark left side */}
