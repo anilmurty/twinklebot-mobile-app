@@ -31,7 +31,7 @@ export function WebLandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [heroIndex, setHeroIndex] = useState(0)
-  const heroImages = ["/hero-1.png", "/hero-2.png", "/hero-3.png"]
+  const heroImages = ["/hero-1.jpg", "/hero-2.jpg", "/hero-3.jpg"]
 
   useEffect(() => {
     const timer = setInterval(() => {
