@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from "next"
+import Script from "next/script"
 import { Geist, Geist_Mono, Lora } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
@@ -85,6 +86,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-J60V4T7WKW"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-J60V4T7WKW');
+          `}
+        </Script>
+      </head>
       <body className={`font-sans antialiased ${_lora.variable}`}>
         <script
           type="application/ld+json"
