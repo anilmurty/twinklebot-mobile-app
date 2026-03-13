@@ -96,7 +96,11 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-J60V4T7WKW');
+            var isCapacitor = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+            var appPlatform = isCapacitor ? (window.Capacitor.getPlatform && window.Capacitor.getPlatform() || 'native') : 'web';
+            gtag('config', 'G-J60V4T7WKW', {
+              app_platform: appPlatform
+            });
           `}
         </Script>
       </head>
