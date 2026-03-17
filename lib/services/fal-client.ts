@@ -4,6 +4,7 @@
  */
 
 const FAL_API_URL = 'https://queue.fal.run'
+const FAL_MODEL_ID = 'fal-ai/nano-banana-2/edit'
 
 function getFalKey(): string {
   const key = process.env.FAL_KEY
@@ -16,6 +17,8 @@ function getFalKey(): string {
 interface FalQueueResponse {
   request_id: string
   status: string
+  status_url: string
+  response_url: string
 }
 
 interface FalStatusResponse {
@@ -33,6 +36,9 @@ interface FalResultResponse {
   }>
 }
 
+// Module-level cache: request_id → { status_url, response_url }
+const requestUrlCache = new Map<string, { statusUrl: string; responseUrl: string }>()
+
 /**
  * Submit an image generation request to fal.ai queue.
  * Returns a request_id (analogous to Replicate's prediction ID).
@@ -49,7 +55,7 @@ export async function createFalPrediction(
     outputFormat: input.output_format,
   })
 
-  const response = await fetch(`${FAL_API_URL}/fal-ai/nano-banana-2/edit`, {
+  const response = await fetch(`${FAL_API_URL}/${FAL_MODEL_ID}`, {
     method: 'POST',
     headers: {
       Authorization: `Key ${getFalKey()}`,
@@ -69,41 +75,55 @@ export async function createFalPrediction(
   }
 
   const data: FalQueueResponse = await response.json()
+  console.log(`[fal.ai] Queued request ${data.request_id}, status_url: ${data.status_url}`)
+
+  // Cache the URLs provided by fal for polling
+  requestUrlCache.set(data.request_id, {
+    statusUrl: data.status_url,
+    responseUrl: data.response_url,
+  })
+
   return data.request_id
 }
 
 /**
- * Check the status of a fal.ai request.
+ * Check the status of a fal.ai request using the server-provided status URL.
  */
-export async function getFalStatus(requestId: string): Promise<FalStatusResponse> {
-  const response = await fetch(
-    `${FAL_API_URL}/fal-ai/nano-banana-2/edit/requests/${requestId}/status`,
-    {
-      headers: {
-        Authorization: `Key ${getFalKey()}`,
-      },
-    }
-  )
+async function getFalStatus(requestId: string): Promise<FalStatusResponse> {
+  const cached = requestUrlCache.get(requestId)
+  const statusUrl = cached?.statusUrl
+    || `${FAL_API_URL}/${FAL_MODEL_ID}/requests/${requestId}/status`
+
+  const response = await fetch(statusUrl, {
+    method: 'GET',
+    headers: {
+      Authorization: `Key ${getFalKey()}`,
+    },
+  })
 
   if (!response.ok) {
-    throw new Error(`Failed to get fal.ai status: ${response.status}`)
+    const errorText = await response.text()
+    console.error(`[fal.ai] Status check failed (${response.status}): ${errorText}`)
+    throw new Error(`Failed to get fal.ai status: ${response.status} - ${errorText}`)
   }
 
   return response.json()
 }
 
 /**
- * Get the result of a completed fal.ai request.
+ * Get the result of a completed fal.ai request using the server-provided response URL.
  */
 async function getFalResult(requestId: string): Promise<FalResultResponse> {
-  const response = await fetch(
-    `${FAL_API_URL}/fal-ai/nano-banana-2/edit/requests/${requestId}`,
-    {
-      headers: {
-        Authorization: `Key ${getFalKey()}`,
-      },
-    }
-  )
+  const cached = requestUrlCache.get(requestId)
+  const responseUrl = cached?.responseUrl
+    || `${FAL_API_URL}/${FAL_MODEL_ID}/requests/${requestId}`
+
+  const response = await fetch(responseUrl, {
+    method: 'GET',
+    headers: {
+      Authorization: `Key ${getFalKey()}`,
+    },
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to get fal.ai result: ${response.status}`)
@@ -135,11 +155,13 @@ export async function pollFalPrediction(
         throw new Error('fal.ai prediction succeeded but no output images')
       }
       console.log(`[fal.ai] ✅ Completed ${requestId}: ${result.images[0].url.substring(0, 80)}...`)
+      requestUrlCache.delete(requestId)
       return result.images[0].url
     }
 
     if (status.status === 'FAILED') {
       console.error(`[fal.ai] ❌ Failed ${requestId}:`, status.error)
+      requestUrlCache.delete(requestId)
       throw new Error(status.error || 'fal.ai prediction failed')
     }
 
@@ -148,5 +170,6 @@ export async function pollFalPrediction(
     attempts++
   }
 
+  requestUrlCache.delete(requestId)
   throw new Error('fal.ai prediction timeout')
 }
