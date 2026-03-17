@@ -1,6 +1,17 @@
 /**
- * Image generation service using Replicate API
+ * Image generation service using Replicate API or fal.ai
+ * Set IMAGE_PROVIDER=fal to use fal.ai, defaults to replicate
  */
+
+import { createFalPrediction, pollFalPrediction } from './fal-client'
+
+type ImageProvider = 'replicate' | 'fal'
+
+function getImageProvider(): ImageProvider {
+  const provider = process.env.IMAGE_PROVIDER?.toLowerCase()
+  if (provider === 'fal') return 'fal'
+  return 'replicate'
+}
 
 const REPLICATE_API_URL = 'https://api.replicate.com/v1'
 
@@ -100,6 +111,47 @@ export async function pollPrediction(
   }
 
   throw new Error('Prediction timeout')
+}
+
+/**
+ * Convert Replicate-style input to fal.ai input format.
+ * Replicate uses `image_input`, fal uses `image_urls`.
+ */
+function toFalInput(input: Record<string, any>): Record<string, any> {
+  const { image_input, aspect_ratio, output_format, ...rest } = input
+  return {
+    ...rest,
+    image_urls: image_input,
+    aspect_ratio: aspect_ratio === 'match_input_image' ? 'auto' : aspect_ratio,
+    output_format: output_format === 'jpg' ? 'jpeg' : output_format,
+  }
+}
+
+/**
+ * Create a prediction using the configured provider (Replicate or fal.ai).
+ */
+export async function createProviderPrediction(
+  modelVersion: string,
+  input: Record<string, any>
+): Promise<string> {
+  const provider = getImageProvider()
+  console.log(`🎨 Image provider: ${provider}`)
+
+  if (provider === 'fal') {
+    return createFalPrediction(toFalInput(input))
+  }
+  return createPrediction(modelVersion, input)
+}
+
+/**
+ * Poll a prediction using the configured provider.
+ */
+export async function pollProviderPrediction(predictionId: string): Promise<string> {
+  const provider = getImageProvider()
+  if (provider === 'fal') {
+    return pollFalPrediction(predictionId)
+  }
+  return pollPrediction(predictionId)
 }
 
 /**
@@ -223,14 +275,14 @@ export async function generateImageWithNanoBanana(
     aspectRatio
   })
   
-  const predictionId = await createPrediction(modelVersion, {
+  const predictionId = await createProviderPrediction(modelVersion, {
     prompt,
     image_input: validPhotos,
     aspect_ratio: aspectRatio,
     output_format: 'jpg',
   })
 
-  return pollPrediction(predictionId)
+  return pollProviderPrediction(predictionId)
 }
 
 /**
@@ -292,10 +344,10 @@ export async function createBasePhotoAndCharacterPrediction(
   
   console.log('=====================================\n')
   
-  // Call Replicate API with both images
+  // Call image generation API with both images
   // The prompt is the insertion prompt, and we pass both images
   // nano-banana accepts multiple images in the image_input array
-  const predictionId = await createPrediction(modelVersion, {
+  const predictionId = await createProviderPrediction(modelVersion, {
     prompt: insertionPrompt,
     image_input: [basePhotoUrl, characterVariationUrl], // Base photo first, then character variation
     aspect_ratio: aspectRatio,
@@ -326,5 +378,5 @@ export async function generateImageWithBasePhotoAndCharacter(
     templateId,
     qualityTier
   )
-  return pollPrediction(predictionId)
+  return pollProviderPrediction(predictionId)
 }

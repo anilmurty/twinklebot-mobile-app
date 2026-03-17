@@ -4,7 +4,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { generateImageWithNanoBanana, createPrediction, pollPrediction } from './image-generation'
+import { generateImageWithNanoBanana, createProviderPrediction, pollProviderPrediction } from './image-generation'
 import { uploadToStorage, getSignedUrl, deleteFromStorage, getStorageUrl } from '@/lib/supabase/storage'
 
 export interface CharacterVariations {
@@ -241,8 +241,8 @@ export async function generateCharacterVariations(
     const predictionCreateStart = Date.now()
     const totalTimeBeforePrediction = Date.now() - variationGenStartTime
     console.log(`[TIMING] ⏱️  TOTAL TIME BEFORE FIRST PREDICTION: ${totalTimeBeforePrediction}ms (${(totalTimeBeforePrediction/1000).toFixed(2)}s)`)
-    console.log(`[TIMING] Creating first Replicate prediction at ${new Date().toISOString()}`)
-    const predictionId = await createPrediction(
+    console.log(`[TIMING] Creating first prediction at ${new Date().toISOString()}`)
+    const predictionId = await createProviderPrediction(
       modelVersion,
       {
         prompt: frontPrompt,
@@ -263,7 +263,7 @@ export async function generateCharacterVariations(
     
     // Now poll for result
     const pollStart = Date.now()
-    frontUrl = await pollPrediction(predictionId)
+    frontUrl = await pollProviderPrediction(predictionId)
     console.log(`[TIMING] Polled prediction result: ${Date.now() - pollStart}ms`)
     console.log('✅ Front variation generated:', frontUrl)
   } else {
