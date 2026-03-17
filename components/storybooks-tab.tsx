@@ -381,12 +381,13 @@ export function StorybooksTab() {
   const handleViewPreview = async (storybook: Storybook) => {
     try {
       const freshStorybook = await storybooksApi.get(storybook.id)
-      setResumeStorybook(freshStorybook)
-      if (subscriptionPlans.length === 0) {
-        await fetchSubscriptionPlans()
-      } else {
-        await fetchSubscriptionPlans()
-      }
+      // Preserve thumbnail from list data — the single GET endpoint doesn't include it
+      setResumeStorybook({
+        ...freshStorybook,
+        thumbnail_url: freshStorybook.thumbnail_url || storybook.thumbnail_url,
+        first_scene_base_image: freshStorybook.first_scene_base_image || storybook.first_scene_base_image,
+      })
+      await fetchSubscriptionPlans()
     } catch (err: any) {
       console.error("Failed to fetch storybook:", err)
       setResumeStorybook(storybook)
@@ -734,7 +735,7 @@ export function StorybooksTab() {
                             </div>
                           </div>
                         </div>
-                        {resumeStorybook.scenes[0]?.text && (
+                        {resumeStorybook.scenes?.[0]?.text && (
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent px-3 pt-8 pb-3 z-10">
                             <div className="text-center">
                               {resumeStorybook.scenes[0].text.split('\n\n').slice(0, 1).map((stanza: string, i: number) => (
