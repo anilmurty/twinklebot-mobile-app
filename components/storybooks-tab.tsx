@@ -717,10 +717,10 @@ export function StorybooksTab() {
                   // Show preview and payment options when ready
                   <>
                     {/* Inline scene-style preview */}
-                    {resumeStorybook.scenes && resumeStorybook.scenes[0]?.image_url ? (
+                    {(resumeStorybook.scenes?.[0]?.image_url || resumeStorybook.thumbnail_url || resumeStorybook.first_scene_base_image) ? (
                       <div className="rounded-xl overflow-hidden bg-black relative" style={{ minHeight: '280px' }}>
                         <img
-                          src={resumeStorybook.scenes[0].image_url}
+                          src={resumeStorybook.scenes?.[0]?.image_url || resumeStorybook.thumbnail_url || resumeStorybook.first_scene_base_image || "/placeholder.svg"}
                           alt={`${resumeStorybook.title} preview`}
                           className="absolute inset-0 w-full h-full object-cover"
                         />

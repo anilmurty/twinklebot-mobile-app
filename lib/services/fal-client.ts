@@ -44,6 +44,7 @@ export async function createFalPrediction(
     inputKeys: Object.keys(input),
     promptLength: input.prompt?.length || 0,
     imageUrlCount: Array.isArray(input.image_urls) ? input.image_urls.length : 0,
+    imageUrls: Array.isArray(input.image_urls) ? input.image_urls.map((u: string) => u.substring(0, 80) + '...') : [],
     aspectRatio: input.aspect_ratio,
     outputFormat: input.output_format,
   })
@@ -124,15 +125,21 @@ export async function pollFalPrediction(
   while (attempts < maxAttempts) {
     const status = await getFalStatus(requestId)
 
+    if (attempts % 5 === 0) {
+      console.log(`[fal.ai] Poll #${attempts} for ${requestId}: status=${status.status}`)
+    }
+
     if (status.status === 'COMPLETED') {
       const result = await getFalResult(requestId)
       if (!result.images || result.images.length === 0) {
         throw new Error('fal.ai prediction succeeded but no output images')
       }
+      console.log(`[fal.ai] ✅ Completed ${requestId}: ${result.images[0].url.substring(0, 80)}...`)
       return result.images[0].url
     }
 
     if (status.status === 'FAILED') {
+      console.error(`[fal.ai] ❌ Failed ${requestId}:`, status.error)
       throw new Error(status.error || 'fal.ai prediction failed')
     }
 

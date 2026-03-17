@@ -635,11 +635,11 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
             </DialogHeader>
 
             <div className="space-y-4 py-4">
-              {/* Inline scene-style preview */}
-              {previewSceneUrl ? (
+              {/* Inline scene-style preview or cover image fallback */}
+              {(previewSceneUrl || story.script_data?.[0]?.base_photo) ? (
                 <div className="rounded-xl overflow-hidden bg-black relative" style={{ minHeight: '280px' }}>
                   <img
-                    src={previewSceneUrl}
+                    src={previewSceneUrl || "/placeholder.svg"}
                     alt={`${story.title} preview`}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
