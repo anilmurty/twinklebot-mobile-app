@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, BookOpen, X, ChevronDown } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
 
 interface Scene {
   scene_number?: number
@@ -36,9 +36,8 @@ export default function SharedStorybookPage() {
   const [currentScene, setCurrentScene] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [textHidden, setTextHidden] = useState(false)
-  const [showScrollHint, setShowScrollHint] = useState(false)
-  const [showTextHint, setShowTextHint] = useState(true)
+  const [textExpanded, setTextExpanded] = useState(false)
+  const [textOverflows, setTextOverflows] = useState(false)
   const textScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -87,32 +86,17 @@ export default function SharedStorybookPage() {
     }
   }
 
-  // Auto-dismiss text hint after 5 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => setShowTextHint(false), 5000)
-    return () => clearTimeout(timer)
-  }, [])
-
   // Reset text state on scene change and check for overflow
   useEffect(() => {
-    setTextHidden(false)
-    setShowScrollHint(false)
+    setTextExpanded(false)
     requestAnimationFrame(() => {
       const el = textScrollRef.current
       if (el) {
         el.scrollTop = 0
-        setShowScrollHint(el.scrollHeight > el.clientHeight + 4)
+        setTextOverflows(el.scrollHeight > el.clientHeight + 4)
       }
     })
   }, [currentScene])
-
-  const handleTextScroll = () => {
-    const el = textScrollRef.current
-    if (el) {
-      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4
-      setShowScrollHint(!atBottom)
-    }
-  }
 
   // Get story-specific intro text based on template
   const getStoryIntro = (templateTitle: string | undefined, charName: string) => {
@@ -392,20 +376,28 @@ export default function SharedStorybookPage() {
 
               {/* Bottom section: story text + CTA */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
-                {/* Text Overlay — scrollable, capped at 20% of viewport */}
-                {(scene.text || scene.script_text) && !textHidden && (
-                  <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-3 pb-1 relative">
-                    <button
-                      onClick={() => setTextHidden(true)}
-                      className="absolute top-1 right-3 z-10 text-white hover:text-white text-[10px] uppercase tracking-widest transition-colors"
-                    >
-                      hide text
-                    </button>
+                {/* Text Overlay — 20vh default, expandable */}
+                {(scene.text || scene.script_text) && (
+                  <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-1 pb-1">
+                    {textOverflows && (
+                      <div className="flex justify-center pb-0.5">
+                        <button
+                          onClick={() => setTextExpanded(!textExpanded)}
+                          className="text-white/70 hover:text-white transition-colors p-1"
+                          aria-label={textExpanded ? "Collapse text" : "Expand text"}
+                        >
+                          {textExpanded ? (
+                            <ChevronDown className="w-5 h-5" />
+                          ) : (
+                            <ChevronUp className="w-5 h-5 animate-bounce" />
+                          )}
+                        </button>
+                      </div>
+                    )}
                     <div
                       ref={textScrollRef}
-                      className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto"
-                      style={{ maxHeight: '10vh' }}
-                      onScroll={handleTextScroll}
+                      className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto transition-[max-height] duration-300 ease-in-out"
+                      style={{ maxHeight: textExpanded ? '60vh' : '20vh' }}
                       onTouchStart={(e) => {
                         const el = e.currentTarget
                         if (el.scrollHeight > el.clientHeight) e.stopPropagation()
@@ -437,28 +429,6 @@ export default function SharedStorybookPage() {
                           </div>
                         ))}
                     </div>
-                    {showScrollHint && (
-                      <div className="flex justify-center pt-0.5">
-                        <ChevronDown className="w-3.5 h-3.5 text-white animate-bounce" />
-                      </div>
-                    )}
-                    {showTextHint && sceneIndex === 0 && (
-                      <p className="text-white/60 text-[10px] text-center mt-1.5 animate-pulse">
-                        Tap &quot;HIDE TEXT&quot; to see more of the image
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Show text toggle when hidden */}
-                {(scene.text || scene.script_text) && textHidden && (
-                  <div className="flex justify-center py-1">
-                    <button
-                      onClick={() => setTextHidden(false)}
-                      className="text-white hover:text-white text-[10px] uppercase tracking-widest transition-colors"
-                    >
-                      show text
-                    </button>
                   </div>
                 )}
 
