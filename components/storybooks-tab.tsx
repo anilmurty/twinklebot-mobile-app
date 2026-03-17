@@ -83,7 +83,7 @@ export function StorybooksTab() {
   const [isGeneratingShare, setIsGeneratingShare] = useState(false)
   const [copiedShareUrl, setCopiedShareUrl] = useState(false)
   const [iapPackages, setIapPackages] = useState<IAPPackage[]>([])
-  const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('basic')
+  const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('premium')
   const [premiumCredits, setPremiumCredits] = useState(0)
 
   // Refresh when tab becomes active (in case user navigated from story creation)

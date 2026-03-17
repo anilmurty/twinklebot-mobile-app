@@ -58,7 +58,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [iapPackages, setIapPackages] = useState<IAPPackage[]>([])
   const [previewSceneText, setPreviewSceneText] = useState<string | null>(null)
   const [fetchingPreviewData, setFetchingPreviewData] = useState(false)
-  const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('basic')
+  const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('premium')
   const [premiumCredits, setPremiumCredits] = useState(0)
 
   // Poll for preview status while generating
@@ -116,7 +116,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setCharacterGender(null)
       setPreviewSceneText(null)
       setFetchingPreviewData(false)
-      setSelectedTier('basic')
+      setSelectedTier('premium')
       setPremiumCredits(0)
     }
   }, [open, story.id])

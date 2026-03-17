@@ -44,7 +44,7 @@ export function CompactPricing({
   selectedTier: controlledTier,
   onTierChange,
 }: CompactPricingProps) {
-  const [internalTier, setInternalTier] = useState<'basic' | 'premium'>('basic')
+  const [internalTier, setInternalTier] = useState<'basic' | 'premium'>('premium')
   const selectedTier = controlledTier ?? internalTier
   const handleTierChange = (tier: 'basic' | 'premium') => {
     setInternalTier(tier)
@@ -78,34 +78,8 @@ export function CompactPricing({
   if (tierCredits > 0 && onUseCredit) {
     return (
       <div className="space-y-3">
-        {/* Tier Toggle */}
-        <div className="flex rounded-lg border border-border overflow-hidden">
-          <button
-            onClick={() => handleTierChange('basic')}
-            className={cn(
-              "flex-1 py-2 px-3 text-sm font-medium transition-colors",
-              selectedTier === 'basic'
-                ? "bg-primary text-primary-foreground"
-                : "bg-card text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Basic
-          </button>
-          <button
-            onClick={() => handleTierChange('premium')}
-            className={cn(
-              "flex-1 py-2 px-3 text-sm font-medium transition-colors",
-              selectedTier === 'premium'
-                ? "bg-primary text-primary-foreground"
-                : "bg-card text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Premium
-          </button>
-        </div>
-
         <p className="text-sm text-center text-muted-foreground">
-          You have <span className="font-semibold text-foreground">{tierCredits} {selectedTier} {tierCredits === 1 ? 'credit' : 'credits'}</span>
+          You have <span className="font-semibold text-foreground">{tierCredits} {tierCredits === 1 ? 'credit' : 'credits'}</span>
         </p>
         <Button
           onClick={() => onUseCredit(selectedTier)}
@@ -121,7 +95,7 @@ export function CompactPricing({
           ) : (
             <>
               <Sparkles className="w-4 h-4 mr-2" />
-              Use 1 {selectedTier === 'premium' ? 'Premium ' : ''}Credit to Unlock
+              Use 1 Credit to Unlock
             </>
           )}
         </Button>
@@ -131,42 +105,6 @@ export function CompactPricing({
 
   return (
     <div className="space-y-3">
-      {/* Tier Toggle */}
-      <div className="flex rounded-lg border border-border overflow-hidden">
-        <button
-          onClick={() => handleTierChange('basic')}
-          className={cn(
-            "flex-1 py-2 px-3 text-sm font-medium transition-colors",
-            selectedTier === 'basic'
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Basic
-        </button>
-        <button
-          onClick={() => handleTierChange('premium')}
-          className={cn(
-            "flex-1 py-2 px-3 text-sm font-medium transition-colors",
-            selectedTier === 'premium'
-              ? "bg-primary text-primary-foreground"
-              : "bg-card text-muted-foreground hover:text-foreground"
-          )}
-        >
-          Premium
-        </button>
-      </div>
-
-      {selectedTier === 'premium' ? (
-        <p className="text-[10px] text-center text-muted-foreground">
-          Higher quality images generated with more expensive AI models
-        </p>
-      ) : (
-        <p className="text-[10px] text-center text-muted-foreground">
-          For best results, we recommend using the &quot;Premium&quot; option
-        </p>
-      )}
-
       {sortedPlans.map((plan) => {
         const isSelected = selectedPlanId === plan.id
         const price = (plan.price_amount / 100).toFixed(2)
