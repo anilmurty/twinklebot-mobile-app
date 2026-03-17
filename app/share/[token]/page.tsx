@@ -38,6 +38,7 @@ export default function SharedStorybookPage() {
   const [error, setError] = useState<string | null>(null)
   const [textExpanded, setTextExpanded] = useState(false)
   const [textOverflows, setTextOverflows] = useState(false)
+  const [textHidden, setTextHidden] = useState(false)
   const textScrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -86,9 +87,14 @@ export default function SharedStorybookPage() {
     }
   }
 
-  // Reset text state on scene change and check for overflow
+  // Reset expanded state on scene change
   useEffect(() => {
     setTextExpanded(false)
+  }, [currentScene])
+
+  // Check overflow when text becomes visible or scene changes
+  useEffect(() => {
+    if (textHidden) return
     requestAnimationFrame(() => {
       const el = textScrollRef.current
       if (el) {
@@ -96,7 +102,7 @@ export default function SharedStorybookPage() {
         setTextOverflows(el.scrollHeight > el.clientHeight + 4)
       }
     })
-  }, [currentScene])
+  }, [currentScene, textHidden])
 
   // Get story-specific intro text based on template
   const getStoryIntro = (templateTitle: string | undefined, charName: string) => {
@@ -376,8 +382,8 @@ export default function SharedStorybookPage() {
 
               {/* Bottom section: story text + CTA */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
-                {/* Text Overlay — 20vh default, expandable */}
-                {(scene.text || scene.script_text) && (
+                {/* Text Overlay — 15vh default, expandable */}
+                {(scene.text || scene.script_text) && !textHidden && (
                   <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-1 pb-1">
                     {textOverflows && (
                       <div className="flex justify-center pb-0.5">
@@ -397,7 +403,7 @@ export default function SharedStorybookPage() {
                     <div
                       ref={textScrollRef}
                       className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto transition-[max-height] duration-300 ease-in-out"
-                      style={{ maxHeight: textExpanded ? '60vh' : '20vh' }}
+                      style={{ maxHeight: textExpanded ? '60vh' : '15vh' }}
                       onTouchStart={(e) => {
                         const el = e.currentTarget
                         if (el.scrollHeight > el.clientHeight) e.stopPropagation()
@@ -432,7 +438,15 @@ export default function SharedStorybookPage() {
                   </div>
                 )}
 
-                <div className="bg-black/90 px-4 pb-8 pt-3 flex justify-center">
+                <div className="bg-black/90 px-4 pb-8 pt-2 flex items-center justify-between">
+                  {(scene.text || scene.script_text) ? (
+                    <button
+                      onClick={() => setTextHidden(!textHidden)}
+                      className="text-white text-[10px] uppercase tracking-widest transition-colors"
+                    >
+                      {textHidden ? 'show text' : 'hide text'}
+                    </button>
+                  ) : <div />}
                   <Button
                     size="sm"
                     variant="ghost"

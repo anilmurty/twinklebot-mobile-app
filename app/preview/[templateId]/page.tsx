@@ -42,6 +42,7 @@ export default function StoryPreviewPage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [textExpanded, setTextExpanded] = useState(false)
   const [textOverflows, setTextOverflows] = useState(false)
+  const [textHidden, setTextHidden] = useState(false)
   const textScrollRef = useRef<HTMLDivElement>(null)
 
   const minSwipeDistance = 50
@@ -143,9 +144,14 @@ export default function StoryPreviewPage() {
     }
   }
 
-  // Reset text state on scene change and check for overflow
+  // Reset expanded state on scene change
   useEffect(() => {
     setTextExpanded(false)
+  }, [currentScene])
+
+  // Check overflow when text becomes visible or scene changes
+  useEffect(() => {
+    if (textHidden) return
     requestAnimationFrame(() => {
       const el = textScrollRef.current
       if (el) {
@@ -153,7 +159,7 @@ export default function StoryPreviewPage() {
         setTextOverflows(el.scrollHeight > el.clientHeight + 4)
       }
     })
-  }, [currentScene])
+  }, [currentScene, textHidden])
 
   const handleGenerateStory = () => {
     router.push(`/app?tab=library&templateId=${templateId}`)
@@ -539,7 +545,7 @@ export default function StoryPreviewPage() {
               {/* Bottom section: story text + action button */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
                 {/* Text Overlay — 20vh default, expandable */}
-                {(scene.text || scene.script_text) && (
+                {(scene.text || scene.script_text) && !textHidden && (
                   <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-1 pb-1">
                     {textOverflows && (
                       <div className="flex justify-center pb-0.5">
@@ -596,8 +602,16 @@ export default function StoryPreviewPage() {
                   </div>
                 )}
 
-                {/* Action Button */}
-                <div className="bg-black/90 px-4 pb-8 pt-3 flex justify-center">
+                {/* Bottom bar */}
+                <div className="bg-black/90 px-4 pb-8 pt-2 flex items-center justify-between">
+                  {(scene.text || scene.script_text) ? (
+                    <button
+                      onClick={() => setTextHidden(!textHidden)}
+                      className="text-white text-[10px] uppercase tracking-widest transition-colors"
+                    >
+                      {textHidden ? 'show text' : 'hide text'}
+                    </button>
+                  ) : <div />}
                   <Button
                     size="sm"
                     onClick={handleGenerateStory}
