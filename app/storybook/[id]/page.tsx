@@ -45,6 +45,7 @@ export default function StorybookViewerPage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [textHidden, setTextHidden] = useState(false)
   const [showScrollHint, setShowScrollHint] = useState(false)
+  const [showTextHint, setShowTextHint] = useState(true)
   const textScrollRef = useRef<HTMLDivElement>(null)
 
   const minSwipeDistance = 50
@@ -134,6 +135,12 @@ export default function StorybookViewerPage() {
       setCurrentScene(currentScene + 1)
     }
   }
+
+  // Auto-dismiss text hint after 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowTextHint(false), 5000)
+    return () => clearTimeout(timer)
+  }, [])
 
   // Reset text state on scene change and check for overflow
   useEffect(() => {
@@ -641,6 +648,11 @@ export default function StorybookViewerPage() {
                       <div className="flex justify-center pt-0.5">
                         <ChevronDown className="w-3.5 h-3.5 text-white animate-bounce" />
                       </div>
+                    )}
+                    {showTextHint && sceneIndex === 0 && (
+                      <p className="text-white/60 text-[10px] text-center mt-1.5 animate-pulse">
+                        Tap &quot;HIDE TEXT&quot; to see more of the image
+                      </p>
                     )}
                   </div>
                 )}
