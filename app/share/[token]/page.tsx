@@ -390,14 +390,14 @@ export default function SharedStorybookPage() {
                   <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-3 pb-1 relative">
                     <button
                       onClick={() => setTextHidden(true)}
-                      className="absolute top-1 right-3 z-10 text-white/25 hover:text-white/50 text-[10px] uppercase tracking-widest transition-colors"
+                      className="absolute top-1 right-3 z-10 text-white hover:text-white text-[10px] uppercase tracking-widest transition-colors"
                     >
-                      hide
+                      hide text
                     </button>
                     <div
                       ref={textScrollRef}
                       className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto"
-                      style={{ maxHeight: '20vh' }}
+                      style={{ maxHeight: '10vh' }}
                       onScroll={handleTextScroll}
                       onTouchStart={(e) => {
                         const el = e.currentTarget
@@ -432,7 +432,7 @@ export default function SharedStorybookPage() {
                     </div>
                     {showScrollHint && (
                       <div className="flex justify-center pt-0.5">
-                        <ChevronDown className="w-3.5 h-3.5 text-white/30 animate-bounce" />
+                        <ChevronDown className="w-3.5 h-3.5 text-white animate-bounce" />
                       </div>
                     )}
                   </div>
@@ -443,7 +443,7 @@ export default function SharedStorybookPage() {
                   <div className="flex justify-center py-1">
                     <button
                       onClick={() => setTextHidden(false)}
-                      className="text-white/25 hover:text-white/50 text-[10px] uppercase tracking-widest transition-colors"
+                      className="text-white hover:text-white text-[10px] uppercase tracking-widest transition-colors"
                     >
                       show text
                     </button>
