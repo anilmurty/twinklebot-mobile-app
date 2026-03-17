@@ -105,8 +105,10 @@ export default function SharedStorybookPage() {
   }
 
   // Check if this is the counting story
-  const isCountingStory = storybook?.template?.title?.includes('Learning to Count') ||
+  const isCountingStory = storybook?.template?.title?.includes('Numbers Around the House') ||
+                          storybook?.template?.title?.includes('Learning to Count') ||
                           storybook?.template?.title?.includes('Counting') ||
+                          storybook?.title?.includes('Numbers Around the House') ||
                           storybook?.title?.includes('Learning to Count') ||
                           storybook?.title?.includes('Counting')
 

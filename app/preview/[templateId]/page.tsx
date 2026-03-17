@@ -145,7 +145,8 @@ export default function StoryPreviewPage() {
   }
 
   // Check if this is the counting story
-  const isCountingStory = template?.title?.includes('Learning to Count') ||
+  const isCountingStory = template?.title?.includes('Numbers Around the House') ||
+                          template?.title?.includes('Learning to Count') ||
                           template?.title?.includes('Counting')
 
   const isAlphabetStory = template?.title?.includes('Alphabet')

@@ -135,7 +135,7 @@ export default function StorybookViewerPage() {
   // Get story-specific intro text based on template
   const getStoryIntro = (templateTitle: string | undefined, charName: string) => {
     const title = templateTitle?.toLowerCase() || ''
-    if (title.includes('counting') || title.includes('count')) {
+    if (title.includes('numbers around the house') || title.includes('counting') || title.includes('count')) {
       return `This is the story of how ${charName} counts things around the home`
     }
     if (title.includes('alphabet adventure 1')) {
@@ -155,8 +155,10 @@ export default function StorybookViewerPage() {
   }
 
   // Check if this is the counting story
-  const isCountingStory = storybook?.template?.title?.includes('Learning to Count') ||
+  const isCountingStory = storybook?.template?.title?.includes('Numbers Around the House') ||
+                          storybook?.template?.title?.includes('Learning to Count') ||
                           storybook?.template?.title?.includes('Counting') ||
+                          storybook?.title?.includes('Numbers Around the House') ||
                           storybook?.title?.includes('Learning to Count') ||
                           storybook?.title?.includes('Counting')
 

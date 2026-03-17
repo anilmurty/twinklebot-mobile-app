@@ -378,10 +378,17 @@ export function StoryLibraryTab() {
     }
   }
 
-  // Group templates by category
+  // Sort: complete stories first, then coming-soon
+  const sortedTemplates = [...templates].sort((a, b) => {
+    const aComplete = a.is_coming_soon ? 1 : 0
+    const bComplete = b.is_coming_soon ? 1 : 0
+    return aComplete - bComplete
+  })
+
+  // Group templates by category (already sorted)
   const categorizedTemplates = CATEGORIES.map((cat) => ({
     ...cat,
-    templates: templates.filter((t) => getDisplayCategory(t.title, t.category) === cat.id),
+    templates: sortedTemplates.filter((t) => getDisplayCategory(t.title, t.category) === cat.id),
   }))
 
   return (
@@ -414,7 +421,7 @@ export function StoryLibraryTab() {
                 All Stories
               </h2>
               <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
-                {templates.map((template) => (
+                {sortedTemplates.map((template) => (
                   <LibraryCard
                     key={template.id}
                     template={template}

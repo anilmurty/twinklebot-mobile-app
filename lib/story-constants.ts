@@ -32,7 +32,7 @@ export function getDisplayCategory(title: string, dbCategory?: string): StoryCat
     if (mapped) return mapped
   }
   // Fallback: infer from title
-  if (title.includes("Count")) return "math"
+  if (title.includes("Count") || title.includes("Numbers Around")) return "math"
   if (title.includes("Alphabet")) return "language"
   if (title.includes("Zoo")) return "world"
   if (title.includes("Mission") || title.includes("Moon")) return "scifi"
@@ -42,6 +42,7 @@ export function getDisplayCategory(title: string, dbCategory?: string): StoryCat
 /** Tagline data keyed by substring match against story title */
 const TAGLINE_MAP: Record<string, { verb: string; subject: string }> = {
   // Language Learning
+  "Numbers Around the House": { verb: "TEACHES", subject: "COUNTING 1-10" },
   "Counting": { verb: "TEACHES", subject: "COUNTING 1-10" },
   "Colors of the Carnival": { verb: "TEACHES", subject: "COLORS & WORDS" },
   "Opposites at the Playground": { verb: "TEACHES", subject: "OPPOSITES" },

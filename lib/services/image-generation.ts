@@ -115,13 +115,13 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
 
   // Quality tier selection (overrides template model)
   if (qualityTier === 'premium') {
-    console.log(`✅ Using premium model: google/nano-banana-pro`)
-    return 'google/nano-banana-pro'
+    console.log(`✅ Using premium model: google/nano-banana-2`)
+    return 'google/nano-banana-2'
   }
 
   if (qualityTier === 'basic') {
-    console.log(`✅ Using basic model: google/nano-banana`)
-    return 'google/nano-banana'
+    console.log(`✅ Using basic model: google/nano-banana-2`)
+    return 'google/nano-banana-2'
   }
 
   // If template ID provided, try to get model from template
@@ -153,7 +153,7 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
   }
 
   // Fallback default
-  return 'google/nano-banana'
+  return 'google/nano-banana-2'
 }
 
 /**
@@ -161,7 +161,7 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
  */
 async function resolveModelVersion(modelIdentifier: string): Promise<string> {
   // Version IDs are typically long alphanumeric strings (e.g., "abc123def456...")
-  // Model names contain slashes (e.g., "google/nano-banana", "google/nano-banana-pro")
+  // Model names contain slashes (e.g., "google/nano-banana-2")
   
   if (modelIdentifier.includes('/')) {
     // Model name format - use directly without API call
@@ -175,7 +175,7 @@ async function resolveModelVersion(modelIdentifier: string): Promise<string> {
     if (modelIdentifier.length < 30 || !/^[a-z0-9]+$/i.test(modelIdentifier)) {
       console.error(`❌ Error: "${modelIdentifier}" appears to be a prediction ID, not a model version ID.`)
       console.error('📝 Solution: For models without exposed versions, use the model name:')
-      console.error(`   Set NANOBANANA_MODEL_VERSION=${modelIdentifier.includes('/') ? modelIdentifier : 'google/nano-banana-pro'} in .env.local`)
+      console.error(`   Set NANOBANANA_MODEL_VERSION=${modelIdentifier.includes('/') ? modelIdentifier : 'google/nano-banana-2'} in .env.local`)
       throw new Error(`Invalid version ID format: "${modelIdentifier}". Use model name instead.`)
     }
     console.log('✅ Using provided model version ID:', modelIdentifier)

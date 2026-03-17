@@ -143,7 +143,7 @@ export async function generateCharacterVariations(
     modelIdentifier = process.env.NANOBANANA_MODEL_VERSION
     console.log(`✅ Using model from env var: ${modelIdentifier}`)
   } else {
-    modelIdentifier = 'google/nano-banana'
+    modelIdentifier = 'google/nano-banana-2'
     const { data: template, error: templateError } = templateResult
     if (!templateError && template?.generation_models) {
       const modelData = Array.isArray(template.generation_models)
