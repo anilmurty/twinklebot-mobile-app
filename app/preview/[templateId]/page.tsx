@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, X } from "lucide-react"
+import { ArrowLeft, ArrowRight, Loader2, Sparkles, X, ChevronDown } from "lucide-react"
 import { templatesApi } from "@/lib/api-client"
 
 interface MockScene {
@@ -40,6 +40,9 @@ export default function StoryPreviewPage() {
   // Swipe state
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [textHidden, setTextHidden] = useState(false)
+  const [showScrollHint, setShowScrollHint] = useState(false)
+  const textScrollRef = useRef<HTMLDivElement>(null)
 
   const minSwipeDistance = 50
 
@@ -137,6 +140,27 @@ export default function StoryPreviewPage() {
     if (currentScene > 0) {
       setCurrentScene(currentScene - 1)
       setImageError(false)
+    }
+  }
+
+  // Reset text state on scene change and check for overflow
+  useEffect(() => {
+    setTextHidden(false)
+    setShowScrollHint(false)
+    requestAnimationFrame(() => {
+      const el = textScrollRef.current
+      if (el) {
+        el.scrollTop = 0
+        setShowScrollHint(el.scrollHeight > el.clientHeight + 4)
+      }
+    })
+  }, [currentScene])
+
+  const handleTextScroll = () => {
+    const el = textScrollRef.current
+    if (el) {
+      const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 4
+      setShowScrollHint(!atBottom)
     }
   }
 
@@ -523,23 +547,27 @@ export default function StoryPreviewPage() {
 
               {/* Bottom section: story text + action button */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
-                {/* Text Overlay */}
-                {(scene.text || scene.script_text) && (
-                  <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-4 pb-2">
+                {/* Text Overlay — scrollable, capped at 20% of viewport */}
+                {(scene.text || scene.script_text) && !textHidden && (
+                  <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-3 pb-1 relative">
+                    <button
+                      onClick={() => setTextHidden(true)}
+                      className="absolute top-1 right-3 z-10 text-white/25 hover:text-white/50 text-[10px] uppercase tracking-widest transition-colors"
+                    >
+                      hide
+                    </button>
                     <div
+                      ref={textScrollRef}
                       className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto"
-                      style={{ maxHeight: '35vh' }}
+                      style={{ maxHeight: '20vh' }}
+                      onScroll={handleTextScroll}
                       onTouchStart={(e) => {
                         const el = e.currentTarget
-                        if (el.scrollHeight > el.clientHeight) {
-                          e.stopPropagation()
-                        }
+                        if (el.scrollHeight > el.clientHeight) e.stopPropagation()
                       }}
                       onTouchMove={(e) => {
                         const el = e.currentTarget
-                        if (el.scrollHeight > el.clientHeight) {
-                          e.stopPropagation()
-                        }
+                        if (el.scrollHeight > el.clientHeight) e.stopPropagation()
                       }}
                     >
                       {(scene.text || scene.script_text || '')
@@ -566,6 +594,23 @@ export default function StoryPreviewPage() {
                           </div>
                         ))}
                     </div>
+                    {showScrollHint && (
+                      <div className="flex justify-center pt-0.5">
+                        <ChevronDown className="w-3.5 h-3.5 text-white/30 animate-bounce" />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Show text toggle when hidden */}
+                {(scene.text || scene.script_text) && textHidden && (
+                  <div className="flex justify-center py-1">
+                    <button
+                      onClick={() => setTextHidden(false)}
+                      className="text-white/25 hover:text-white/50 text-[10px] uppercase tracking-widest transition-colors"
+                    >
+                      show text
+                    </button>
                   </div>
                 )}
 
