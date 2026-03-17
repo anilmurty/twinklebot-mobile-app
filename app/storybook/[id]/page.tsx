@@ -567,10 +567,26 @@ export default function StorybookViewerPage() {
 
               {/* Bottom section: story text + action button */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
-                {/* Text Overlay */}
+                {/* Text Overlay — scrollable, capped at 40% of viewport */}
                 {(scene.text || scene.script_text) && (
-                  <div className="bg-gradient-to-t from-black/95 via-black/85 to-transparent px-4 md:px-6 lg:px-8 pt-10 pb-2">
-                    <div className="text-center max-w-3xl mx-auto">
+                  <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-4 pb-2">
+                    <div
+                      className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto"
+                      style={{ maxHeight: '35vh' }}
+                      onTouchStart={(e) => {
+                        // Allow scrolling inside text area without triggering page swipe
+                        const el = e.currentTarget
+                        if (el.scrollHeight > el.clientHeight) {
+                          e.stopPropagation()
+                        }
+                      }}
+                      onTouchMove={(e) => {
+                        const el = e.currentTarget
+                        if (el.scrollHeight > el.clientHeight) {
+                          e.stopPropagation()
+                        }
+                      }}
+                    >
                       {(scene.text || scene.script_text || '')
                         .split('\n\n')
                         .map((stanza, stanzaIdx) => (
