@@ -17,7 +17,7 @@ import {
   Menu,
   X
 } from "lucide-react"
-import { STORY_CATEGORIES, type StoryCategoryId } from "@/lib/story-constants"
+import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-constants"
 
 export function WebLandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
@@ -83,70 +83,70 @@ export function WebLandingPage() {
     `${supabaseUrl}/storage/v1/render/image/public/story-template-assets/${path}?quality=60`
 
   // All stories grouped by category (matching shared STORY_CATEGORIES)
-  const storiesByCategory: Record<StoryCategoryId, { title: string; description: string; image: string }[]> = {
+  const storiesByCategory: Record<StoryCategoryId, { title: string; description: string; image: string; age: string; scenes: number }[]> = {
     language: [
-      { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/alphabet-general-a-through-i.png") },
-      { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: assetUrl("alphabet-general/alphabet-general-j-through-r.png") },
-      { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: assetUrl("alphabet-general/alphabet-general-s-through-z.png") },
-      { title: "Colors of the Carnival", description: "A colorful celebration", image: assetUrl("colors-of-the-carnival/colors-of-the-carnival.png") },
-      { title: "Opposites at the Playground", description: "Learn big and small", image: assetUrl("opposites-at-the-playground/opposites-at-the-playground.png") },
-      { title: "The Feelings Farm", description: "Understand your emotions", image: assetUrl("the-feelings-farm/the-feelings-farm.png") },
-      { title: "A Day in My Body", description: "Explore how your body works", image: assetUrl("a-day-in-my-body/a-day-in-my-body.png") },
-      { title: "Vehicles on the Go", description: "Cars, trucks, and more", image: assetUrl("vehicles-on-the-go/vehicles-on-the-go.png") },
-      { title: "Animals Around the World", description: "Meet animals everywhere", image: assetUrl("animals-around-the-world/animals-around-the-world.png") },
-      { title: "Action Heroes", description: "Be a real-life hero", image: assetUrl("action-heroes/action-heroes.png") },
-      { title: "My Five Senses Adventure", description: "See, hear, touch, taste, smell", image: assetUrl("my-five-senses-adventure/my-five-senses-adventure.png") },
-      { title: "Weather Words", description: "Learn weather vocabulary", image: assetUrl("weather-words/weather-words.png") },
+      { title: "Alphabet Adventures A-I", description: "Explore letters A to I", image: assetUrl("alphabet-general/alphabet-general-a-through-i.png"), age: "2-6", scenes: 9 },
+      { title: "Alphabet Adventures J-R", description: "Explore letters J to R", image: assetUrl("alphabet-general/alphabet-general-j-through-r.png"), age: "2-6", scenes: 9 },
+      { title: "Alphabet Adventures S-Z", description: "Explore letters S to Z", image: assetUrl("alphabet-general/alphabet-general-s-through-z.png"), age: "2-6", scenes: 8 },
+      { title: "Colors of the Carnival", description: "A colorful celebration", image: assetUrl("colors-of-the-carnival/colors-of-the-carnival.png"), age: "2-6", scenes: 10 },
+      { title: "Opposites at the Playground", description: "Learn big and small", image: assetUrl("opposites-at-the-playground/opposites-at-the-playground.png"), age: "2-6", scenes: 10 },
+      { title: "The Feelings Farm", description: "Understand your emotions", image: assetUrl("the-feelings-farm/the-feelings-farm.png"), age: "2-6", scenes: 10 },
+      { title: "A Day in My Body", description: "Explore how your body works", image: assetUrl("a-day-in-my-body/a-day-in-my-body.png"), age: "2-6", scenes: 10 },
+      { title: "Vehicles on the Go", description: "Cars, trucks, and more", image: assetUrl("vehicles-on-the-go/vehicles-on-the-go.png"), age: "2-6", scenes: 10 },
+      { title: "Animals Around the World", description: "Meet animals everywhere", image: assetUrl("animals-around-the-world/animals-around-the-world.png"), age: "2-6", scenes: 10 },
+      { title: "Action Heroes", description: "Be a real-life hero", image: assetUrl("action-heroes/action-heroes.png"), age: "2-6", scenes: 10 },
+      { title: "My Five Senses Adventure", description: "See, hear, touch, taste, smell", image: assetUrl("my-five-senses-adventure/my-five-senses-adventure.png"), age: "2-6", scenes: 10 },
+      { title: "Weather Words", description: "Learn weather vocabulary", image: assetUrl("weather-words/weather-words.png"), age: "2-6", scenes: 10 },
     ],
     math: [
-      { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/counting-general.png") },
-      { title: "The Great Bake Sale", description: "Bake and share treats", image: assetUrl("the-great-bake-sale/the-great-bake-sale.png") },
-      { title: "Building a Birdhouse", description: "Create a home for birds", image: assetUrl("building-a-birdhouse/building-a-birdhouse.png") },
-      { title: "Camping Under the Stars", description: "A nighttime adventure", image: assetUrl("camping-under-the-stars/camping-under-the-stars.png") },
-      { title: "The Toy Store Sort", description: "Organize the toy store", image: assetUrl("the-toy-store-sort/the-toy-store-sort.png") },
-      { title: "Race Day at the Track", description: "Ready, set, go!", image: assetUrl("race-day-at-the-track/race-day-at-the-track.png") },
-      { title: "The Garden Grows", description: "Watch a garden bloom", image: assetUrl("the-garden-grows/the-garden-grows.png") },
-      { title: "The Pizza Party Problem", description: "Solve a cheesy puzzle", image: assetUrl("the-pizza-party-problem/the-pizza-party-problem.png") },
-      { title: "The Aquarium Helper", description: "Care for sea creatures", image: assetUrl("the-acquarium%20helper/the-acquarium%20helper.png") },
-      { title: "The Big Shape City", description: "Shapes are everywhere", image: assetUrl("the-big-shape-city/the-big-shape-city.png") },
-      { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/visit-to-the-farmers-market.png") },
+      { title: "Counting Adventures", description: "Learn numbers 1-10 with fun", image: assetUrl("counting-general/counting-general.png"), age: "1-5", scenes: 10 },
+      { title: "The Great Bake Sale", description: "Bake and share treats", image: assetUrl("the-great-bake-sale/the-great-bake-sale.png"), age: "2-6", scenes: 10 },
+      { title: "Building a Birdhouse", description: "Create a home for birds", image: assetUrl("building-a-birdhouse/building-a-birdhouse.png"), age: "2-6", scenes: 10 },
+      { title: "Camping Under the Stars", description: "A nighttime adventure", image: assetUrl("camping-under-the-stars/camping-under-the-stars.png"), age: "2-6", scenes: 10 },
+      { title: "The Toy Store Sort", description: "Organize the toy store", image: assetUrl("the-toy-store-sort/the-toy-store-sort.png"), age: "2-6", scenes: 10 },
+      { title: "Race Day at the Track", description: "Ready, set, go!", image: assetUrl("race-day-at-the-track/race-day-at-the-track.png"), age: "2-6", scenes: 10 },
+      { title: "The Garden Grows", description: "Watch a garden bloom", image: assetUrl("the-garden-grows/the-garden-grows.png"), age: "2-6", scenes: 10 },
+      { title: "The Pizza Party Problem", description: "Solve a cheesy puzzle", image: assetUrl("the-pizza-party-problem/the-pizza-party-problem.png"), age: "2-6", scenes: 10 },
+      { title: "The Aquarium Helper", description: "Care for sea creatures", image: assetUrl("the-acquarium%20helper/the-acquarium%20helper.png"), age: "2-6", scenes: 10 },
+      { title: "The Big Shape City", description: "Shapes are everywhere", image: assetUrl("the-big-shape-city/the-big-shape-city.png"), age: "2-6", scenes: 10 },
+      { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/visit-to-the-farmers-market.png"), age: "2-6", scenes: 10 },
     ],
     world: [
-      { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/day-at-the-zoo.png") },
-      { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/field-trip-to-the-fire-station.png") },
-      { title: "From Seed to Supermarket", description: "How food reaches you", image: assetUrl("from-seed-to-supermarket/from-seed-to-supermarket.png") },
-      { title: "Under the Ocean", description: "Dive into the deep blue", image: assetUrl("under-the-ocean/under-the-ocean.png") },
-      { title: "Into the Rainforest", description: "Explore the jungle", image: assetUrl("into-the-rainforest/into-the-rainforest.png") },
-      { title: "The Construction Site", description: "Build something amazing", image: assetUrl("the-construction-site/the-construction-site.png") },
-      { title: "Around the World in 10 Meals", description: "Taste global cuisines", image: assetUrl("around-the-world-in-10-meals/around-the-world-in-10-meals.png") },
-      { title: "The Weather Station", description: "Predict the weather", image: assetUrl("the-weather-station/the-weather-station.png") },
-      { title: "Night Sky Explorer", description: "Discover stars and planets", image: assetUrl("night-sky-explorer/night-sky-explorer.png") },
-      { title: "The Hospital Helper", description: "Learn about doctors", image: assetUrl("the-hospital-helper/the-hospital-helper.png") },
-      { title: "The River's Journey", description: "Follow a river to the sea", image: assetUrl("the-rivers-journey/the-rivers-journey.png") },
+      { title: "A Day at the Zoo", description: "An adventure with friendly animals", image: assetUrl("day-at-the-zoo/day-at-the-zoo.png"), age: "1-5", scenes: 10 },
+      { title: "Field Trip to the Fire Station", description: "Learn about firefighters", image: assetUrl("field-trip-to-the-fire-station/field-trip-to-the-fire-station.png"), age: "2-6", scenes: 10 },
+      { title: "From Seed to Supermarket", description: "How food reaches you", image: assetUrl("from-seed-to-supermarket/from-seed-to-supermarket.png"), age: "2-6", scenes: 10 },
+      { title: "Under the Ocean", description: "Dive into the deep blue", image: assetUrl("under-the-ocean/under-the-ocean.png"), age: "2-6", scenes: 10 },
+      { title: "Into the Rainforest", description: "Explore the jungle", image: assetUrl("into-the-rainforest/into-the-rainforest.png"), age: "2-6", scenes: 10 },
+      { title: "The Construction Site", description: "Build something amazing", image: assetUrl("the-construction-site/the-construction-site.png"), age: "2-6", scenes: 10 },
+      { title: "Around the World in 10 Meals", description: "Taste global cuisines", image: assetUrl("around-the-world-in-10-meals/around-the-world-in-10-meals.png"), age: "2-6", scenes: 10 },
+      { title: "The Weather Station", description: "Predict the weather", image: assetUrl("the-weather-station/the-weather-station.png"), age: "2-6", scenes: 10 },
+      { title: "Night Sky Explorer", description: "Discover stars and planets", image: assetUrl("night-sky-explorer/night-sky-explorer.png"), age: "2-6", scenes: 10 },
+      { title: "The Hospital Helper", description: "Learn about doctors", image: assetUrl("the-hospital-helper/the-hospital-helper.png"), age: "2-6", scenes: 10 },
+      { title: "The River's Journey", description: "Follow a river to the sea", image: assetUrl("the-rivers-journey/the-rivers-journey.png"), age: "2-6", scenes: 10 },
     ],
     science: [
-      { title: "How a Volcano Works", description: "Explore erupting volcanoes", image: assetUrl("how-a-volcano-works/how-a-volcano-works.png") },
-      { title: "Inside the Human Body", description: "Journey through organs", image: assetUrl("inside-the-human-body/inside-the-human-body.png") },
-      { title: "The Life of a Butterfly", description: "Watch a metamorphosis", image: assetUrl("the-life-of-a-butterfly/the-life-of-a-butterfly.png") },
-      { title: "Where Does Water Go?", description: "Follow the water cycle", image: assetUrl("where-does-water-go/where-does-water-go.png") },
-      { title: "The Earthquake Investigator", description: "Discover what shakes the earth", image: assetUrl("the-earthquake-investigator/the-earthquake-investigator.png") },
-      { title: "Light and Shadows", description: "Play with light", image: assetUrl("light-and-shadows/light-and-shadows.png") },
-      { title: "The Magnetic World", description: "Discover magnets", image: assetUrl("the-magnetic-world/the-magnetic-world.png") },
-      { title: "A Day in the Life of a Seed", description: "Watch a seed grow", image: assetUrl("a-day-in-the-life-of-a-seed/a-day-in-the-life-of-a-seed.png") },
-      { title: "Forces All Around Us", description: "Discover push and pull", image: assetUrl("forces-all-around-us/forces-all-around-us.png") },
-      { title: "The Deep Freeze", description: "Explore icy worlds", image: assetUrl("the-deep-freeze/the-deep-freeze.png") },
+      { title: "How a Volcano Works", description: "Explore erupting volcanoes", image: assetUrl("how-a-volcano-works/how-a-volcano-works.png"), age: "2-6", scenes: 10 },
+      { title: "Inside the Human Body", description: "Journey through organs", image: assetUrl("inside-the-human-body/inside-the-human-body.png"), age: "2-6", scenes: 10 },
+      { title: "The Life of a Butterfly", description: "Watch a metamorphosis", image: assetUrl("the-life-of-a-butterfly/the-life-of-a-butterfly.png"), age: "2-6", scenes: 10 },
+      { title: "Where Does Water Go?", description: "Follow the water cycle", image: assetUrl("where-does-water-go/where-does-water-go.png"), age: "2-6", scenes: 10 },
+      { title: "The Earthquake Investigator", description: "Discover what shakes the earth", image: assetUrl("the-earthquake-investigator/the-earthquake-investigator.png"), age: "2-6", scenes: 10 },
+      { title: "Light and Shadows", description: "Play with light", image: assetUrl("light-and-shadows/light-and-shadows.png"), age: "2-6", scenes: 10 },
+      { title: "The Magnetic World", description: "Discover magnets", image: assetUrl("the-magnetic-world/the-magnetic-world.png"), age: "2-6", scenes: 10 },
+      { title: "A Day in the Life of a Seed", description: "Watch a seed grow", image: assetUrl("a-day-in-the-life-of-a-seed/a-day-in-the-life-of-a-seed.png"), age: "2-6", scenes: 10 },
+      { title: "Forces All Around Us", description: "Discover push and pull", image: assetUrl("forces-all-around-us/forces-all-around-us.png"), age: "2-6", scenes: 10 },
+      { title: "The Deep Freeze", description: "Explore icy worlds", image: assetUrl("the-deep-freeze/the-deep-freeze.png"), age: "2-6", scenes: 10 },
     ],
     scifi: [
-      { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/mission-to-the-moon.png") },
-      { title: "The Time Traveler's Backpack", description: "Journey through time", image: assetUrl("the-time-travelers-backpack/the-time-travelers-backpack.png") },
-      { title: "Planet of the Colors", description: "A colorful space trip", image: assetUrl("planet-of-the-colors/planet-of-the-colors.png") },
-      { title: "The Dream Architect", description: "Design your dreams", image: assetUrl("the-dream-architect/the-dream-architect.png") },
-      { title: "The Robot Best Friend", description: "Meet your robot pal", image: assetUrl("the-robot-best-friend/the-robot-best-friend.png") },
-      { title: "Guardians of the Forest", description: "Protect the woodland", image: assetUrl("guardians-of-the-forest/guardians-of-the-forest.png") },
-      { title: "The Cloud Castle", description: "Adventure in the clouds", image: assetUrl("the-cloud-castle/the-cloud-castle.png") },
-      { title: "The Smallest Astronaut", description: "A tiny space explorer", image: assetUrl("the-smallest-astronaut/the-smallest-astronaut.png") },
-      { title: "The Portal Map", description: "Travel through portals", image: assetUrl("the-portal-map/the-portal-map.png") },
-      { title: "The Star Catcher", description: "Catch falling stars", image: assetUrl("the-star-catcher/the-star-catcher.png") },
+      { title: "Mission To The Moon", description: "A space adventure", image: assetUrl("mission-to-the-moon/mission-to-the-moon.png"), age: "2-6", scenes: 10 },
+      { title: "The Time Traveler's Backpack", description: "Journey through time", image: assetUrl("the-time-travelers-backpack/the-time-travelers-backpack.png"), age: "2-6", scenes: 10 },
+      { title: "Planet of the Colors", description: "A colorful space trip", image: assetUrl("planet-of-the-colors/planet-of-the-colors.png"), age: "2-6", scenes: 10 },
+      { title: "The Dream Architect", description: "Design your dreams", image: assetUrl("the-dream-architect/the-dream-architect.png"), age: "2-6", scenes: 10 },
+      { title: "The Robot Best Friend", description: "Meet your robot pal", image: assetUrl("the-robot-best-friend/the-robot-best-friend.png"), age: "2-6", scenes: 10 },
+      { title: "Guardians of the Forest", description: "Protect the woodland", image: assetUrl("guardians-of-the-forest/guardians-of-the-forest.png"), age: "2-6", scenes: 10 },
+      { title: "The Cloud Castle", description: "Adventure in the clouds", image: assetUrl("the-cloud-castle/the-cloud-castle.png"), age: "2-6", scenes: 10 },
+      { title: "The Smallest Astronaut", description: "A tiny space explorer", image: assetUrl("the-smallest-astronaut/the-smallest-astronaut.png"), age: "2-6", scenes: 10 },
+      { title: "The Portal Map", description: "Travel through portals", image: assetUrl("the-portal-map/the-portal-map.png"), age: "2-6", scenes: 10 },
+      { title: "The Star Catcher", description: "Catch falling stars", image: assetUrl("the-star-catcher/the-star-catcher.png"), age: "2-6", scenes: 10 },
     ],
   }
 
@@ -451,26 +451,39 @@ export function WebLandingPage() {
                       className="flex gap-6 w-max carousel-strip"
                       style={{ animation: `${direction} ${duration} linear infinite` }}
                     >
-                      {[...stories, ...stories].map((story, i) => (
-                        <div
-                          key={i}
-                          className="group/card relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer"
-                        >
-                          <div className="aspect-[4/3] relative">
-                            <Image
-                              src={story.image}
-                              alt={story.title}
-                              fill
-                              className="object-cover transition-transform group-hover/card:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+                      {[...stories, ...stories].map((story, i) => {
+                        const tagline = getTagline(story.title)
+                        return (
+                          <div
+                            key={i}
+                            className="group/card relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer"
+                          >
+                            <div className="aspect-[4/3] relative">
+                              <Image
+                                src={story.image}
+                                alt={story.title}
+                                fill
+                                className="object-cover transition-transform group-hover/card:scale-105"
+                              />
+                              {/* Always-visible gradient + title */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                              {/* Stronger gradient on hover */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
+                            </div>
+                            {/* Always visible: just title */}
+                            <div className="absolute bottom-0 left-0 right-0 p-4 text-white group-hover/card:opacity-0 transition-opacity duration-300">
+                              <h3 className="text-lg font-bold text-white truncate">{story.title}</h3>
+                            </div>
+                            {/* Hover: full details */}
+                            <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover/card:opacity-100 transition-all duration-300 translate-y-2 group-hover/card:translate-y-0">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1">{tagline.verb} {tagline.subject}</p>
+                              <h3 className="text-lg font-bold text-white mb-1">{story.title}</h3>
+                              <p className="text-white/80 text-sm mb-2">{story.description}</p>
+                              <p className="text-white/60 text-xs">Ages {story.age} · {story.scenes} pages</p>
+                            </div>
                           </div>
-                          <div className="absolute bottom-0 left-0 right-0 p-6 text-white opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 translate-y-2 group-hover/card:translate-y-0">
-                            <h3 className="text-xl font-bold mb-1 text-white">{story.title}</h3>
-                            <p className="text-white/80 text-sm">{story.description}</p>
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 </div>
