@@ -454,18 +454,18 @@ export function WebLandingPage() {
                       {[...stories, ...stories].map((story, i) => (
                         <div
                           key={i}
-                          className="group relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer"
+                          className="group/card relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer"
                         >
                           <div className="aspect-[4/3] relative">
                             <Image
                               src={story.image}
                               alt={story.title}
                               fill
-                              className="object-cover transition-transform group-hover:scale-105"
+                              className="object-cover transition-transform group-hover/card:scale-105"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300" />
                           </div>
-                          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                          <div className="absolute bottom-0 left-0 right-0 p-6 text-white opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 translate-y-2 group-hover/card:translate-y-0">
                             <h3 className="text-xl font-bold mb-1 text-white">{story.title}</h3>
                             <p className="text-white/80 text-sm">{story.description}</p>
                           </div>
