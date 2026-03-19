@@ -508,27 +508,16 @@ export function StoryLibraryTab() {
             <DialogDescription>Pick a template to create a personalized storybook</DialogDescription>
           </DialogHeader>
           <div className="grid gap-2 py-4 overflow-y-auto max-h-[50vh]">
-            {templates.map((template) => {
+            {templates.filter((t) => !t.is_coming_soon).map((template) => {
               const tagline = getTagline(template.title)
-              const isComingSoon = template.is_coming_soon
-              const isNotified = template.user_interested
               return (
                 <button
                   key={template.id}
                   onClick={() => {
-                    if (isComingSoon) {
-                      handleNotify(template)
-                      return
-                    }
                     setShowTemplatePicker(false)
                     setSelectedStory(template)
                   }}
-                  disabled={isComingSoon && isNotified}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left w-full group ${
-                    isComingSoon && isNotified
-                      ? "border-emerald-500/30 bg-emerald-500/5 cursor-default"
-                      : "border-border hover:border-primary/50 hover:bg-primary/5"
-                  }`}
+                  className="flex items-center gap-3 p-3 rounded-xl border transition-all text-left w-full group border-border hover:border-primary/50 hover:bg-primary/5"
                 >
                   {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
                     <img
@@ -546,11 +535,6 @@ export function StoryLibraryTab() {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1.5">
                       {template.title}
-                      {isComingSoon && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 uppercase tracking-wide shrink-0">
-                          Soon
-                        </span>
-                      )}
                     </h4>
                     <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
                       <span className="text-muted-foreground">{tagline.verb}</span>
@@ -561,15 +545,7 @@ export function StoryLibraryTab() {
                         "A personalized adventure"}
                     </p>
                   </div>
-                  {isComingSoon ? (
-                    isNotified ? (
-                      <BellRing className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : (
-                      <Bell className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
-                    )
-                  ) : (
-                    <Sparkles className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
-                  )}
+                  <Sparkles className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
                 </button>
               )
             })}

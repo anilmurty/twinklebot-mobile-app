@@ -218,9 +218,11 @@ export function CreateStoryDialog({
       setLoading(true)
       setError(null)
       const data = await templatesApi.list()
-      setTemplates(data.templates || [])
-      if (data.templates && data.templates.length > 0) {
-        setSelectedTemplate(data.templates[0].id)
+      // Filter out coming-soon templates (no script_data/scenes)
+      const activeTemplates = (data.templates || []).filter((t: any) => !t.is_coming_soon)
+      setTemplates(activeTemplates)
+      if (activeTemplates.length > 0) {
+        setSelectedTemplate(activeTemplates[0].id)
       }
     } catch (err: any) {
       console.error("Failed to fetch templates:", err)
@@ -412,7 +414,7 @@ export function CreateStoryDialog({
                     value={selectedTemplate?.toString() || ""}
                     onValueChange={(value) => setSelectedTemplate(Number.parseInt(value))}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
                       {templates.map((template) => (
                         <Card key={template.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
                           <label className="flex items-center gap-3 cursor-pointer w-full">
