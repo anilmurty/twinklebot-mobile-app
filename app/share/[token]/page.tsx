@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Loader2, Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
 
 interface Scene {
   scene_number?: number
@@ -307,20 +307,14 @@ export default function SharedStorybookPage() {
                   {getStoryIntro(storybook.template?.title, characterName || 'your child')}
                 </p>
 
-                <div className="text-white/60 text-sm">
-                  Swipe or tap to start reading →
+                {/* Swipe hint */}
+                <div className="text-white/60 text-sm flex items-center gap-2">
+                  <span className="md:hidden">Swipe left to start reading</span>
+                  <span className="hidden md:inline">Swipe or click to start reading →</span>
+                  <span className="md:hidden animate-bounce-x">👆</span>
                 </div>
               </div>
             </div>
-
-            {/* Next Arrow for Title Page */}
-            <button
-              onClick={handleNext}
-              className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
-              aria-label="Start reading"
-            >
-              <ArrowRight className="w-7 h-7 text-white drop-shadow-lg" />
-            </button>
           </>
         )}
 
@@ -364,14 +358,6 @@ export default function SharedStorybookPage() {
               </div>
             </div>
 
-            {/* Previous Arrow for End Page */}
-            <button
-              onClick={handlePrevious}
-              className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/80 hover:bg-amber-700/90 transition-all backdrop-blur-md shadow-lg border border-amber-700/30"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="w-7 h-7 text-white drop-shadow-lg" />
-            </button>
           </>
         )}
 
@@ -493,26 +479,6 @@ export default function SharedStorybookPage() {
               </div>
             </div>
 
-            {/* Navigation Arrows */}
-            <>
-              <button
-                onClick={handlePrevious}
-                disabled={currentScene === 0}
-                className="cursor-pointer absolute left-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/70 hover:bg-amber-700/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-amber-700/30 pointer-events-auto"
-                aria-label="Previous scene"
-              >
-                <ArrowLeft className="w-6 h-6 text-white drop-shadow-lg" />
-              </button>
-
-              <button
-                onClick={handleNext}
-                disabled={currentScene === totalPages - 1}
-                className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full bg-amber-800/70 hover:bg-amber-700/80 disabled:opacity-20 disabled:cursor-not-allowed transition-all backdrop-blur-md shadow-lg border border-amber-700/30 pointer-events-auto"
-                aria-label="Next scene"
-              >
-                <ArrowRight className="w-6 h-6 text-white drop-shadow-lg" />
-              </button>
-            </>
           </>
         )}
 
