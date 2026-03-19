@@ -465,7 +465,7 @@ export function StorybooksTab() {
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
                   {inProgressBooks.map((storybook) => {
                     const { isGenerating, isGeneratingPreview, isPreviewReady, thumbnailUrl } = getStorybookStatus(storybook)
-                    const progress = storybook.progress || 0
+                    const progress = Math.min(storybook.progress || 0, 100)
 
                     return (
                       <div key={storybook.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
