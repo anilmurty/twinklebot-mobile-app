@@ -41,6 +41,34 @@ export default function SharedStorybookPage() {
   const [textHidden, setTextHidden] = useState(false)
   const textScrollRef = useRef<HTMLDivElement>(null)
 
+  // Swipe state
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    const distance = touchStart - touchEnd
+    if (Math.abs(distance) < minSwipeDistance) return
+
+    if (distance > 0) {
+      handleNext()
+    } else {
+      handlePrevious()
+    }
+    setTouchStart(null)
+    setTouchEnd(null)
+  }
+
   useEffect(() => {
     if (shareToken) {
       fetchSharedStorybook()
@@ -244,7 +272,12 @@ export default function SharedStorybookPage() {
     : 'Your Child'
 
   return (
-    <div className="min-h-screen flex flex-col bg-black md:bg-background md:p-6 lg:p-8">
+    <div
+      className="min-h-screen flex flex-col bg-black md:bg-background md:p-6 lg:p-8"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       <div className="mx-auto w-full max-w-4xl relative md:rounded-lg md:shadow-2xl bg-black overflow-visible">
 
         {/* Title Page */}
@@ -275,7 +308,7 @@ export default function SharedStorybookPage() {
                 </p>
 
                 <div className="text-white/60 text-sm">
-                  Tap the arrow to start reading →
+                  Swipe or tap to start reading →
                 </div>
               </div>
             </div>
