@@ -730,9 +730,9 @@ export function StorybooksTab() {
                     const genTotalScenes = resumeStorybook.total_scenes || 10
                     const genScenesDone = resumeStorybook.scenes?.length || 0
                     const genProgress = Math.min(Math.round((genScenesDone / genTotalScenes) * 100), 100)
-                    // Show latest scene image, or fall back to first scene / thumbnail
-                    const latestScene = resumeStorybook.scenes?.[genScenesDone - 1]
-                    const displayImageUrl = latestScene?.image_url || resumeStorybook.scenes?.[0]?.image_url || resumeStorybook.thumbnail_url || resumeStorybook.first_scene_base_image
+                    // Use thumbnail/first_scene_image from list API (these have proper proxy URLs)
+                    // Raw scene image_urls from the list endpoint may not be accessible
+                    const displayImageUrl = resumeStorybook.first_scene_image || resumeStorybook.thumbnail_url || resumeStorybook.first_scene_base_image
                     return (
                       <div className="space-y-4">
                         {displayImageUrl && (
