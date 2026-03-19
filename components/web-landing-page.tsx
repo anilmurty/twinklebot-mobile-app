@@ -419,7 +419,7 @@ export function WebLandingPage() {
           </div>
 
           {/* Carousel keyframes */}
-          <style jsx>{`
+          <style dangerouslySetInnerHTML={{ __html: `
             @keyframes scroll-left {
               0% { transform: translateX(0); }
               100% { transform: translateX(-50%); }
@@ -429,9 +429,9 @@ export function WebLandingPage() {
               100% { transform: translateX(0); }
             }
             .carousel-row:hover .carousel-strip {
-              animation-play-state: paused;
+              animation-play-state: paused !important;
             }
-          `}</style>
+          `}} />
 
           <div className="space-y-10">
             {STORY_CATEGORIES.map((cat, catIndex) => {
