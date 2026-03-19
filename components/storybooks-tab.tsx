@@ -465,7 +465,13 @@ export function StorybooksTab() {
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
                   {inProgressBooks.map((storybook) => {
                     const { isGenerating, isGeneratingPreview, isPreviewReady, thumbnailUrl } = getStorybookStatus(storybook)
-                    const progress = Math.min(storybook.progress || 0, 100)
+                    // For full generation: derive progress from scene count
+                    // Start at 10% (preview exists), each additional scene adds equal share up to 100%
+                    const totalScenes = storybook.total_scenes || 10
+                    const scenesDone = storybook.scenes?.length || 0
+                    const progress = isGenerating
+                      ? Math.min(Math.round((scenesDone / totalScenes) * 100), 100)
+                      : Math.min(storybook.progress || 0, 100)
 
                     return (
                       <div key={storybook.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
@@ -679,12 +685,16 @@ export function StorybooksTab() {
             <DialogTitle className="text-xl">
               {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
                 ? "Generating Preview"
-                : "Unlock Your Story"}
+                : (resumeStorybook?.status === 'generating' || resumeStorybook?.status === 'pending')
+                  ? "Generating Your Story"
+                  : "Unlock Your Story"}
             </DialogTitle>
             <DialogDescription>
               {resumeStorybook && resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0)
                 ? "Creating a magical preview just for you"
-                : `A personalized keepsake starring ${resumeStorybook?.character_name || 'your child'}`}
+                : (resumeStorybook?.status === 'generating' || resumeStorybook?.status === 'pending')
+                  ? `Creating ${resumeStorybook?.title} starring ${resumeStorybook?.character_name || 'your child'}`
+                  : `A personalized keepsake starring ${resumeStorybook?.character_name || 'your child'}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -714,6 +724,50 @@ export function StorybooksTab() {
                       <p className="text-sm text-muted-foreground">{Math.round(resumeStorybook.progress || 0)}% complete</p>
                     </div>
                   </div>
+                ) : (resumeStorybook.status === 'generating' || resumeStorybook.status === 'pending') ? (
+                  // Show progress for full story generation
+                  (() => {
+                    const genTotalScenes = resumeStorybook.total_scenes || 10
+                    const genScenesDone = resumeStorybook.scenes?.length || 0
+                    const genProgress = Math.min(Math.round((genScenesDone / genTotalScenes) * 100), 100)
+                    // Show latest scene image, or fall back to first scene / thumbnail
+                    const latestScene = resumeStorybook.scenes?.[genScenesDone - 1]
+                    const displayImageUrl = latestScene?.image_url || resumeStorybook.scenes?.[0]?.image_url || resumeStorybook.thumbnail_url || resumeStorybook.first_scene_base_image
+                    return (
+                      <div className="space-y-4">
+                        {displayImageUrl && (
+                          <div className="rounded-xl overflow-hidden bg-black relative" style={{ minHeight: '280px' }}>
+                            <img
+                              src={displayImageUrl}
+                              alt={`${resumeStorybook.title}`}
+                              className="absolute inset-0 w-full h-full object-cover"
+                            />
+                            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/70 via-black/40 to-transparent px-3 pt-3 pb-6 z-10">
+                              <div className="flex items-center justify-between gap-2">
+                                <h2 className="text-white text-sm font-bold font-serif drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] flex-1 truncate">
+                                  {resumeStorybook.title}
+                                </h2>
+                                <div className="text-white text-[10px] font-medium shrink-0 bg-primary px-2 py-0.5 rounded-full">
+                                  {genScenesDone} / {genTotalScenes} scenes
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        <div className="space-y-2">
+                          <Progress value={genProgress} className="w-full h-2" />
+                          <p className="text-sm text-center text-muted-foreground">
+                            {genScenesDone < genTotalScenes
+                              ? `Generating scene ${genScenesDone + 1} of ${genTotalScenes}...`
+                              : 'Finishing up...'}
+                          </p>
+                        </div>
+                        <Button variant="outline" className="w-full" onClick={() => setResumeStorybook(null)}>
+                          Close
+                        </Button>
+                      </div>
+                    )
+                  })()
                 ) : (
                   // Show preview and payment options when ready
                   <>
