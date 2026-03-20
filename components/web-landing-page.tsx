@@ -476,8 +476,8 @@ export function WebLandingPage() {
                             </div>
                             {/* Hover: full details */}
                             <div className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover/card:opacity-100 transition-all duration-300 translate-y-2 group-hover/card:translate-y-0">
-                              <p className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1">{tagline.verb} {tagline.subject}</p>
                               <h3 className="text-lg font-bold text-white mb-1">{story.title}</h3>
+                              <p className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-1">{tagline.verb} {tagline.subject}</p>
                               <p className="text-white/80 text-sm mb-2">{story.description}</p>
                               <p className="text-white/60 text-xs">Ages {story.age} · {story.scenes} pages</p>
                             </div>
