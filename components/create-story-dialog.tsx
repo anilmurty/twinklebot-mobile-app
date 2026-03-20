@@ -715,6 +715,7 @@ export function CreateStoryDialog({
                   storyCredits={storyCredits}
                   onUseCredit={handleUseCredit}
                   iapPriceMap={iapPackages.length > 0 ? Object.fromEntries(iapPackages.map(p => [p.credits, p.priceString])) : undefined}
+                  onCancel={handleMaybeLater}
                 />
               )}
 
@@ -723,10 +724,6 @@ export function CreateStoryDialog({
                   <p className="text-xs text-destructive">{error}</p>
                 </div>
               )}
-
-              <Button variant="ghost" size="sm" className="w-full" onClick={handleMaybeLater} disabled={isSubmitting}>
-                Maybe Later
-              </Button>
             </div>
           </>
         )}

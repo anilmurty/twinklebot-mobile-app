@@ -29,6 +29,8 @@ interface CompactPricingProps {
   selectedTier?: 'basic' | 'premium'
   /** Callback when tier changes */
   onTierChange?: (tier: 'basic' | 'premium') => void
+  /** Optional cancel/dismiss callback — renders "Maybe Later" button next to Continue */
+  onCancel?: () => void
 }
 
 export function CompactPricing({
@@ -43,6 +45,7 @@ export function CompactPricing({
   iapPriceMap,
   selectedTier: controlledTier,
   onTierChange,
+  onCancel,
 }: CompactPricingProps) {
   const [internalTier, setInternalTier] = useState<'basic' | 'premium'>('premium')
   const selectedTier = controlledTier ?? internalTier
@@ -176,24 +179,37 @@ export function CompactPricing({
         )
       })}
 
-      <Button
-        onClick={() => selectedPlanId && onPurchase(selectedPlanId)}
-        disabled={!selectedPlanId || isSubmitting}
-        className="w-full mt-2"
-        size="lg"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          <>
-            <Sparkles className="w-4 h-4 mr-2" />
-            Continue to Payment
-          </>
+      <div className="flex gap-2 mt-2">
+        {onCancel && (
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex-1 font-semibold"
+            size="lg"
+          >
+            Maybe Later
+          </Button>
         )}
-      </Button>
+        <Button
+          onClick={() => selectedPlanId && onPurchase(selectedPlanId)}
+          disabled={!selectedPlanId || isSubmitting}
+          className={onCancel ? "flex-1" : "w-full"}
+          size="lg"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 mr-2" />
+              Continue to Payment
+            </>
+          )}
+        </Button>
+      </div>
 
       <p className="text-[10px] text-center text-muted-foreground">
         Yours to keep forever • No subscription required

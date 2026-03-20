@@ -712,7 +712,7 @@ export function StorybooksTab() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-6">
+          <div className="space-y-4 pt-2 pb-4">
             {resumeStorybook && (
               <>
                 {resumeStorybook.status === 'preview_pending' && (!resumeStorybook.scenes || resumeStorybook.scenes.length === 0) ? (
@@ -847,6 +847,7 @@ export function StorybooksTab() {
                             .filter(p => p.tier === selectedTier)
                             .map(p => [p.credits, p.priceString])
                         ) : undefined}
+                        onCancel={handleResumeMaybeLater}
                       />
                     )}
 
@@ -855,10 +856,6 @@ export function StorybooksTab() {
                         <p className="text-xs text-destructive">{paymentError}</p>
                       </div>
                     )}
-
-                    <Button variant="ghost" size="sm" className="w-full" onClick={handleResumeMaybeLater} disabled={isSubmitting}>
-                      Maybe Later
-                    </Button>
                   </>
                 )}
               </>

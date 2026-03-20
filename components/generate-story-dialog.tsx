@@ -705,6 +705,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                       .filter(p => p.tier === selectedTier)
                       .map(p => [p.credits, p.priceString])
                   ) : undefined}
+                  onCancel={handleMaybeLater}
                 />
               )}
 
@@ -713,10 +714,6 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <p className="text-xs text-destructive">{error}</p>
                 </div>
               )}
-
-              <Button variant="ghost" size="sm" className="w-full" onClick={handleMaybeLater} disabled={isSubmitting}>
-                Maybe Later
-              </Button>
             </div>
           </>
         )}
