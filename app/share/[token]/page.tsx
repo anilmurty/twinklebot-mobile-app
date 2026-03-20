@@ -87,6 +87,29 @@ export default function SharedStorybookPage() {
       }
 
       const data = await response.json()
+
+      // Preload all scene images before showing the storybook
+      if (data?.scenes?.length) {
+        const imageUrls = data.scenes
+          .map((s: any) => s.image_url)
+          .filter(Boolean) as string[]
+
+        const preloadAll = Promise.all(
+          imageUrls.map(
+            (url) =>
+              new Promise<void>((resolve) => {
+                const img = new window.Image()
+                img.onload = () => resolve()
+                img.onerror = () => resolve()
+                img.src = url
+              })
+          )
+        )
+
+        const timeout = new Promise<void>((resolve) => setTimeout(resolve, 8000))
+        await Promise.race([preloadAll, timeout])
+      }
+
       setStorybook(data)
     } catch (err: any) {
       console.error('Failed to fetch shared storybook:', err)
