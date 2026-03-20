@@ -427,7 +427,7 @@ export function CreateStoryDialog({
                       </div>
                     </RadioGroup>
                     <div className="flex items-center justify-center gap-2 py-1 bg-gradient-to-t from-card to-transparent">
-                      <span className="text-[10px] text-muted-foreground">Swipe down to view more</span>
+                      <span className="text-[10px] text-muted-foreground">Swipe on the list to view more</span>
                       <ChevronDown className="w-4 h-4 text-muted-foreground animate-bounce" />
                     </div>
                   </div>
