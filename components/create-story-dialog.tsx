@@ -410,26 +410,28 @@ export function CreateStoryDialog({
                     <p className="text-sm text-muted-foreground">No story templates available.</p>
                   </Card>
                 ) : (
-                  <RadioGroup
-                    value={selectedTemplate?.toString() || ""}
-                    onValueChange={(value) => setSelectedTemplate(Number.parseInt(value))}
-                  >
-                    <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1">
-                      {templates.map((template) => (
-                        <Card key={template.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
-                          <label className="flex items-center gap-3 cursor-pointer w-full">
-                            <RadioGroupItem value={template.id.toString()} id={`template-${template.id}`} />
-                            <div className="flex-1">
-                              <div className="font-medium">{template.title}</div>
-                              <div className="text-xs text-muted-foreground mt-1">
-                                {template.scene_count || template.script_data?.scenes?.length || 0} scenes
+                  <div className="border border-accent rounded-lg overflow-hidden">
+                    <RadioGroup
+                      value={selectedTemplate?.toString() || ""}
+                      onValueChange={(value) => setSelectedTemplate(Number.parseInt(value))}
+                    >
+                      <div className="space-y-2 p-2 max-h-[28vh] overflow-y-auto">
+                        {templates.map((template) => (
+                          <Card key={template.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
+                            <label className="flex items-center gap-3 cursor-pointer w-full">
+                              <RadioGroupItem value={template.id.toString()} id={`template-${template.id}`} />
+                              <div className="flex-1">
+                                <div className="font-medium">{template.title}</div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {template.scene_count || template.script_data?.scenes?.length || 0} scenes
+                                </div>
                               </div>
-                            </div>
-                          </label>
-                        </Card>
-                      ))}
-                    </div>
-                  </RadioGroup>
+                            </label>
+                          </Card>
+                        ))}
+                      </div>
+                    </RadioGroup>
+                  </div>
                 )}
               </div>
 
@@ -439,10 +441,9 @@ export function CreateStoryDialog({
                   <h4 className="font-semibold text-sm">What happens next?</h4>
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1 ml-6 list-disc">
-                  <li>We'll generate a preview with your character and the first scene</li>
-                  <li>Review the preview before purchasing the full story</li>
-                  <li>Full story generation typically takes 5-10 minutes</li>
-                  <li>You can close the app during generation</li>
+                  <li>We'll generate a free preview of your storybook</li>
+                  <li>Review it before generating the full story</li>
+                  <li>Story generation takes 2-3 minutes</li>
                 </ul>
               </div>
 
@@ -496,69 +497,68 @@ export function CreateStoryDialog({
                   <p>No looks available for this story.</p>
                 </div>
               ) : (
-                <RadioGroup
-                  value={selectedLookId?.toString() || ""}
-                  onValueChange={(value) => setSelectedLookId(Number.parseInt(value))}
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    {looks.map((look) => (
-                      <Card
-                        key={look.id}
-                        className={`p-4 cursor-pointer transition-all ${
-                          selectedLookId === look.id
-                            ? "border-primary border-2 bg-primary/5"
-                            : "hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedLookId(look.id)}
-                      >
-                        <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
-                          <RadioGroupItem
-                            value={look.id.toString()}
-                            id={`look-${look.id}`}
-                            className="sr-only"
-                          />
-                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
-                            {look.is_original && characterPhotoUrl ? (
-                              <img
-                                src={characterPhotoUrl}
-                                alt={look.look_name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : look.reference_image_url ? (
-                              <img
-                                src={look.reference_image_url}
-                                alt={look.look_name}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
-                                  const target = e.target as HTMLImageElement
-                                  target.style.display = 'none'
-                                  const parent = target.parentElement
-                                  if (parent) {
-                                    parent.innerHTML = '<span class="text-xs text-muted-foreground">Image not found</span>'
-                                  }
-                                }}
-                                onLoad={() => {
-                                  console.log(`Successfully loaded image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
-                                }}
-                              />
-                            ) : (
-                              <span className="text-xs text-muted-foreground">No image</span>
-                            )}
-                          </div>
-                          <div className="text-center">
-                            <div className="font-medium">{look.look_name}</div>
-                            {look.is_original && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                Uses original photo
-                              </div>
-                            )}
-                          </div>
-                        </label>
-                      </Card>
-                    ))}
-                  </div>
-                </RadioGroup>
+                <div className="border border-accent rounded-lg overflow-hidden">
+                  <RadioGroup
+                    value={selectedLookId?.toString() || ""}
+                    onValueChange={(value) => setSelectedLookId(Number.parseInt(value))}
+                  >
+                    <div className="grid grid-cols-2 gap-4 p-2 max-h-[50vh] overflow-y-auto">
+                      {looks.map((look) => (
+                        <Card
+                          key={look.id}
+                          className={`p-4 cursor-pointer transition-all ${
+                            selectedLookId === look.id
+                              ? "border-primary border-2 bg-primary/5"
+                              : "hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedLookId(look.id)}
+                        >
+                          <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
+                            <RadioGroupItem
+                              value={look.id.toString()}
+                              id={`look-${look.id}`}
+                              className="sr-only"
+                            />
+                            <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                              {look.is_original && characterPhotoUrl ? (
+                                <img
+                                  src={characterPhotoUrl}
+                                  alt={look.look_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : look.reference_image_url ? (
+                                <img
+                                  src={look.reference_image_url}
+                                  alt={look.look_name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error(`Failed to load image for look ${look.id} (${look.look_name}):`, look.reference_image_url)
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                    const parent = target.parentElement
+                                    if (parent) {
+                                      parent.innerHTML = '<span class="text-xs text-muted-foreground">Image not found</span>'
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No image</span>
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-medium">{look.look_name}</div>
+                              {look.is_original && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Uses original photo
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        </Card>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </div>
               )}
 
               <div className="flex gap-3">

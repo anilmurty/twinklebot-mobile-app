@@ -437,10 +437,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <h4 className="font-semibold text-sm">What happens next?</h4>
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1 ml-6 list-disc">
-                  <li>We'll generate a preview with your character and the first scene</li>
-                  <li>Review the preview before purchasing the full story</li>
-                  <li>Full story generation typically takes 5-10 minutes</li>
-                  <li>You can close the app during generation</li>
+                  <li>We'll generate a free preview of your storybook</li>
+                  <li>Review it before generating the full story</li>
+                  <li>Story generation takes 2-3 minutes</li>
                 </ul>
               </div>
 
@@ -494,57 +493,59 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <p>No looks available for this story.</p>
                 </div>
               ) : (
-                <RadioGroup
-                  value={selectedLookId?.toString() || ""}
-                  onValueChange={(value) => setSelectedLookId(Number.parseInt(value))}
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    {looks.map((look) => (
-                      <Card
-                        key={look.id}
-                        className={`p-4 cursor-pointer transition-all ${
-                          selectedLookId === look.id
-                            ? "border-primary border-2 bg-primary/5"
-                            : "hover:border-primary/50"
-                        }`}
-                        onClick={() => setSelectedLookId(look.id)}
-                      >
-                        <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
-                          <RadioGroupItem
-                            value={look.id.toString()}
-                            id={`look-${look.id}`}
-                            className="sr-only"
-                          />
-                          <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
-                            {look.is_original && selectedCharacterData?.front_photo_url ? (
-                              <img
-                                src={selectedCharacterData.front_photo_url}
-                                alt={look.look_name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : look.reference_image_url ? (
-                              <img
-                                src={look.reference_image_url}
-                                alt={look.look_name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <span className="text-xs text-muted-foreground">No image</span>
-                            )}
-                          </div>
-                          <div className="text-center">
-                            <div className="font-medium">{look.look_name}</div>
-                            {look.is_original && (
-                              <div className="text-xs text-muted-foreground mt-1">
-                                Uses original photo
-                              </div>
-                            )}
-                          </div>
-                        </label>
-                      </Card>
-                    ))}
-                  </div>
-                </RadioGroup>
+                <div className="border border-accent rounded-lg overflow-hidden">
+                  <RadioGroup
+                    value={selectedLookId?.toString() || ""}
+                    onValueChange={(value) => setSelectedLookId(Number.parseInt(value))}
+                  >
+                    <div className="grid grid-cols-2 gap-4 p-2 max-h-[50vh] overflow-y-auto">
+                      {looks.map((look) => (
+                        <Card
+                          key={look.id}
+                          className={`p-4 cursor-pointer transition-all ${
+                            selectedLookId === look.id
+                              ? "border-primary border-2 bg-primary/5"
+                              : "hover:border-primary/50"
+                          }`}
+                          onClick={() => setSelectedLookId(look.id)}
+                        >
+                          <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
+                            <RadioGroupItem
+                              value={look.id.toString()}
+                              id={`look-${look.id}`}
+                              className="sr-only"
+                            />
+                            <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
+                              {look.is_original && selectedCharacterData?.front_photo_url ? (
+                                <img
+                                  src={selectedCharacterData.front_photo_url}
+                                  alt={look.look_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : look.reference_image_url ? (
+                                <img
+                                  src={look.reference_image_url}
+                                  alt={look.look_name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No image</span>
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-medium">{look.look_name}</div>
+                              {look.is_original && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Uses original photo
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        </Card>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </div>
               )}
             </div>
 
