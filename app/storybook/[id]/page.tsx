@@ -493,33 +493,44 @@ export default function StorybookViewerPage() {
                 <div className="text-white/60 text-sm flex items-center gap-2 mb-8">
                   <span className="md:hidden">Swipe left to start reading</span>
                   <span className="hidden md:inline">Click the arrow to start reading →</span>
-                  <span className="md:hidden animate-bounce-x">👆</span>
+                  <span className="md:hidden animate-bounce-x text-2xl">👆</span>
                 </div>
 
-                {/* Share button */}
-                <Button
-                  onClick={handleShareStory}
-                  disabled={shareState === 'loading'}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
-                  size="lg"
-                >
-                  {shareState === 'copied' ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Link Copied!
-                    </>
-                  ) : shareState === 'loading' ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating Link...
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="w-4 h-4 mr-2" />
-                      Share this story
-                    </>
-                  )}
-                </Button>
+                {/* Action buttons */}
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleShareStory}
+                    disabled={shareState === 'loading'}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
+                    size="lg"
+                  >
+                    {shareState === 'copied' ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Link Copied!
+                      </>
+                    ) : shareState === 'loading' ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creating Link...
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share this story
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => router.push('/app?tab=storybooks')}
+                    variant="outline"
+                    className="font-semibold px-6"
+                    size="lg"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Close Book
+                  </Button>
+                </div>
               </div>
             </div>
 
