@@ -45,9 +45,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       const firstScene = sortedScenes[0] as any
       if (firstScene?.image_url) {
         try {
-          const urlMatch = firstScene.image_url.match(/storybook-scenes\/(.+)$/)
+          // Extract storage path from various URL formats:
+          // - Public: .../object/public/storybook-scenes/ID/scene-1.jpg
+          // - Signed: .../object/sign/storybook-scenes/ID/scene-1.jpg?token=...
+          // - Simple: storybook-scenes/ID/scene-1.jpg
+          const urlStr = firstScene.image_url.split('?')[0] // Strip query params (signed URL tokens)
+          const urlMatch = urlStr.match(/storybook-scenes\/(.+)$/)
           if (urlMatch) {
-            ogImageUrl = await getSignedUrl("storybook-scenes", urlMatch[1], 3600)
+            const path = urlMatch[1]
+            console.log(`[OG] Generating signed URL for path: ${path}`)
+            ogImageUrl = await getSignedUrl("storybook-scenes", path, 3600)
+            console.log(`[OG] Generated OG image URL: ${ogImageUrl?.substring(0, 80)}...`)
+          } else {
+            console.warn(`[OG] Could not extract path from scene URL: ${firstScene.image_url.substring(0, 100)}`)
           }
         } catch (err) {
           console.error("Failed to generate OG image URL:", err)
