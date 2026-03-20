@@ -47,6 +47,7 @@ export default function StorybookViewerPage() {
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const [textExpanded, setTextExpanded] = useState(false)
   const [textOverflows, setTextOverflows] = useState(false)
+  const [textScrolledToBottom, setTextScrolledToBottom] = useState(false)
   const [textHidden, setTextHidden] = useState(false)
   const [shareState, setShareState] = useState<'idle' | 'loading' | 'copied'>('idle')
   const textScrollRef = useRef<HTMLDivElement>(null)
@@ -182,6 +183,7 @@ export default function StorybookViewerPage() {
   // Reset expanded state on scene change
   useEffect(() => {
     setTextExpanded(false)
+    setTextScrolledToBottom(false)
   }, [currentScene])
 
   // Check overflow when text becomes visible or scene changes
@@ -699,6 +701,11 @@ export default function StorybookViewerPage() {
                       ref={textScrollRef}
                       className="overflow-y-auto overscroll-contain text-center max-w-3xl mx-auto transition-[max-height] duration-300 ease-in-out"
                       style={{ maxHeight: textExpanded ? '60vh' : '15vh' }}
+                      onScroll={(e) => {
+                        const el = e.currentTarget
+                        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 4
+                        setTextScrolledToBottom(atBottom)
+                      }}
                       onTouchStart={(e) => {
                         const el = e.currentTarget
                         if (el.scrollHeight > el.clientHeight) e.stopPropagation()
@@ -731,7 +738,7 @@ export default function StorybookViewerPage() {
                           </div>
                         ))}
                     </div>
-                    {textOverflows && (
+                    {textOverflows && !textScrolledToBottom && (
                       <div className="flex items-center justify-center gap-2 pt-0.5">
                         <span className="text-[10px] text-white/50">Swipe to scroll</span>
                         <ChevronDown className="w-4 h-4 text-white/50 animate-bounce" />
