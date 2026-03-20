@@ -388,53 +388,46 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   </Card>
                 ) : (
                   <div className="border border-accent rounded-lg overflow-hidden relative">
-                    <RadioGroup value={selectedCharacter} onValueChange={setSelectedCharacter}>
-                      <div className={`p-2 max-h-[28vh] overflow-y-auto ${
-                        characters.length > 9
-                          ? "grid grid-cols-3 gap-2"
-                          : characters.length > 4
-                            ? "grid grid-cols-2 gap-2"
-                            : "space-y-2"
-                      }`}>
-                        {characters.map((character) => {
-                          const isCompact = characters.length > 4
-                          const isSelected = selectedCharacter === character.id
-                          return (
-                            <Card
-                              key={character.id}
-                              className={`p-3 cursor-pointer transition-all ${
-                                isSelected
-                                  ? "border-primary border-2 bg-primary/5"
-                                  : "hover:border-primary/50"
-                              }`}
-                              onClick={() => setSelectedCharacter(character.id)}
-                            >
-                              <label className={`flex cursor-pointer w-full ${
-                                isCompact
-                                  ? "flex-col items-center gap-2 text-center"
-                                  : "items-center gap-3"
-                              }`}>
-                                <RadioGroupItem
-                                  value={character.id}
-                                  id={`char-${character.id}`}
-                                  className="sr-only"
-                                />
-                                <img
-                                  src={character.front_photo_url || "/placeholder.svg"}
-                                  alt={character.name}
-                                  className={`rounded-full object-cover border-2 ${
-                                    isSelected ? "border-primary" : "border-primary/20"
-                                  } ${characters.length > 9 ? "w-10 h-10" : "w-12 h-12"}`}
-                                />
-                                <span className={`font-medium ${isCompact ? "text-xs truncate w-full" : ""}`}>
-                                  {character.name}
-                                </span>
-                              </label>
-                            </Card>
-                          )
-                        })}
-                      </div>
-                    </RadioGroup>
+                    <div className={`p-2 max-h-[28vh] overflow-y-auto ${
+                      characters.length > 9
+                        ? "grid grid-cols-3 gap-2"
+                        : characters.length > 4
+                          ? "grid grid-cols-2 gap-2"
+                          : "space-y-2"
+                    }`}>
+                      {characters.map((character) => {
+                        const isCompact = characters.length > 4
+                        const isSelected = selectedCharacter === character.id
+                        return (
+                          <Card
+                            key={character.id}
+                            className={`p-3 cursor-pointer transition-all ${
+                              isSelected
+                                ? "border-primary border-2 bg-primary/5"
+                                : "hover:border-primary/50"
+                            }`}
+                            onClick={() => setSelectedCharacter(character.id)}
+                          >
+                            <div className={`flex w-full ${
+                              isCompact
+                                ? "flex-col items-center gap-2 text-center"
+                                : "items-center gap-3"
+                            }`}>
+                              <img
+                                src={character.front_photo_url || "/placeholder.svg"}
+                                alt={character.name}
+                                className={`rounded-full object-cover border-2 ${
+                                  isSelected ? "border-primary" : "border-primary/20"
+                                } ${characters.length > 9 ? "w-10 h-10" : "w-12 h-12"}`}
+                              />
+                              <span className={`font-medium ${isCompact ? "text-xs truncate w-full" : ""}`}>
+                                {character.name}
+                              </span>
+                            </div>
+                          </Card>
+                        )
+                      })}
+                    </div>
                     {characters.length > 4 && (
                       <div className="flex items-center justify-center gap-2 py-1 bg-gradient-to-t from-card to-transparent">
                         <span className="text-[10px] text-muted-foreground">Swipe to view more</span>
