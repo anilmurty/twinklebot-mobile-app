@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check } from "lucide-react"
+import { Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check, ArrowLeft } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 
 interface Scene {
@@ -421,6 +421,36 @@ export default function SharedStorybookPage() {
                     Create Your Own Story
                   </Button>
                 </Card>
+
+                {/* Action buttons */}
+                <div className="flex gap-3 w-full max-w-md">
+                  <Button
+                    onClick={handleShareCopy}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    size="lg"
+                  >
+                    {shareCopied ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Link Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share this story
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentScene(0)}
+                    className="flex-1 font-semibold"
+                    size="lg"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Read Again
+                  </Button>
+                </div>
               </div>
             </div>
 
