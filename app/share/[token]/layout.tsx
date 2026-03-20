@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { supabaseAdmin } from "@/lib/supabase/server"
-import { getSignedUrl } from "@/lib/supabase/storage"
+import { getStorageUrl } from "@/lib/supabase/storage"
 
 interface Props {
   params: Promise<{ token: string }> | { token: string }
@@ -49,13 +49,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           // - Public: .../object/public/storybook-scenes/ID/scene-1.jpg
           // - Signed: .../object/sign/storybook-scenes/ID/scene-1.jpg?token=...
           // - Simple: storybook-scenes/ID/scene-1.jpg
-          const urlStr = firstScene.image_url.split('?')[0] // Strip query params (signed URL tokens)
+          const urlStr = firstScene.image_url.split('?')[0] // Strip query params
           const urlMatch = urlStr.match(/storybook-scenes\/(.+)$/)
           if (urlMatch) {
-            const path = urlMatch[1]
-            console.log(`[OG] Generating signed URL for path: ${path}`)
-            ogImageUrl = await getSignedUrl("storybook-scenes", path, 3600)
-            console.log(`[OG] Generated OG image URL: ${ogImageUrl?.substring(0, 80)}...`)
+            // Use public URL — crawlers (WhatsApp, iMessage, etc.) can't handle signed URLs well
+            ogImageUrl = getStorageUrl("storybook-scenes", urlMatch[1])
+            console.log(`[OG] Using public URL for OG image: ${ogImageUrl}`)
           } else {
             console.warn(`[OG] Could not extract path from scene URL: ${firstScene.image_url.substring(0, 100)}`)
           }
