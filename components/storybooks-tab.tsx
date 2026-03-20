@@ -885,26 +885,30 @@ export function StorybooksTab() {
           <div className="space-y-4 py-4">
             {shareUrl ? (
               <>
-                <div className="px-3 py-2 rounded-md bg-muted/50 border border-border font-mono text-xs text-muted-foreground select-none overflow-hidden text-ellipsis whitespace-nowrap">
-                  {shareUrl.url}
+                <div className="flex gap-2">
+                  <Input
+                    value={shareUrl.url}
+                    readOnly
+                    className="flex-1 font-mono text-sm select-none pointer-events-none"
+                    tabIndex={-1}
+                  />
+                  <Button
+                    onClick={handleCopyShareUrl}
+                    variant={copiedShareUrl ? "default" : "outline"}
+                  >
+                    {copiedShareUrl ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy
+                      </>
+                    )}
+                  </Button>
                 </div>
-                <Button
-                  onClick={handleCopyShareUrl}
-                  variant={copiedShareUrl ? "default" : "outline"}
-                  className="w-full"
-                >
-                  {copiedShareUrl ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Link
-                    </>
-                  )}
-                </Button>
                 <div className="flex gap-2">
                   <Button
                     onClick={handleCreateShare}
