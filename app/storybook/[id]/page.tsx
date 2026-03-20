@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Loader2, Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, ArrowRight, Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { storybooksApi } from "@/lib/api-client"
 
 interface Scene {
@@ -370,7 +371,7 @@ export default function StorybookViewerPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <LogoSpinner size={32} />
       </div>
     )
   }

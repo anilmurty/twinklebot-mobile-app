@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Mail, LogOut, Loader2, RotateCcw } from "lucide-react"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
@@ -77,7 +78,7 @@ export function ProfileTab() {
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <LogoSpinner size={32} />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">

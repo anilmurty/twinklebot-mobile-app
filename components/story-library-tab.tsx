@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { BookOpen, Loader2, Lightbulb, Eye, Sparkles, Bell, BellRing } from "lucide-react"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
 import {
   Dialog,
@@ -404,7 +405,7 @@ export function StoryLibraryTab() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <LogoSpinner size={32} />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">

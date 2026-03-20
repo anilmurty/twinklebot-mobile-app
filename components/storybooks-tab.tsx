@@ -1,6 +1,7 @@
 "use client"
 
 import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Sparkles, Eye } from "lucide-react"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -412,7 +413,7 @@ export function StorybooksTab() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <LogoSpinner size={32} />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">
@@ -428,7 +429,7 @@ export function StorybooksTab() {
             </div>
             <div className="text-center space-y-4">
               {charactersLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+                <LogoSpinner size={24} />
               ) : characters.length === 0 ? (
                 <>
                   <h3 className="text-lg font-semibold">No Storybooks or Characters Yet</h3>
@@ -814,7 +815,7 @@ export function StorybooksTab() {
                     {/* Compact Pricing */}
                     {subscriptionPlans.length === 0 ? (
                       <div className="flex items-center justify-center py-6">
-                        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <LogoSpinner size={24} />
                       </div>
                     ) : (
                       <CompactPricing

@@ -1,6 +1,7 @@
 "use client"
 
 import { Plus, Trash2, Sparkles, Loader2, Pencil } from "lucide-react"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
@@ -158,7 +159,7 @@ export function CharactersTab() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <LogoSpinner size={32} />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">

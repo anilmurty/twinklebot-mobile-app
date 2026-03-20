@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Sparkles, Loader2 } from "lucide-react"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { storybooksApi, templatesApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi, charactersApi } from "@/lib/api-client"
 import { navigateToUrl } from "@/lib/utils/navigation"
@@ -403,7 +404,7 @@ export function CreateStoryDialog({
                 <Label>Select Story Template</Label>
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <LogoSpinner size={24} />
                   </div>
                 ) : templates.length === 0 ? (
                   <Card className="p-4 text-center">
@@ -490,7 +491,7 @@ export function CreateStoryDialog({
 
               {loadingLooks ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <LogoSpinner size={24} />
                 </div>
               ) : looks.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
@@ -704,7 +705,7 @@ export function CreateStoryDialog({
               {/* Compact Pricing */}
               {loadingPlans ? (
                 <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                  <LogoSpinner size={24} />
                 </div>
               ) : (
                 <CompactPricing
