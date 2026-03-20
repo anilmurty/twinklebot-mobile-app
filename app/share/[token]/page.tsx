@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
+import { Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 
 interface Scene {
@@ -40,6 +40,7 @@ export default function SharedStorybookPage() {
   const [textExpanded, setTextExpanded] = useState(false)
   const [textOverflows, setTextOverflows] = useState(false)
   const [textHidden, setTextHidden] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
   const textScrollRef = useRef<HTMLDivElement>(null)
 
   // Swipe state
@@ -270,6 +271,28 @@ export default function SharedStorybookPage() {
     return content
   }
 
+  const handleShareCopy = async () => {
+    const url = window.location.href
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+      } else {
+        const textarea = document.createElement('textarea')
+        textarea.value = url
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy share URL:", err)
+    }
+  }
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-black">
@@ -332,11 +355,30 @@ export default function SharedStorybookPage() {
                 </p>
 
                 {/* Swipe hint */}
-                <div className="text-white/60 text-sm flex items-center gap-2">
+                <div className="text-white/60 text-sm flex items-center gap-2 mb-8">
                   <span className="md:hidden">Swipe left to start reading</span>
                   <span className="hidden md:inline">Swipe or click to start reading →</span>
                   <span className="md:hidden animate-bounce-x">👆</span>
                 </div>
+
+                {/* Share button */}
+                <Button
+                  onClick={handleShareCopy}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
+                  size="lg"
+                >
+                  {shareCopied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Link Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share this story
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </>

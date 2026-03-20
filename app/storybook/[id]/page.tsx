@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Sparkles, BookOpen, X, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, ArrowRight, Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check, Loader2 } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { storybooksApi } from "@/lib/api-client"
 
@@ -24,6 +24,7 @@ interface Storybook {
   title: string
   character_name: string
   status: string
+  share_token?: string | null
   scenes?: Scene[]
   template?: {
     id: number
@@ -47,6 +48,7 @@ export default function StorybookViewerPage() {
   const [textExpanded, setTextExpanded] = useState(false)
   const [textOverflows, setTextOverflows] = useState(false)
   const [textHidden, setTextHidden] = useState(false)
+  const [shareState, setShareState] = useState<'idle' | 'loading' | 'copied'>('idle')
   const textScrollRef = useRef<HTMLDivElement>(null)
 
   const minSwipeDistance = 50
@@ -115,6 +117,46 @@ export default function StorybookViewerPage() {
       setError(err.message || 'Failed to load storybook')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const copyToClipboard = async (text: string) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+  }
+
+  const handleShareStory = async () => {
+    if (!storybook) return
+    setShareState('loading')
+    try {
+      // If share link already exists, just copy it
+      if (storybook.share_token) {
+        const url = `${window.location.origin}/share/${storybook.share_token}`
+        await copyToClipboard(url)
+        setShareState('copied')
+        setTimeout(() => setShareState('idle'), 2000)
+        return
+      }
+      // Generate new share link
+      const result = await storybooksApi.generateShare(storybookId)
+      await copyToClipboard(result.share_url)
+      // Update local storybook data with new share token
+      setStorybook(prev => prev ? { ...prev, share_token: result.share_token } : prev)
+      setShareState('copied')
+      setTimeout(() => setShareState('idle'), 2000)
+    } catch (err) {
+      console.error("Failed to share story:", err)
+      setShareState('idle')
     }
   }
 
@@ -448,11 +490,36 @@ export default function StorybookViewerPage() {
                 </p>
 
                 {/* Page Indicator */}
-                <div className="text-white/60 text-sm flex items-center gap-2">
+                <div className="text-white/60 text-sm flex items-center gap-2 mb-8">
                   <span className="md:hidden">Swipe left to start reading</span>
                   <span className="hidden md:inline">Click the arrow to start reading →</span>
                   <span className="md:hidden animate-bounce-x">👆</span>
                 </div>
+
+                {/* Share button */}
+                <Button
+                  onClick={handleShareStory}
+                  disabled={shareState === 'loading'}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-6"
+                  size="lg"
+                >
+                  {shareState === 'copied' ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Link Copied!
+                    </>
+                  ) : shareState === 'loading' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating Link...
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Share this story
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
 
