@@ -662,12 +662,12 @@ export function StorybooksTab() {
       {/* Floating Action Button */}
       {storybooks.length > 0 && (
         <div
-          className="fixed left-4 right-4 z-20 flex justify-center"
+          className="fixed left-4 right-4 z-40 flex justify-center pointer-events-none"
           style={{ bottom: 'calc(4rem + env(safe-area-inset-bottom, 0px) + 0.75rem)' }}
         >
           <Button
             onClick={handleCreateStorybook}
-            className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0 bg-primary text-primary-foreground"
+            className="h-auto py-2.5 px-5 flex items-center justify-center gap-2 rounded-full shadow-lg border-0 bg-primary text-primary-foreground pointer-events-auto"
           >
             <Sparkles className="w-4 h-4" />
             <span className="font-semibold text-sm">Create New Storybook</span>
