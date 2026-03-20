@@ -191,7 +191,20 @@ export function StorybooksTab() {
   const handleCopyShareUrl = async () => {
     if (!shareUrl) return
     try {
-      await navigator.clipboard.writeText(shareUrl.url)
+      // Try modern clipboard API first
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl.url)
+      } else {
+        // Fallback for iOS WebView / older browsers
+        const textarea = document.createElement('textarea')
+        textarea.value = shareUrl.url
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand('copy')
+        document.body.removeChild(textarea)
+      }
       setCopiedShareUrl(true)
       setTimeout(() => setCopiedShareUrl(false), 2000)
     } catch (err) {
@@ -872,12 +885,10 @@ export function StorybooksTab() {
           <div className="space-y-4 py-4">
             {shareUrl ? (
               <>
-                <div className="flex gap-2">
-                  <Input
-                    value={shareUrl.url}
-                    readOnly
-                    className="flex-1 font-mono text-sm"
-                  />
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 px-3 py-2 rounded-md bg-muted/50 border border-border font-mono text-sm text-muted-foreground truncate select-none">
+                    {shareUrl.url}
+                  </div>
                   <Button
                     onClick={handleCopyShareUrl}
                     variant={copiedShareUrl ? "default" : "outline"}
