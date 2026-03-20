@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { supabaseAdmin } from "@/lib/supabase/server"
-import { getStorageUrl } from "@/lib/supabase/storage"
 
 interface Props {
   params: Promise<{ token: string }> | { token: string }
@@ -36,33 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const title = `${storyTitle} starring ${characterName}`
     const description = `Read "${storyTitle}" — a personalized storybook starring ${characterName}, created with Twinklebot.`
 
-    // Get first scene image as OG image (signed URL, 1 hour expiry — crawlers fetch immediately)
-    let ogImageUrl: string | undefined
-    if (storybook.scenes && Array.isArray(storybook.scenes) && storybook.scenes.length > 0) {
-      const sortedScenes = [...storybook.scenes].sort(
-        (a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0)
-      )
-      const firstScene = sortedScenes[0] as any
-      if (firstScene?.image_url) {
-        try {
-          // Extract storage path from various URL formats:
-          // - Public: .../object/public/storybook-scenes/ID/scene-1.jpg
-          // - Signed: .../object/sign/storybook-scenes/ID/scene-1.jpg?token=...
-          // - Simple: storybook-scenes/ID/scene-1.jpg
-          const urlStr = firstScene.image_url.split('?')[0] // Strip query params
-          const urlMatch = urlStr.match(/storybook-scenes\/(.+)$/)
-          if (urlMatch) {
-            // Use public URL — crawlers (WhatsApp, iMessage, etc.) can't handle signed URLs well
-            ogImageUrl = getStorageUrl("storybook-scenes", urlMatch[1])
-            console.log(`[OG] Using public URL for OG image: ${ogImageUrl}`)
-          } else {
-            console.warn(`[OG] Could not extract path from scene URL: ${firstScene.image_url.substring(0, 100)}`)
-          }
-        } catch (err) {
-          console.error("Failed to generate OG image URL:", err)
-        }
-      }
-    }
+    // Use our own OG image proxy endpoint — a clean URL that crawlers can fetch reliably.
+    // The proxy fetches from private Supabase storage and serves the image directly.
+    // This avoids signed URL issues (too long, expiry) and public URL issues (bucket is private).
+    const ogImageUrl = `https://www.twinklebot.app/api/og-image/${token}`
 
     return {
       title,
