@@ -601,6 +601,15 @@ export default function StorybookViewerPage() {
                     <BookOpen className="w-5 h-5 mr-2" />
                     Generate Your Next Story
                   </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={() => setCurrentScene(0)}
+                    className="w-full h-14 text-lg font-semibold mt-3"
+                  >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Read Again
+                  </Button>
                 </Card>
 
                 {/* Back to Home Link */}
@@ -671,7 +680,8 @@ export default function StorybookViewerPage() {
                 {(scene.text || scene.script_text) && !textHidden && (
                   <div className="bg-gradient-to-t from-black/95 via-black/90 to-black/70 px-4 md:px-6 lg:px-8 pt-1 pb-1">
                     {textOverflows && (
-                      <div className="flex justify-center pb-0.5">
+                      <div className="flex items-center justify-center gap-2 pb-0.5">
+                        <span className="text-[10px] text-white/50">Tap to {textExpanded ? 'reduce' : 'increase'} text area</span>
                         <button
                           onClick={() => setTextExpanded(!textExpanded)}
                           className="text-white/70 hover:text-white transition-colors p-1"
@@ -721,6 +731,12 @@ export default function StorybookViewerPage() {
                           </div>
                         ))}
                     </div>
+                    {textOverflows && (
+                      <div className="flex items-center justify-center gap-2 pt-0.5">
+                        <span className="text-[10px] text-white/50">Swipe to scroll</span>
+                        <ChevronDown className="w-4 h-4 text-white/50 animate-bounce" />
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -729,7 +745,7 @@ export default function StorybookViewerPage() {
                   {(scene.text || scene.script_text) && (
                     <button
                       onClick={() => setTextHidden(!textHidden)}
-                      className="text-white text-[10px] uppercase tracking-widest transition-colors"
+                      className="text-primary text-[10px] uppercase tracking-widest transition-colors font-semibold"
                     >
                       {textHidden ? 'show text' : 'hide text'}
                     </button>
