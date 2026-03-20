@@ -371,7 +371,7 @@ export default function StorybookViewerPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <LogoSpinner size={32} />
+        <LogoSpinner />
       </div>
     )
   }

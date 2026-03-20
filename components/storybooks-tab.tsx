@@ -413,7 +413,7 @@ export function StorybooksTab() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <LogoSpinner size={32} />
+            <LogoSpinner />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">
@@ -429,7 +429,7 @@ export function StorybooksTab() {
             </div>
             <div className="text-center space-y-4">
               {charactersLoading ? (
-                <LogoSpinner size={24} />
+                <LogoSpinner size={48} />
               ) : characters.length === 0 ? (
                 <>
                   <h3 className="text-lg font-semibold">No Storybooks or Characters Yet</h3>
@@ -815,7 +815,7 @@ export function StorybooksTab() {
                     {/* Compact Pricing */}
                     {subscriptionPlans.length === 0 ? (
                       <div className="flex items-center justify-center py-6">
-                        <LogoSpinner size={24} />
+                        <LogoSpinner size={48} />
                       </div>
                     ) : (
                       <CompactPricing

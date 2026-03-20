@@ -78,7 +78,7 @@ export function ProfileTab() {
       <div className="p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <LogoSpinner size={32} />
+            <LogoSpinner />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">

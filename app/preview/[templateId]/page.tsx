@@ -302,7 +302,7 @@ export default function StoryPreviewPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <LogoSpinner size={32} />
+        <LogoSpinner />
       </div>
     )
   }

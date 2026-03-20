@@ -273,7 +273,7 @@ export default function SharedStorybookPage() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-black">
-        <LogoSpinner size={32} />
+        <LogoSpinner />
       </div>
     )
   }

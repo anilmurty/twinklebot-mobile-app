@@ -159,7 +159,7 @@ export function CharactersTab() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <LogoSpinner size={32} />
+            <LogoSpinner />
           </div>
         ) : error ? (
           <Card className="p-4 bg-destructive/10 border-destructive">

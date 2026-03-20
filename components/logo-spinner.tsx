@@ -1,41 +1,92 @@
+"use client"
+
+import { useState, useEffect } from "react"
+
 /**
- * Animated logo spinner — replaces generic Loader2 spinners.
- * Uses the Twinklebot favicon (book with face + star) with a pulse animation.
+ * Animated Twinklebot logo spinner with "Creating Magic..." text.
+ * Uses the splash screen robot SVG with winking eye animation.
  */
 
 interface LogoSpinnerProps {
   className?: string
-  /** Size in pixels (default 24) */
+  /** Size of the robot icon in pixels (default 80) */
   size?: number
 }
 
-export function LogoSpinner({ className = "", size = 24 }: LogoSpinnerProps) {
+export function LogoSpinner({ className = "", size = 80 }: LogoSpinnerProps) {
+  const [dotCount, setDotCount] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDotCount((prev) => (prev + 1) % 4)
+    }, 500)
+    return () => clearInterval(interval)
+  }, [])
+
+  const dots = ".".repeat(dotCount)
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 32 32"
-      width={size}
-      height={size}
-      className={`animate-pulse ${className}`}
-    >
-      <rect fill="#fef3c7" width="32" height="32" rx="6" ry="6" />
-      <path
-        fill="#d97706"
-        d="M22.5 6h3.5c0.8 0 1.5 0.3 2 0.8s0.8 1.2 0.8 2v14c0 0.8-0.3 1.5-0.8 2s-1.2 0.8-2 0.8h-3.5c-1.5 0-3 0.2-4 0.8-0.5 0.3-1.2 0.1-1.5-0.4v-1c0-0.5 0.3-0.9 0.7-1 1-0.3 2-0.4 3-0.4h3c0.3 0 0.6-0.3 0.6-0.6V9.5c0-0.3-0.3-0.6-0.6-0.6h-3c-1 0-2 0.3-2.8 0.8-0.8 0.5-1.4 1.2-1.9 2-0.2 0.4-0.6 0.7-1 0.8-0.4 0.1-0.9-0.1-1.2-0.4-0.3-0.3-0.6-0.6-0.8-1-0.5-0.8-1.1-1.5-1.9-2-0.8-0.5-1.7-0.8-2.8-0.8h-3c-0.3 0-0.6 0.3-0.6 0.6v7c0 0.6-0.4 1-1 1h-0.5c-0.5 0-1-0.4-1-1V8.8c0-0.8 0.3-1.5 0.8-2s1.2-0.8 2-0.8h3.5c1.5 0 2.8 0.5 4 1.3 0.8 0.6 1.5 1.3 2 2.2 0.5-0.9 1.2-1.6 2-2.2 1.2-0.8 2.5-1.3 4-1.3z"
-      />
-      <circle fill="#78350f" cx="11" cy="14" r="2" />
-      <circle fill="#78350f" cx="21" cy="14" r="2" />
-      <path
-        d="M12 18.5c0 0 2 2.5 4 2.5s4-2.5 4-2.5"
-        stroke="#78350f"
-        strokeWidth="1.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-      <path
-        fill="#f59e0b"
-        d="M8 24l1.5 0.7 0.7 1.5c0.2 0.4 0.8 0.4 1 0l0.7-1.5 1.5-0.7c0.4-0.2 0.4-0.8 0-1l-1.5-0.7-0.7-1.5c-0.2-0.4-0.8-0.4-1 0l-0.7 1.5-1.5 0.7c-0.4 0.2-0.4 0.8 0 1z"
-      />
-    </svg>
+    <div className={`flex flex-col items-center gap-3 ${className}`}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 1024 1024"
+        width={size}
+        height={size}
+        style={{ shapeRendering: "geometricPrecision" }}
+      >
+        <defs>
+          <style>{`
+            .ls-fil1 { fill: #78350f }
+            .ls-fil2 { fill: #f59e0b }
+            .ls-fil3 { fill: #d97706 }
+            @keyframes ls-wink {
+              0%, 90%, 100% { transform: scaleY(1); }
+              95% { transform: scaleY(0.1); }
+            }
+            .ls-wink-eye {
+              animation: ls-wink 3s ease-in-out infinite;
+            }
+          `}</style>
+        </defs>
+        <g transform="translate(512, 490) scale(1.55) translate(-1287, -730)">
+          {/* Mouth */}
+          <path
+            className="ls-fil1"
+            d="M1350.08 766.92c-14.49,13.87 -33.63,21.56 -53.68,21.56 -20.06,0 -39.21,-7.68 -53.69,-21.56 -3.86,-3.7 -4.08,-9.86 -0.5,-13.83l8.29 -9.15c1.86,-2.06 4.25,-3.17 7.03,-3.26 2.74,-0.09 5.26,0.89 7.23,2.8 8.51,8.24 19.79,12.8 31.64,12.8 11.84,0 23.13,-4.56 31.63,-12.8 1.97,-1.91 4.49,-2.89 7.23,-2.8 2.78,0.09 5.17,1.2 7.04,3.26l8.28 9.15c3.58,3.97 3.36,10.13 -0.5,13.83z"
+          />
+          {/* Right eye (winking) */}
+          <g className="ls-wink-eye" style={{ transformOrigin: "1411px 669px" }}>
+            <path
+              className="ls-fil1"
+              d="M1411.09 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
+            />
+          </g>
+          {/* Left eye */}
+          <path
+            className="ls-fil1"
+            d="M1183.73 626.7c23.46,0 42.48,19.02 42.48,42.48 0,23.46 -19.02,42.48 -42.48,42.48 -23.46,0 -42.48,-19.02 -42.48,-42.48 0,-23.46 19.02,-42.48 42.48,-42.48z"
+          />
+          {/* Small star */}
+          <path
+            className="ls-fil2"
+            d="M1186.25 930.87l21.8 10.68 10.68 21.8c1.29,2.56 3.74,3.85 6.2,3.85 2.46,0 4.92,-1.29 6.2,-3.85l10.68 -21.8 21.8 -10.68c5.12,-2.56 5.12,-9.83 0,-12.39l-21.8 -10.69 -10.68 -21.79c-2.57,-5.13 -9.83,-5.13 -12.4,0l-10.68 21.79 -21.8 10.69c-5.12,2.56 -5.12,9.83 0,12.39z"
+          />
+          {/* Large star */}
+          <path
+            className="ls-fil2"
+            d="M1032.8 863.81l49.84 24.43 24.44 49.85c5.86,11.72 22.48,11.72 28.34,0l24.43 -49.85 49.85 -24.43c11.72,-5.86 11.72,-22.48 0,-28.34l-49.85 -24.44 -24.43 -49.84c-5.86,-11.73 -22.48,-11.73 -28.34,0l-24.44 49.84 -49.84 24.44c-5.87,2.93 -8.8,8.55 -8.8,14.17 0,5.62 2.93,11.24 8.8,14.17z"
+          />
+          {/* Body */}
+          <path
+            className="ls-fil3"
+            d="M1377.01 492.5l131.28 0c9.37,0 17.87,4.16 24.02,10.86 6.14,6.69 9.96,15.95 9.96,26.16l0 361.98c0,10.21 -3.82,19.47 -9.96,26.16 -6.15,6.7 -14.65,10.86 -24.02,10.86l-131.28 0c-11.59,0 -24.78,0.28 -36.82,1.97 -5.29,0.74 -10.53,1.75 -15.51,3.11 -3.97,1.09 -7.8,0.21 -11.03,-2.53 -3.22,-2.74 -4.94,-6.57 -4.94,-11.03l0 -16c0,-6.63 4.11,-12.22 10.05,-13.66 5.41,-1.3 10.91,-2.31 16.41,-3.08 15.2,-2.13 29.57,-2.49 41.84,-2.49l117.11 0c4.42,0 8.02,-3.93 8.02,-8.75l0 -331.11c0,-4.81 -3.6,-8.74 -8.02,-8.74l-117.11 0c-10.32,0 -19.58,3.28 -27.52,8.79 -9.34,6.48 -17.19,16.15 -23.12,27.43 -3.06,5.81 -7.34,10.44 -12.46,13.66l-0.08 0c-5.1,3.2 -10.89,4.9 -16.99,4.88 -6.21,-0.02 -12.04,-1.77 -17.13,-5.02 -5.14,-3.29 -9.41,-7.97 -12.42,-13.79 -5.76,-11.14 -13.47,-20.71 -22.8,-27.14 -8.09,-5.58 -17.54,-8.89 -28.14,-8.89l0 0.08 -115.65 0c-4.42,0 -8.03,3.93 -8.03,8.74l0 179.54c0,7.7 -5.76,13.98 -12.84,13.98l-14.44 0c-7.08,0 -12.84,-6.28 -12.84,-13.98l0 -194.97c0,-10.21 3.81,-19.47 9.96,-26.16 6.15,-6.7 14.65,-10.86 24.02,-10.86l129.82 0 0 0.09c18.7,0 35.3,5.8 49.46,15.55 12.44,8.57 22.88,20.1 31.12,33.32 8.29,-13.13 18.76,-24.61 31.08,-33.16 14.27,-9.91 30.77,-15.8 49,-15.8z"
+          />
+        </g>
+      </svg>
+      <p className="text-sm text-muted-foreground font-medium">
+        <span>Creating Magic</span>
+        <span className="inline-block w-[1.5ch] text-left">{dots}</span>
+      </p>
+    </div>
   )
 }
