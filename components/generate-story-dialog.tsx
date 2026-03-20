@@ -387,7 +387,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                     </p>
                   </Card>
                 ) : (
-                  <div className="border border-accent rounded-lg overflow-hidden relative">
+                  <div className="border border-accent rounded-lg overflow-clip">
                     <div className={`p-2 max-h-[28vh] overflow-y-auto ${
                       characters.length > 9
                         ? "grid grid-cols-3 gap-2"
