@@ -417,7 +417,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                                 <RadioGroupItem
                                   value={character.id}
                                   id={`char-${character.id}`}
-                                  className={isCompact ? "sr-only" : ""}
+                                  className="sr-only"
                                 />
                                 <img
                                   src={character.front_photo_url || "/placeholder.svg"}
