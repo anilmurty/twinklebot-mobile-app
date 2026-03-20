@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { BookOpen, Loader2, Lightbulb, Eye, Sparkles, Bell, BellRing } from "lucide-react"
+import { BookOpen, Loader2, Lightbulb, Eye, Sparkles, Bell, BellRing, ChevronDown, ChevronUp } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { GenerateStoryDialog } from "@/components/generate-story-dialog"
 import {
@@ -298,6 +298,7 @@ export function StoryLibraryTab() {
   const [feedbackText, setFeedbackText] = useState("")
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+  const [pickerSelection, setPickerSelection] = useState<Template | null>(null)
   const [notifyingId, setNotifyingId] = useState<number | null>(null)
 
   const notifyMutation = useNotifyInterest()
@@ -500,7 +501,13 @@ export function StoryLibraryTab() {
       )}
 
       {/* Template Picker Dialog */}
-      <Dialog open={showTemplatePicker} onOpenChange={setShowTemplatePicker}>
+      <Dialog open={showTemplatePicker} onOpenChange={(open) => {
+        setShowTemplatePicker(open)
+        if (open) {
+          const available = templates.filter((t) => !t.is_coming_soon)
+          setPickerSelection(available[0] || null)
+        }
+      }}>
         <DialogContent className="max-w-sm max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="text-xl">
@@ -508,48 +515,88 @@ export function StoryLibraryTab() {
             </DialogTitle>
             <DialogDescription>Pick a template to create a personalized storybook</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-2 py-4 overflow-y-auto max-h-[50vh]">
-            {templates.filter((t) => !t.is_coming_soon).map((template) => {
-              const tagline = getTagline(template.title)
-              return (
-                <button
-                  key={template.id}
-                  onClick={() => {
-                    setShowTemplatePicker(false)
-                    setSelectedStory(template)
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-xl border transition-all text-left w-full group border-border hover:border-primary/50 hover:bg-primary/5"
-                >
-                  {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
-                    <img
-                      src={template.thumbnail_url}
-                      alt={template.title}
-                      loading="lazy"
-                      decoding="async"
-                      className="w-14 h-[4.5rem] object-cover rounded-lg shrink-0"
-                    />
-                  ) : (
-                    <div className="w-14 h-[4.5rem] bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
-                      <BookOpen className="w-6 h-6 text-primary" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1.5">
-                      {template.title}
-                    </h4>
-                    <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
-                      <span className="text-muted-foreground">{tagline.verb}</span>
-                      <span className={tagline.color}> · {tagline.subject}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                      {template.description?.replace(/\{character_name\}/g, "your child") ||
-                        "A personalized adventure"}
-                    </p>
-                  </div>
-                  <Sparkles className="w-4 h-4 text-primary/0 group-hover:text-primary transition-colors shrink-0" />
-                </button>
-              )
-            })}
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-center gap-2 py-1">
+              <ChevronUp className="w-4 h-4 text-muted-foreground animate-bounce" />
+              <span className="text-[10px] text-muted-foreground">Swipe on the list to view more</span>
+            </div>
+
+            <div className="border border-accent rounded-lg overflow-hidden">
+              <div className="space-y-1.5 p-2 max-h-[40vh] overflow-y-auto">
+                {templates.filter((t) => !t.is_coming_soon).map((template) => {
+                  const tagline = getTagline(template.title)
+                  const isSelected = pickerSelection?.id === template.id
+                  return (
+                    <button
+                      key={template.id}
+                      onClick={() => setPickerSelection(template)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left w-full group ${
+                        isSelected
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/50 hover:bg-primary/5"
+                      }`}
+                    >
+                      {template.thumbnail_url && !failedThumbnails.has(template.id) ? (
+                        <img
+                          src={template.thumbnail_url}
+                          alt={template.title}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-14 h-[4.5rem] object-cover rounded-lg shrink-0"
+                        />
+                      ) : (
+                        <div className="w-14 h-[4.5rem] bg-primary/10 rounded-lg flex items-center justify-center shrink-0">
+                          <BookOpen className="w-6 h-6 text-primary" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-sm text-foreground line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1.5">
+                          {template.title}
+                        </h4>
+                        <p className="text-[11px] font-semibold tracking-wider uppercase mt-0.5">
+                          <span className="text-muted-foreground">{tagline.verb}</span>
+                          <span className={tagline.color}> · {tagline.subject}</span>
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                          {template.description?.replace(/\{character_name\}/g, "your child") ||
+                            "A personalized adventure"}
+                        </p>
+                      </div>
+                      {isSelected && <Sparkles className="w-4 h-4 text-primary shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-2 py-1">
+              <span className="text-[10px] text-muted-foreground">Swipe on the list to view more</span>
+              <ChevronDown className="w-4 h-4 text-muted-foreground animate-bounce" />
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1 bg-transparent"
+              onClick={() => setShowTemplatePicker(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-primary hover:bg-primary/90"
+              disabled={!pickerSelection}
+              onClick={() => {
+                if (pickerSelection) {
+                  setShowTemplatePicker(false)
+                  setSelectedStory(pickerSelection)
+                }
+              }}
+            >
+              <Sparkles className="w-4 h-4 mr-1" />
+              Continue
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
