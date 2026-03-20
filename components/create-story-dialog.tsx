@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Sparkles, Loader2 } from "lucide-react"
+import { Sparkles, Loader2, ChevronDown } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { storybooksApi, templatesApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi, charactersApi } from "@/lib/api-client"
@@ -396,8 +396,11 @@ export function CreateStoryDialog({
                 </div>
               )}
 
-              <div className="space-y-3">
-                <Label>Select Story Template</Label>
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-1">
+                  <Label>Select Story Template</Label>
+                  <span className="text-[10px] text-muted-foreground">(swipe vertically to see more)</span>
+                </div>
                 {loading ? (
                   <div className="flex items-center justify-center py-8">
                     <LogoSpinner size={48} />
@@ -407,27 +410,25 @@ export function CreateStoryDialog({
                     <p className="text-sm text-muted-foreground">No story templates available.</p>
                   </Card>
                 ) : (
-                  <div className="border border-accent rounded-lg overflow-hidden">
+                  <div className="border border-accent rounded-lg overflow-hidden relative">
                     <RadioGroup
                       value={selectedTemplate?.toString() || ""}
                       onValueChange={(value) => setSelectedTemplate(Number.parseInt(value))}
                     >
-                      <div className="space-y-2 p-2 max-h-[28vh] overflow-y-auto">
+                      <div className="space-y-1.5 p-2 max-h-[28vh] overflow-y-auto">
                         {templates.map((template) => (
-                          <Card key={template.id} className="p-3 cursor-pointer hover:border-primary transition-colors">
-                            <label className="flex items-center gap-3 cursor-pointer w-full">
+                          <Card key={template.id} className="p-2 cursor-pointer hover:border-primary transition-colors">
+                            <label className="flex items-center gap-2 cursor-pointer w-full">
                               <RadioGroupItem value={template.id.toString()} id={`template-${template.id}`} />
-                              <div className="flex-1">
-                                <div className="font-medium">{template.title}</div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {template.scene_count || template.script_data?.scenes?.length || 0} scenes
-                                </div>
-                              </div>
+                              <span className="font-medium text-sm">{template.title}</span>
                             </label>
                           </Card>
                         ))}
                       </div>
                     </RadioGroup>
+                    <div className="flex justify-center py-1 bg-gradient-to-t from-card to-transparent">
+                      <ChevronDown className="w-4 h-4 text-muted-foreground animate-bounce" />
+                    </div>
                   </div>
                 )}
               </div>
