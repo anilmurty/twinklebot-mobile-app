@@ -363,35 +363,31 @@ export function CreateStoryDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         {currentStep === "template-selection" && (
           <>
-            <DialogHeader>
+            <DialogHeader className="pb-0">
               <DialogTitle className="text-2xl flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-primary" />
                 Create Story
               </DialogTitle>
-              <DialogDescription>
-                Create a personalized story with <strong>{characterName}</strong>
-              </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 pt-4">
+            <div className="space-y-4 pt-2">
               <div className="flex items-center gap-3 p-3 bg-accent/30 rounded-lg border border-accent">
+                <p className="flex-1 text-sm font-medium min-w-0">
+                  Choose a story where <span className="text-primary font-bold">{characterName}</span> will be the hero
+                </p>
                 {characterPhotoUrl ? (
                   <img
                     src={characterPhotoUrl || "/placeholder.svg"}
                     alt={characterName}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-primary/20 shrink-0"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-secondary border-2 border-primary/20 flex items-center justify-center">
-                    <span className="text-lg font-bold text-muted-foreground">
+                  <div className="w-10 h-10 rounded-full bg-secondary border-2 border-primary/20 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-muted-foreground">
                       {characterName.charAt(0).toUpperCase()}
                     </span>
                   </div>
                 )}
-                <div>
-                  <p className="font-medium">{characterName}</p>
-                  <p className="text-xs text-muted-foreground">Selected character</p>
-                </div>
               </div>
 
               {error && (
