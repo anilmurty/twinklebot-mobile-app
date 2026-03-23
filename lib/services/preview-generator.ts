@@ -333,6 +333,19 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     console.log(`[PREVIEW] Preview generation complete for storybook ${storybookId}`)
 
+    // Send push notification (best-effort, never throws)
+    try {
+      const { sendNotificationToUser } = await import('@/lib/services/apns-service')
+      await sendNotificationToUser(
+        userId,
+        'Preview Ready!',
+        `Your ${template.title} preview for ${character.name} is ready to view.`,
+        { storybookId, type: 'preview_ready' }
+      )
+    } catch (err: any) {
+      console.error('[PREVIEW] Failed to send notification:', err.message)
+    }
+
     return {
       storybookId,
       firstSceneImageUrl: uploadedSceneUrl,

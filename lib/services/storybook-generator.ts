@@ -828,6 +828,19 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     }
 
     console.log(`✅ Storybook ${storybookId} generation completed - all ${totalScenes} scenes generated successfully`)
+
+    // Send push notification (best-effort, never throws)
+    try {
+      const { sendNotificationToUser } = await import('@/lib/services/apns-service')
+      await sendNotificationToUser(
+        userId,
+        'Your Story is Ready!',
+        `${character.name}'s "${template.title}" storybook is complete!`,
+        { storybookId, type: 'story_complete' }
+      )
+    } catch (err: any) {
+      console.error('[STORYBOOK] Failed to send notification:', err.message)
+    }
   } catch (error: any) {
     // Ensure status is updated even if an unexpected error occurs
     console.error(`❌ Unexpected error during storybook generation:`, error)

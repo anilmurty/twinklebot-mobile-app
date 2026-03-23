@@ -28,4 +28,13 @@ export async function initCapacitor() {
   } catch (err) {
     console.error('Failed to configure RevenueCat:', err)
   }
+
+  // Push notification registration
+  try {
+    const { initPushNotifications } = await import('@/lib/utils/push-notifications')
+    await initPushNotifications()
+    console.log('Push notifications initialized')
+  } catch (err) {
+    console.error('Failed to initialize push notifications:', err)
+  }
 }
