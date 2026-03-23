@@ -608,7 +608,7 @@ export default function StoryPreviewPage() {
                   {(scene.text || scene.script_text) ? (
                     <button
                       onClick={() => setTextHidden(!textHidden)}
-                      className="text-white text-[10px] uppercase tracking-widest transition-colors"
+                      className="px-3 py-1 rounded-full border border-white/30 bg-white/10 text-white/80 text-[10px] uppercase tracking-widest transition-colors hover:bg-white/20 active:bg-white/30 font-semibold"
                     >
                       {textHidden ? 'show text' : 'hide text'}
                     </button>
