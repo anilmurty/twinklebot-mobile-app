@@ -440,7 +440,7 @@ export function CreateStoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
         {currentStep === "template-selection" && (
           <>
             <DialogHeader className="pb-0">

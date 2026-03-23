@@ -508,7 +508,7 @@ export function StoryLibraryTab() {
           setPickerSelection(available[0] || null)
         }
       }}>
-        <DialogContent className="max-w-sm max-h-[80vh]">
+        <DialogContent className="max-w-[min(24rem,calc(100vw-2rem))] max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="text-xl">
               <span className="text-primary">Choose</span> a Story

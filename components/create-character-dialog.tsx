@@ -189,7 +189,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[min(28rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Create Character</DialogTitle>
           <DialogDescription>Add your child's photo to create their storybook character</DialogDescription>
