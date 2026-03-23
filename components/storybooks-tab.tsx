@@ -393,21 +393,8 @@ export function StorybooksTab() {
     return { sceneCount, isGenerating, isCompleted, isPreviewPending, isGeneratingPreview, isPreviewReady, thumbnailUrl }
   }
 
-  const handleViewPreview = async (storybook: Storybook) => {
-    try {
-      const freshStorybook = await storybooksApi.get(storybook.id)
-      // Preserve thumbnail from list data — the single GET endpoint doesn't include it
-      setResumeStorybook({
-        ...freshStorybook,
-        thumbnail_url: freshStorybook.thumbnail_url || storybook.thumbnail_url,
-        first_scene_base_image: freshStorybook.first_scene_base_image || storybook.first_scene_base_image,
-      })
-      await fetchSubscriptionPlans()
-    } catch (err: any) {
-      console.error("Failed to fetch storybook:", err)
-      setResumeStorybook(storybook)
-      await fetchSubscriptionPlans()
-    }
+  const handleViewPreview = (storybook: Storybook) => {
+    router.push(`/storybook/${storybook.id}`)
   }
 
   // Group storybooks
