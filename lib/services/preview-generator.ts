@@ -11,6 +11,18 @@ import {
 import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { uploadToStorage } from '@/lib/supabase/storage'
 
+type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
+
+const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
+  natural: '',
+  storybook:
+    'render the child and transform the entire scene in a watercolor children\'s book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
+  'comic-book':
+    'render the child and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
+  cartoon:
+    'render the child and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across child and background.',
+}
+
 interface SceneTemplate {
   scene_number: number
   headline?: string
@@ -253,11 +265,22 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     console.log(`[PREVIEW] Constructed base photo path: ${basePhotoPath} from base_photo: ${firstScene.base_photo}`)
 
+    // Apply style modifier to insertion prompt
+    const storybookStyle = ((storybook.style as StorybookStyle) || 'natural') as StorybookStyle
+    const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
+    const styledPrompt = styleModifier
+      ? `${firstScene.insertion_prompt} ${styleModifier}`
+      : firstScene.insertion_prompt
+
+    if (styleModifier) {
+      console.log(`[PREVIEW] Applied ${storybookStyle} style modifier to prompt`)
+    }
+
     // Generate first scene image (always use basic model for preview)
     const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
       basePhotoPath,
       signedVariationUrl,
-      firstScene.insertion_prompt,
+      styledPrompt,
       firstScene.aspect_ratio || 'match_input_image',
       template.id,
       'basic'

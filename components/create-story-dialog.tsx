@@ -38,13 +38,14 @@ type GenerationStep = "template-selection" | "look-selection" | "style-selection
 
 type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 
-const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; icon: React.ReactNode; color: string }[] = [
+const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; icon: React.ReactNode; color: string; imageSuffix: string }[] = [
   {
     id: 'natural',
     label: 'Natural',
     description: 'Photorealistic, true-to-life',
     icon: <Camera className="w-5 h-5" />,
     color: 'text-emerald-500',
+    imageSuffix: '',
   },
   {
     id: 'storybook',
@@ -52,6 +53,7 @@ const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; i
     description: 'Watercolor illustration',
     icon: <Paintbrush className="w-5 h-5" />,
     color: 'text-violet-500',
+    imageSuffix: '-storybook-style',
   },
   {
     id: 'comic-book',
@@ -59,6 +61,7 @@ const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; i
     description: 'Bold ink & vivid colors',
     icon: <Zap className="w-5 h-5" />,
     color: 'text-amber-500',
+    imageSuffix: '-comicbook-style',
   },
   {
     id: 'cartoon',
@@ -66,8 +69,23 @@ const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; i
     description: '3D animated movie style',
     icon: <Wand2 className="w-5 h-5" />,
     color: 'text-sky-500',
+    imageSuffix: '-cartoon-style',
   },
 ]
+
+/** Build style preview image URL from template folder + first scene base_photo */
+function getStyleImageUrl(thumbnailUrl: string | undefined, basePhoto: string | undefined, suffix: string): string | null {
+  if (!thumbnailUrl || !basePhoto) return null
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) return null
+  const parts = thumbnailUrl.split('/')
+  if (parts.length < 2) return null
+  const folder = parts[1]
+  const dotIdx = basePhoto.lastIndexOf('.')
+  const nameWithoutExt = dotIdx > 0 ? basePhoto.substring(0, dotIdx) : basePhoto
+  const fileName = suffix ? `${nameWithoutExt}${suffix}.png` : basePhoto
+  return `${supabaseUrl}/storage/v1/object/public/story-template-assets/${folder}/${fileName}`
+}
 
 export function CreateStoryDialog({
   open,
@@ -98,6 +116,7 @@ export function CreateStoryDialog({
   const [previewSceneText, setPreviewSceneText] = useState<string | null>(null)
   const [fetchingPreviewData, setFetchingPreviewData] = useState(false)
   const [selectedStyle, setSelectedStyle] = useState<StorybookStyle>('natural')
+  const [styleImagesFailed, setStyleImagesFailed] = useState<Set<string>>(new Set())
 
   // Poll for preview status while generating
   const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
@@ -156,6 +175,7 @@ export function CreateStoryDialog({
       setPreviewSceneText(null)
       setFetchingPreviewData(false)
       setSelectedStyle('natural')
+      setStyleImagesFailed(new Set())
     }
   }, [open, characterId])
 
@@ -392,6 +412,18 @@ export function CreateStoryDialog({
 
   const selectedTemplateData = templates.find((t) => t.id === selectedTemplate)
   const sceneCount = selectedTemplateData?.script_data?.scenes?.length || selectedTemplateData?.scene_count || 0
+
+  // Get first scene's base_photo for style image previews
+  const firstSceneBasePhoto = (() => {
+    const scriptData = selectedTemplateData?.script_data as any
+    if (!scriptData?.scenes) return undefined
+    const scenesList = scriptData.scenes as any[]
+    if (!scenesList || scenesList.length === 0) return undefined
+    const first = scenesList.reduce((prev: any, curr: any) =>
+      (curr.scene_number < prev.scene_number) ? curr : prev
+    )
+    return first?.base_photo as string | undefined
+  })()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -641,27 +673,45 @@ export function CreateStoryDialog({
               <div className="grid grid-cols-2 gap-3">
                 {STYLE_OPTIONS.map((style) => {
                   const isSelected = selectedStyle === style.id
+                  const imageUrl = getStyleImageUrl(selectedTemplateData?.thumbnail_url, firstSceneBasePhoto, style.imageSuffix)
+                  const hasImage = imageUrl && !styleImagesFailed.has(style.id)
                   return (
                     <Card
                       key={style.id}
-                      className={`p-4 cursor-pointer transition-all ${
+                      className={`overflow-hidden cursor-pointer transition-all ${
                         isSelected
                           ? "border-primary border-2 bg-primary/5"
                           : "hover:border-primary/50"
                       }`}
                       onClick={() => setSelectedStyle(style.id)}
                     >
-                      <div className="flex flex-col items-center gap-2 text-center">
-                        <div className={`${style.color}`}>
-                          {style.icon}
+                      {hasImage ? (
+                        <div className="flex flex-col">
+                          <div className="aspect-[3/4] overflow-hidden bg-secondary">
+                            <img
+                              src={imageUrl}
+                              alt={style.label}
+                              className="w-full h-full object-cover"
+                              onError={() => setStyleImagesFailed(prev => new Set(prev).add(style.id))}
+                            />
+                          </div>
+                          <div className="p-2 text-center">
+                            <div className="font-semibold text-sm">{style.label}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="font-semibold text-sm">{style.label}</div>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {style.description}
-                          </p>
+                      ) : (
+                        <div className="p-4 flex flex-col items-center gap-2 text-center">
+                          <div className={`${style.color}`}>
+                            {style.icon}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-sm">{style.label}</div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {style.description}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </Card>
                   )
                 })}
