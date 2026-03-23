@@ -42,7 +42,8 @@ No test framework is configured — there are no test commands.
 | `lib/services/` | Core business logic (image generation, storybook orchestration, IAP) |
 | `lib/queries/` | React Query hooks (`useStorybooks`, `useCharacters`, `useTemplates`, `useProfile`) |
 | `lib/supabase/` | Supabase client initializers (server, browser, auth, storage) |
-| `db_scripts/` | Numbered SQL migration files (`001_*.sql` → `059_*.sql`) applied manually in Supabase |
+| `lib/utils/` | Utility functions (navigation, platform detection, deep links, push notifications) |
+| `db_scripts/` | Numbered SQL migration files (`001_*.sql` → `061_*.sql`) applied manually in Supabase |
 
 ### Storybook Generation Flow
 
@@ -99,3 +100,34 @@ When displaying as a percentage in the UI, clamp with `Math.min(scenesDone / tot
 ### Mobile / Capacitor
 
 The Capacitor native shell loads the live web app — there is no local native build needed for web development. Run `npm run cap:sync` + `npm run cap:open:ios` only when updating native plugins or config. Platform detection is in `lib/utils/` (`isNative()`, etc.).
+
+### Style Selector
+
+Storybooks can be generated in 4 art styles: `natural`, `storybook`, `comic-book`, `cartoon`. The style is stored in the `storybooks.style` column (default `'natural'`). Style modifiers are defined as prompt suffixes in both `storybook-generator.ts` and `preview-generator.ts` — they are appended to each scene's `insertion_prompt` before calling the image generation API.
+
+Style preview images in the selector cards are loaded from Supabase Storage using the naming convention `{base_photo_name}-{style-suffix}.png` (e.g. `1-meet-cleo-cartoon-style.png`). If images aren't found for a template, the UI falls back to icon+text cards.
+
+### Push Notifications (iOS)
+
+Infrastructure is built but **not yet active** — waiting on APNS key from Apple Developer portal.
+
+| Component | File |
+|-----------|------|
+| APNS service | `lib/services/apns-service.ts` — sends via HTTP/2, auto-cleans stale tokens |
+| Token registration API | `app/api/v1/notifications/register/route.ts` |
+| Client setup | `lib/utils/push-notifications.ts` — permission, registration, tap handling |
+| Capacitor init | `lib/utils/capacitor-init.ts` — calls push setup after RevenueCat |
+| iOS AppDelegate | `ios/App/App/AppDelegate.swift` — APNS token forwarding methods |
+| DB table | `device_tokens` (migration 061) |
+
+**To activate** (when APNS key is available):
+1. Generate APNS key in Apple Developer > Certificates, Identifiers & Profiles > Keys
+2. Set env vars in Vercel: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_KEY_CONTENT` (raw .p8 or base64), `APNS_ENVIRONMENT` (`sandbox` for TestFlight, `production` for App Store)
+3. In Xcode: add Push Notifications capability + Background Modes > Remote notifications
+4. Run `npx cap sync` to sync the plugin to the native project
+
+Without the env vars, the service gracefully skips — logs `[APNS] Not configured — skipping notification` with no errors.
+
+Notifications are triggered at the end of:
+- `preview-generator.ts` → "Preview Ready!" when preview completes
+- `storybook-generator.ts` → "Your Story is Ready!" when full generation completes
