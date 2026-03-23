@@ -211,6 +211,9 @@ async function apiRequest<T>(
   const token = await getAuthToken()
 
   if (!token && !options.allowUnauthenticated) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/app'
+    }
     throw new Error('Not authenticated')
   }
 
@@ -229,6 +232,10 @@ async function apiRequest<T>(
   })
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== 'undefined') {
+      window.location.href = '/app'
+      throw new Error('Not authenticated')
+    }
     const error = await response.json().catch(() => ({ error: response.statusText }))
     throw new Error(error.error || `API error: ${response.status}`)
   }
@@ -266,6 +273,9 @@ export const charactersApi = {
     
     return getAuthToken().then(async (token) => {
       if (!token) {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/app'
+        }
         throw new Error('Not authenticated')
       }
       const response = await fetch(`${API_BASE}/characters/${id}`, {
