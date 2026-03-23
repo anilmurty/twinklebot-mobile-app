@@ -27,7 +27,7 @@ interface SceneTemplate {
   headline?: string
   script_text: string
   base_photo: string // filename from Supabase Storage (story-template-assets/day-at-the-zoo/)
-  child_photo: 'front' | 'left' | 'right' // which character variation to use
+  child_photo: 'front' | 'left' | 'right' | 'original' // which photo to use ('original' = child's uploaded photo)
   insertion_prompt: string // scene-specific insertion instructions
   aspect_ratio?: string
 }
@@ -249,37 +249,55 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       if (!sceneTemplate.base_photo || sceneTemplate.base_photo.trim() === '') {
         throw new Error(`Scene ${sceneTemplate.scene_number} missing base_photo field`)
       }
-      if (!sceneTemplate.child_photo || !['front', 'left', 'right'].includes(sceneTemplate.child_photo)) {
+      if (!sceneTemplate.child_photo || !['front', 'left', 'right', 'original'].includes(sceneTemplate.child_photo)) {
         throw new Error(`Scene ${sceneTemplate.scene_number} missing or invalid child_photo field`)
       }
       if (!sceneTemplate.insertion_prompt || sceneTemplate.insertion_prompt.trim() === '') {
         throw new Error(`Scene ${sceneTemplate.scene_number} missing insertion_prompt field`)
       }
 
-      // Always use front variation for all scenes (we only generate one variation now)
-      let characterVariationUrl = variations.front_variation_url
-
-      if (!characterVariationUrl) {
-        throw new Error(`Character variation URL not found`)
-      }
-
-      // Convert character variation URL to signed URL for Replicate access
       const { getSignedUrl } = await import('@/lib/supabase/storage')
-      const extractStoragePath = (url: string): string | null => {
-        const match = url.match(/character-variations\/(.+)$/)
-        if (match) {
-          return match[1]
+      let characterImageUrl: string
+
+      if (sceneTemplate.child_photo === 'original') {
+        // Use the child's original uploaded photo (not the character variation)
+        const originalPhotoUrl = character.front_photo_url
+        if (!originalPhotoUrl) {
+          throw new Error(`Character original photo URL not found`)
         }
-        return null
-      }
 
-      const variationStoragePath = extractStoragePath(characterVariationUrl)
-      if (!variationStoragePath) {
-        throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
-      }
+        // Extract storage path and create signed URL
+        const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
+        if (match) {
+          characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
+        } else {
+          // Already a full/signed URL
+          characterImageUrl = originalPhotoUrl
+        }
+        console.log(`Scene ${sceneTemplate.scene_number}: using child's original photo`)
+      } else {
+        // Use the character variation (front/left/right)
+        let characterVariationUrl = variations.front_variation_url
 
-      // Create signed URL (valid for 1 hour) for Replicate to access
-      characterVariationUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
+        if (!characterVariationUrl) {
+          throw new Error(`Character variation URL not found`)
+        }
+
+        const extractStoragePath = (url: string): string | null => {
+          const match = url.match(/character-variations\/(.+)$/)
+          if (match) {
+            return match[1]
+          }
+          return null
+        }
+
+        const variationStoragePath = extractStoragePath(characterVariationUrl)
+        if (!variationStoragePath) {
+          throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
+        }
+
+        characterImageUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
+      }
 
       // Construct base photo path - extract folder from template thumbnail_url
       // thumbnail_url format: "/counting-general/cover.png" -> folder is "counting-general"
@@ -330,7 +348,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
       const predictionId = await createBasePhotoAndCharacterPrediction(
         basePhotoPath,
-        characterVariationUrl,
+        characterImageUrl,
         styledInsertionPrompt,
         sceneTemplate.aspect_ratio || '9:16',
         template.id, // Pass template ID to get model from template
