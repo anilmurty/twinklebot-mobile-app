@@ -76,14 +76,27 @@ const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; i
 /** Build style preview image URL from template folder + first scene base_photo */
 function getStyleImageUrl(thumbnailUrl: string | undefined, basePhoto: string | undefined, suffix: string): string | null {
   if (!thumbnailUrl || !basePhoto) return null
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!supabaseUrl) return null
-  const parts = thumbnailUrl.split('/')
-  if (parts.length < 2) return null
-  const folder = parts[1]
+
+  let folder: string | null = null
+  const storageMatch = thumbnailUrl.match(/story-template-assets\/([^/]+)\//)
+  if (storageMatch) {
+    folder = storageMatch[1]
+  } else if (thumbnailUrl.startsWith('/')) {
+    const parts = thumbnailUrl.split('/')
+    if (parts.length >= 2) folder = parts[1]
+  }
+  if (!folder) return null
+
   const dotIdx = basePhoto.lastIndexOf('.')
   const nameWithoutExt = dotIdx > 0 ? basePhoto.substring(0, dotIdx) : basePhoto
   const fileName = suffix ? `${nameWithoutExt}${suffix}.png` : basePhoto
+
+  const baseUrlMatch = thumbnailUrl.match(/^(https?:\/\/.+\/story-template-assets\/)/)
+  if (baseUrlMatch) {
+    return `${baseUrlMatch[1]}${folder}/${fileName}`
+  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) return null
   return `${supabaseUrl}/storage/v1/object/public/story-template-assets/${folder}/${fileName}`
 }
 

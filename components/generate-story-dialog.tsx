@@ -78,19 +78,33 @@ const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; i
 /** Build style preview image URL from template folder + first scene base_photo */
 function getStyleImageUrl(thumbnailUrl: string | undefined, basePhoto: string | undefined, suffix: string): string | null {
   if (!thumbnailUrl || !basePhoto) return null
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!supabaseUrl) return null
 
-  // Extract folder from thumbnail_url like "/the-robot-best-friend/cover.png"
-  const parts = thumbnailUrl.split('/')
-  if (parts.length < 2) return null
-  const folder = parts[1]
+  // Extract folder from thumbnail_url. Handles both:
+  // - Relative: "/the-robot-best-friend/cover.png"
+  // - Full URL: "https://xxx.supabase.co/storage/v1/object/public/story-template-assets/the-robot-best-friend/cover.png"
+  let folder: string | null = null
+  const storageMatch = thumbnailUrl.match(/story-template-assets\/([^/]+)\//)
+  if (storageMatch) {
+    folder = storageMatch[1]
+  } else if (thumbnailUrl.startsWith('/')) {
+    const parts = thumbnailUrl.split('/')
+    if (parts.length >= 2) folder = parts[1]
+  }
+  if (!folder) return null
 
   // Remove extension from base_photo, add suffix, re-add .png
   const dotIdx = basePhoto.lastIndexOf('.')
   const nameWithoutExt = dotIdx > 0 ? basePhoto.substring(0, dotIdx) : basePhoto
   const fileName = suffix ? `${nameWithoutExt}${suffix}.png` : basePhoto
 
+  // Build URL using the same base as the thumbnail
+  const baseUrlMatch = thumbnailUrl.match(/^(https?:\/\/.+\/story-template-assets\/)/)
+  if (baseUrlMatch) {
+    return `${baseUrlMatch[1]}${folder}/${fileName}`
+  }
+  // Fallback: construct from env
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) return null
   return `${supabaseUrl}/storage/v1/object/public/story-template-assets/${folder}/${fileName}`
 }
 

@@ -542,8 +542,8 @@ export function StorybooksTab() {
                             <span className="text-primary"> · {storybook.character_name}</span>
                           </p>
                         </div>
-                        {/* Mobile buttons */}
-                        <div className="flex items-center gap-2 mt-2 px-1 md:hidden">
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 mt-2 px-1">
                           {isPreviewReady ? (
                             <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleViewPreview(storybook)}>
                               <Play className="w-3 h-3 mr-1" />
@@ -599,19 +599,13 @@ export function StorybooksTab() {
                           )}
                           {/* Bottom gradient */}
                           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
-                          {/* Desktop hover overlay */}
-                          <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center gap-2">
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                             <button
                               onClick={(e) => { e.stopPropagation(); handleReadStorybook(storybook.id) }}
                               className="px-4 py-2 rounded-full bg-white/90 text-gray-900 text-sm font-semibold hover:bg-white transition-colors"
                             >
                               Read
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleOpenShareModal(storybook) }}
-                              className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-                            >
-                              Share
                             </button>
                           </div>
                         </div>
@@ -640,8 +634,8 @@ export function StorybooksTab() {
                             )}
                           </div>
                         </div>
-                        {/* Mobile buttons */}
-                        <div className="flex items-center gap-2 mt-2 px-1 md:hidden">
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 mt-2 px-1">
                           <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleReadStorybook(storybook.id)}>
                             <BookOpen className="w-3 h-3 mr-1" />
                             Read
