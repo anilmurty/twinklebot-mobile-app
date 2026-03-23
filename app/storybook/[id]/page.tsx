@@ -4,9 +4,13 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowRight, Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check, Loader2, Lock } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
-import { storybooksApi } from "@/lib/api-client"
+import { storybooksApi, subscriptionPlansApi, profileApi, paymentsApi } from "@/lib/api-client"
+import { CompactPricing } from "@/components/compact-pricing"
+import { isNativeApp } from "@/lib/utils/platform"
+import { navigateToUrl } from "@/lib/utils/navigation"
+import { getIAPPackages, purchasePackage } from "@/lib/services/iap-service"
 
 interface Scene {
   scene_number?: number
@@ -51,6 +55,16 @@ export default function StorybookViewerPage() {
   const [textHidden, setTextHidden] = useState(false)
   const [shareState, setShareState] = useState<'idle' | 'loading' | 'copied'>('idle')
   const textScrollRef = useRef<HTMLDivElement>(null)
+
+  // Paywall state (for preview storybooks)
+  const [subscriptionPlans, setSubscriptionPlans] = useState<any[]>([])
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null)
+  const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('premium')
+  const [storyCredits, setStoryCredits] = useState(0)
+  const [premiumCredits, setPremiumCredits] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [iapPackages, setIapPackages] = useState<any[]>([])
 
   const minSwipeDistance = 50
 
@@ -118,6 +132,105 @@ export default function StorybookViewerPage() {
       setError(err.message || 'Failed to load storybook')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Check if this is a preview storybook (not yet purchased)
+  const isPreview = storybook?.status === 'preview_pending'
+
+  // Fetch subscription plans when viewing a preview
+  useEffect(() => {
+    if (isPreview) {
+      fetchSubscriptionPlans()
+    }
+  }, [isPreview])
+
+  const fetchSubscriptionPlans = async () => {
+    try {
+      const profile = await profileApi.get()
+      setStoryCredits(profile?.basic_credits || profile?.story_credits || 0)
+      setPremiumCredits(profile?.premium_credits || 0)
+
+      const plansData = await subscriptionPlansApi.list()
+      const oneTimePlans = (plansData.plans || []).filter((p: any) => p.plan_type === 'one-time')
+      setSubscriptionPlans(oneTimePlans)
+      const tierPlans = oneTimePlans.filter((p: any) => p.quality_tier === selectedTier)
+      const plansToSearch = tierPlans.length > 0 ? tierPlans : oneTimePlans
+      if (plansToSearch.length > 0) {
+        const singlePlan = plansToSearch.find((p: any) => p.stories_per_period === 1)
+        setSelectedPlanId(singlePlan?.id || plansToSearch[0].id)
+      }
+
+      if (isNativeApp()) {
+        const packages = await getIAPPackages()
+        setIapPackages(packages)
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch subscription plans:", err)
+    }
+  }
+
+  const handleTierChange = (tier: 'basic' | 'premium') => {
+    setSelectedTier(tier)
+    const tierPlans = subscriptionPlans.filter((p: any) => p.quality_tier === tier)
+    if (tierPlans.length > 0) {
+      const singlePlan = tierPlans.find((p: any) => p.stories_per_period === 1)
+      setSelectedPlanId(singlePlan?.id || tierPlans[0].id)
+    }
+  }
+
+  const handlePurchase = async (planId: number) => {
+    if (!storybook || !planId) return
+
+    try {
+      setIsSubmitting(true)
+      setPaymentError(null)
+
+      if (isNativeApp()) {
+        const plan = subscriptionPlans.find((p: any) => p.id === planId)
+        const credits = plan?.stories_per_period || 1
+        const pkg = iapPackages.find((p) => p.credits === credits && p.tier === selectedTier)
+          || iapPackages.find((p) => p.credits === credits)
+
+        if (!pkg) {
+          setPaymentError("In-app purchases are not available right now. Please try again later.")
+          setIsSubmitting(false)
+          return
+        }
+
+        const success = await purchasePackage(pkg.identifier)
+        if (success) {
+          router.push('/app?tab=storybooks')
+        }
+        setIsSubmitting(false)
+      } else {
+        const checkout = await paymentsApi.createCheckout(storybook.id, planId)
+        if (checkout.checkout_url) {
+          await navigateToUrl(checkout.checkout_url)
+        } else {
+          setPaymentError("Failed to create checkout session")
+        }
+      }
+    } catch (err: any) {
+      console.error("Failed to create checkout:", err)
+      setPaymentError(err.message || "Failed to create checkout session")
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleUseCredit = async (tier?: 'basic' | 'premium') => {
+    if (!storybook) return
+    const useTier = tier || selectedTier
+
+    try {
+      setIsSubmitting(true)
+      setPaymentError(null)
+      await storybooksApi.useCredit(storybook.id, useTier)
+      router.push('/app?tab=storybooks')
+    } catch (err: any) {
+      console.error("Failed to use credit:", err)
+      setPaymentError(err.message || "Failed to use credit")
+      setIsSubmitting(false)
     }
   }
 
@@ -556,74 +669,132 @@ export default function StorybookViewerPage() {
           </>
         )}
 
-        {/* End Page */}
+        {/* End Page — Unlock (preview) or The End (completed) */}
         {isEndPage && (
           <>
             <div className="relative w-full flex items-center justify-center min-h-screen md:min-h-[70vh] bg-black md:rounded-lg overflow-hidden">
-              {/* Background with gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-amber-900/30 via-black to-black" />
+              {isPreview ? (
+                <>
+                  {/* Background: blurred cover image */}
+                  <img
+                    src={coverImage}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/90" />
 
-              {/* Content */}
-              <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
-                {/* The End Title */}
-                <h1
-                  className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-lg"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  The End
-                </h1>
+                  {/* Unlock Content */}
+                  <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-md mx-auto w-full">
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center mb-4">
+                      <Lock className="w-8 h-8 text-primary" />
+                    </div>
+                    <h1
+                      className="text-2xl md:text-3xl font-bold text-white mb-2 drop-shadow-lg"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      Unlock the Full Story
+                    </h1>
+                    <p className="text-white/70 text-sm mb-6">
+                      Generate all scenes of <span className="text-primary font-semibold">{characterName}</span>'s adventure in <span className="font-semibold text-white">{storybook.title}</span>
+                    </p>
 
-                <p
-                  className="text-white/70 text-lg md:text-xl mb-8 italic"
-                  style={{ fontFamily: "var(--font-display)" }}
-                >
-                  of {characterName}'s adventure
-                </p>
+                    {paymentError && (
+                      <div className="w-full p-3 mb-4 bg-destructive/10 border border-destructive rounded-lg">
+                        <p className="text-sm text-destructive">{paymentError}</p>
+                      </div>
+                    )}
 
-                {/* Decorative Divider */}
-                <div className="flex items-center gap-4 mb-10">
-                  <div className="w-16 h-px bg-white/30" />
-                  <Sparkles className="w-6 h-6 text-primary" />
-                  <div className="w-16 h-px bg-white/30" />
-                </div>
+                    {subscriptionPlans.length === 0 ? (
+                      <div className="flex items-center justify-center py-6">
+                        <LogoSpinner size={48} />
+                      </div>
+                    ) : (
+                      <div className="w-full">
+                        <CompactPricing
+                          plans={subscriptionPlans}
+                          selectedPlanId={selectedPlanId}
+                          onPlanSelect={setSelectedPlanId}
+                          onPurchase={handlePurchase}
+                          isSubmitting={isSubmitting}
+                          storyCredits={storyCredits}
+                          premiumCredits={premiumCredits}
+                          onUseCredit={handleUseCredit}
+                          selectedTier={selectedTier}
+                          onTierChange={handleTierChange}
+                          onCancel={() => router.push('/app?tab=storybooks')}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Background with gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-amber-900/30 via-black to-black" />
 
-                {/* CTA Section */}
-                <Card className="bg-card border border-border backdrop-blur-sm p-6 md:p-8 mb-6 shadow-2xl">
-                  <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
-                    Ready for another adventure?
-                  </h2>
-                  <p className="text-muted-foreground mb-6">
-                    Explore more stories in our library and create new magical memories.
-                  </p>
-                  <Button
-                    size="lg"
-                    onClick={() => router.push('/app?tab=library')}
-                    className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
-                  >
-                    <BookOpen className="w-5 h-5 mr-2" />
-                    Generate Your Next Story
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => setCurrentScene(0)}
-                    className="w-full h-14 text-lg font-semibold mt-3"
-                  >
-                    <ArrowLeft className="w-5 h-5 mr-2" />
-                    Read Again
-                  </Button>
-                </Card>
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
+                    {/* The End Title */}
+                    <h1
+                      className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4 drop-shadow-lg"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      The End
+                    </h1>
 
-                {/* Back to Home Link */}
-                <Button
-                  variant="ghost"
-                  onClick={() => router.push('/app')}
-                  className="text-white/60 hover:text-white hover:bg-white/10"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to My Storybooks
-                </Button>
-              </div>
+                    <p
+                      className="text-white/70 text-lg md:text-xl mb-8 italic"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      of {characterName}'s adventure
+                    </p>
+
+                    {/* Decorative Divider */}
+                    <div className="flex items-center gap-4 mb-10">
+                      <div className="w-16 h-px bg-white/30" />
+                      <Sparkles className="w-6 h-6 text-primary" />
+                      <div className="w-16 h-px bg-white/30" />
+                    </div>
+
+                    {/* CTA Section */}
+                    <Card className="bg-card border border-border backdrop-blur-sm p-6 md:p-8 mb-6 shadow-2xl">
+                      <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3">
+                        Ready for another adventure?
+                      </h2>
+                      <p className="text-muted-foreground mb-6">
+                        Explore more stories in our library and create new magical memories.
+                      </p>
+                      <Button
+                        size="lg"
+                        onClick={() => router.push('/app?tab=library')}
+                        className="w-full bg-gradient-to-r from-primary to-amber-500 hover:from-primary/90 hover:to-amber-500/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
+                      >
+                        <BookOpen className="w-5 h-5 mr-2" />
+                        Generate Your Next Story
+                      </Button>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        onClick={() => setCurrentScene(0)}
+                        className="w-full h-14 text-lg font-semibold mt-3"
+                      >
+                        <ArrowLeft className="w-5 h-5 mr-2" />
+                        Read Again
+                      </Button>
+                    </Card>
+
+                    {/* Back to Home Link */}
+                    <Button
+                      variant="ghost"
+                      onClick={() => router.push('/app')}
+                      className="text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to My Storybooks
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Previous Arrow for End Page */}
