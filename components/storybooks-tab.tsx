@@ -504,7 +504,9 @@ export function StorybooksTab() {
                                     style={{ width: `${Math.max(progress, 5)}%` }}
                                   />
                                 </div>
-                                <p className="text-white/70 text-xs text-center mt-1">{progress}%</p>
+                                <p className="text-white/70 text-xs text-center mt-1">
+                                  {isGeneratingPreview ? 'Generating Preview...' : 'Generating Full Story...'} {progress}%
+                                </p>
                               </div>
                             </div>
                           )}
