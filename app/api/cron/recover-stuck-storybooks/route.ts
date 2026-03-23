@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
     }
 
     const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
-    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
 
     // Find storybooks stuck in 'generating' for >10 minutes
     const { data: stuckBooks, error } = await supabaseAdmin
@@ -84,7 +83,6 @@ export async function POST(request: NextRequest) {
       const scenesWithImages = scenes.filter((s: any) => s.image_url)
       const totalScenes = book.total_scenes || 10
       const stuckSince = book.updated_at
-      const isLongStuck = stuckSince < thirtyMinAgo
 
       console.log(`[RECOVERY] Storybook ${book.id} "${book.title}": ${scenesWithImages.length}/${totalScenes} scenes, stuck since ${stuckSince}`)
 
@@ -188,8 +186,8 @@ export async function POST(request: NextRequest) {
         results.push({ id: book.id, title: book.title, action: 'reset_to_pending', missing: missingNumbers })
       }
 
-      // Send alert if stuck >30 minutes
-      if (isLongStuck) {
+      // Send alert for every stuck storybook found (already >10 min old)
+      {
         const alertBody = [
           `Storybook: ${book.title} (${book.id})`,
           `Character: ${book.character_name}`,
