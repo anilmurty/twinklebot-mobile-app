@@ -552,7 +552,7 @@ export function StorybooksTab() {
                           ) : (
                             <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => setResumeStorybook(storybook)}>
                               <Clock className="w-3 h-3 mr-1 animate-spin" />
-                              {isGeneratingPreview ? "Generating..." : "In Progress"}
+                              {isGeneratingPreview ? "Generating Preview" : "In Progress"}
                             </Button>
                           )}
                           <button
@@ -750,6 +750,9 @@ export function StorybooksTab() {
                       <Progress value={resumeStorybook.progress || 0} className="w-full h-2" />
                       <p className="text-sm text-muted-foreground">{Math.round(resumeStorybook.progress || 0)}% complete</p>
                     </div>
+                    <Button variant="outline" className="w-full" onClick={() => setResumeStorybook(null)}>
+                      Close
+                    </Button>
                   </div>
                 ) : (resumeStorybook.status === 'generating' || resumeStorybook.status === 'pending') ? (
                   // Show progress for full story generation
