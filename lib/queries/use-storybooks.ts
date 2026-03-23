@@ -86,11 +86,12 @@ export function useCreateStorybook() {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: ({ characterId, templateId, lookId }: { 
+    mutationFn: ({ characterId, templateId, lookId, style }: {
       characterId: string
       templateId: number
-      lookId?: number | null 
-    }) => storybooksApi.create(characterId, templateId, lookId),
+      lookId?: number | null
+      style?: string
+    }) => storybooksApi.create(characterId, templateId, lookId, style),
     onSuccess: () => {
       // Invalidate storybooks list to refetch
       queryClient.invalidateQueries({ queryKey: storybookKeys.lists() })

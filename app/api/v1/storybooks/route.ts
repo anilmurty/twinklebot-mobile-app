@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         title,
         status,
         progress,
+        style,
         created_at,
         completed_at,
         scenes,
@@ -203,7 +204,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { character_id, template_id, look_id } = body
+    const { character_id, template_id, look_id, style } = body
 
     if (!character_id || !template_id) {
       return NextResponse.json(
@@ -323,6 +324,7 @@ export async function POST(request: NextRequest) {
         status: 'preview_pending',
         progress: 0,
         look_id: look_id || null, // Store selected look, null means original
+        style: style || 'natural',
       })
       .select()
       .single()

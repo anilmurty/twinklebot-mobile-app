@@ -38,6 +38,7 @@ interface Storybook {
   progress?: number
   total_scenes?: number
   share_token?: string | null
+  style?: string
   template?: {
     thumbnail_url?: string
   }
@@ -623,9 +624,21 @@ export function StorybooksTab() {
                             <span className="text-muted-foreground">STARRING</span>
                             <span className="text-primary"> · {storybook.character_name}</span>
                           </p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {sceneCount} scenes · {formatDate(storybook.created_at)}
-                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <p className="text-[11px] text-muted-foreground">
+                              {sceneCount} scenes · {formatDate(storybook.created_at)}
+                            </p>
+                            {storybook.style && storybook.style !== 'natural' && (
+                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 font-medium ${
+                                storybook.style === 'storybook' ? 'border-violet-500/50 text-violet-500' :
+                                storybook.style === 'comic-book' ? 'border-amber-500/50 text-amber-500' :
+                                storybook.style === 'cartoon' ? 'border-sky-500/50 text-sky-500' : ''
+                              }`}>
+                                {storybook.style === 'comic-book' ? 'Comic Book' :
+                                 storybook.style.charAt(0).toUpperCase() + storybook.style.slice(1)}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         {/* Mobile buttons */}
                         <div className="flex items-center gap-2 mt-2 px-1 md:hidden">

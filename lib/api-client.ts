@@ -292,13 +292,14 @@ export const storybooksApi = {
     return apiRequest<{ storybooks: any[]; total: number }>(`/storybooks${query}`)
   },
   get: (id: string) => apiRequest<any>(`/storybooks/${id}`),
-  create: (characterId: string, templateId: number, lookId?: number | null) =>
+  create: (characterId: string, templateId: number, lookId?: number | null, style?: string) =>
     apiRequest<any>('/storybooks', {
       method: 'POST',
-      body: JSON.stringify({ 
-        character_id: characterId, 
+      body: JSON.stringify({
+        character_id: characterId,
         template_id: templateId,
-        look_id: lookId || null
+        look_id: lookId || null,
+        style: style || 'natural',
       }),
     }),
   generatePreview: (id: string) =>

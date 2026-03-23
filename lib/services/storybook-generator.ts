@@ -10,6 +10,18 @@ import {
   generateCharacterVariations,
 } from './character-variation-generator'
 
+type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
+
+const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
+  natural: '',
+  storybook:
+    'render the child and transform the entire scene in a watercolor children\'s book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
+  'comic-book':
+    'render the child and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
+  cartoon:
+    'render the child and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across child and background.',
+}
+
 interface SceneTemplate {
   scene_number: number
   headline?: string
@@ -89,6 +101,11 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     // Read quality tier from storybook (set during payment)
     const qualityTier = (storybook.quality_tier as 'basic' | 'premium') || 'basic'
     console.log(`[QUALITY] Using quality tier: ${qualityTier}`)
+
+    // Read style and look up modifier
+    const storybookStyle = ((storybook.style as StorybookStyle) || 'natural') as StorybookStyle
+    const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
+    console.log(`[STYLE] Using style: ${storybookStyle}${styleModifier ? ' (modifier applied)' : ' (no modifier)'}`)
 
     const userId = storybook.user_id
     const scenes = template.script_data.scenes as SceneTemplate[]
@@ -300,12 +317,21 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         }
       }
 
+      // Apply style modifier to insertion prompt
+      const styledInsertionPrompt = styleModifier
+        ? `${sceneTemplate.insertion_prompt} ${styleModifier}`
+        : sceneTemplate.insertion_prompt
+
+      if (styleModifier) {
+        console.log(`[STYLE] Applied ${storybookStyle} modifier to scene ${sceneTemplate.scene_number} prompt`)
+      }
+
       // Create prediction
       const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
       const predictionId = await createBasePhotoAndCharacterPrediction(
         basePhotoPath,
         characterVariationUrl,
-        sceneTemplate.insertion_prompt,
+        styledInsertionPrompt,
         sceneTemplate.aspect_ratio || '9:16',
         template.id, // Pass template ID to get model from template
         qualityTier // Pass quality tier for model selection

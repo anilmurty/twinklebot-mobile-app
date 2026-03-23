@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Sparkles, Loader2, ChevronDown } from "lucide-react"
+import { Sparkles, Loader2, ChevronDown, Camera, Paintbrush, Zap, Wand2 } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { charactersApi, storybooksApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
@@ -35,7 +35,40 @@ interface GenerateStoryDialogProps {
   }
 }
 
-type GenerationStep = "character-selection" | "look-selection" | "generating-preview" | "payment"
+type GenerationStep = "character-selection" | "look-selection" | "style-selection" | "generating-preview" | "payment"
+
+type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
+
+const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; icon: React.ReactNode; color: string }[] = [
+  {
+    id: 'natural',
+    label: 'Natural',
+    description: 'Photorealistic, true-to-life',
+    icon: <Camera className="w-5 h-5" />,
+    color: 'text-emerald-500',
+  },
+  {
+    id: 'storybook',
+    label: 'Storybook',
+    description: 'Watercolor illustration',
+    icon: <Paintbrush className="w-5 h-5" />,
+    color: 'text-violet-500',
+  },
+  {
+    id: 'comic-book',
+    label: 'Comic Book',
+    description: 'Bold ink & vivid colors',
+    icon: <Zap className="w-5 h-5" />,
+    color: 'text-amber-500',
+  },
+  {
+    id: 'cartoon',
+    label: 'Cartoon',
+    description: '3D animated movie style',
+    icon: <Wand2 className="w-5 h-5" />,
+    color: 'text-sky-500',
+  },
+]
 
 export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
   const router = useRouter()
@@ -61,6 +94,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [fetchingPreviewData, setFetchingPreviewData] = useState(false)
   const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('premium')
   const [premiumCredits, setPremiumCredits] = useState(0)
+  const [selectedStyle, setSelectedStyle] = useState<StorybookStyle>('natural')
 
   // Poll for preview status while generating
   const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
@@ -119,6 +153,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setFetchingPreviewData(false)
       setSelectedTier('premium')
       setPremiumCredits(0)
+      setSelectedStyle('natural')
     }
   }, [open, story.id])
 
@@ -226,7 +261,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
       // Step 1: Create storybook with selected look
       setPreviewProgress(10)
-      const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId)
+      const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId, selectedStyle)
       setStorybookId(storybook.id)
 
       // If the API started generation (status=pending), skip preview and navigate away
@@ -563,11 +598,70 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
               <Button
                 className="flex-1 bg-primary hover:bg-primary/90"
                 disabled={selectedLookId === null || loadingLooks || isSubmitting}
-                onClick={handleGeneratePreview}
+                onClick={() => setCurrentStep("style-selection")}
               >
                 <Sparkles className="w-4 h-4 mr-1" />
-                Generate Preview
+                Continue
               </Button>
+            </div>
+          </>
+        )}
+
+        {currentStep === "style-selection" && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-2xl flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-primary" />
+                Choose Storybook Style
+              </DialogTitle>
+              <DialogDescription>
+                Pick the art style for your storybook
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 pt-4">
+              <div className="grid grid-cols-2 gap-3">
+                {STYLE_OPTIONS.map((style) => {
+                  const isSelected = selectedStyle === style.id
+                  return (
+                    <Card
+                      key={style.id}
+                      className={`p-4 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-primary border-2 bg-primary/5"
+                          : "hover:border-primary/50"
+                      }`}
+                      onClick={() => setSelectedStyle(style.id)}
+                    >
+                      <div className="flex flex-col items-center gap-2 text-center">
+                        <div className={`${style.color}`}>
+                          {style.icon}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">{style.label}</div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            {style.description}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+
+              <div className="flex justify-between gap-2">
+                <Button variant="outline" onClick={() => setCurrentStep("look-selection")}>
+                  Back
+                </Button>
+                <Button
+                  className="flex-1 bg-primary hover:bg-primary/90"
+                  disabled={isSubmitting}
+                  onClick={handleGeneratePreview}
+                >
+                  <Sparkles className="w-4 h-4 mr-1" />
+                  Generate Preview
+                </Button>
+              </div>
             </div>
           </>
         )}
