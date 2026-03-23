@@ -35,7 +35,7 @@ No test framework is configured — there are no test commands.
 |------|---------|
 | `app/` | Next.js App Router pages and API routes |
 | `app/api/v1/` | REST API (characters, storybooks, templates, profile, payments) |
-| `app/api/cron/` | Vercel Cron handler — picks up pending storybooks and generates them |
+| `app/api/cron/` | Vercel Cron handlers — generation queue + stuck story recovery |
 | `app/share/[token]/` | Public shared storybook viewer |
 | `app/storybook/[id]/` | Authenticated storybook viewer |
 | `components/` | UI components; `components/ui/` holds Radix primitives |
@@ -49,12 +49,24 @@ No test framework is configured — there are no test commands.
 
 1. User selects template + character → `POST /api/v1/storybooks` creates record with `status: 'pending'`
 2. Vercel Cron (`/api/cron/generate-storybooks`, runs every minute) picks it up
-3. `lib/services/storybook-generator.ts` generates scenes sequentially:
+3. `lib/services/storybook-generator.ts` generates scenes **in parallel**:
    - Combines template scene prompts with character photos
    - Calls image generation API (Replicate or fal.ai)
    - Uploads result to Supabase Storage (`storybook-scenes` bucket, private)
+   - Updates `scenes` JSON array with **optimistic locking** (uses `updated_at` as version marker to prevent parallel writers from overwriting each other)
    - Updates progress field (0–200 range, where 0–100 = character variation phase, 100–200 = scenes phase)
-4. Status set to `completed`
+4. Failed scenes are retried sequentially (up to 3 attempts with exponential backoff)
+5. Status set to `completed`
+
+#### Stuck Story Recovery
+
+A second cron (`/api/cron/recover-stuck-storybooks`, every 5 minutes) handles stories stuck in `generating` for >5 minutes:
+- Deduplicates scenes (parallel writers can occasionally create duplicates)
+- If all expected scenes exist → marks as `completed`
+- If scenes are missing → resets to `pending` for the generation cron to retry
+- Sends email alert to admin via Resend API
+
+**Required env vars for alerts:** `RESEND_API_KEY`, `ADMIN_ALERT_EMAIL`
 
 ### Image Generation
 
