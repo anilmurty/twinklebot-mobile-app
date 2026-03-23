@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 /**
  * POST /api/cron/recover-stuck-storybooks
  *
- * Finds storybooks stuck in 'generating' for >10 minutes.
+ * Finds storybooks stuck in 'generating' for >5 minutes.
  * - If all scenes exist → marks as completed
  * - If some scenes missing → marks as 'pending' so the generation cron retries
  * - If stuck >30 minutes → sends email alert to admin
@@ -54,14 +54,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
 
     // Find storybooks stuck in 'generating' for >10 minutes
     const { data: stuckBooks, error } = await supabaseAdmin
       .from('storybooks')
       .select('id, title, character_name, status, scenes, total_scenes, template_id, updated_at, user_id')
       .eq('status', 'generating')
-      .lt('updated_at', tenMinAgo)
+      .lt('updated_at', fiveMinAgo)
       .order('updated_at', { ascending: true })
       .limit(10)
 
