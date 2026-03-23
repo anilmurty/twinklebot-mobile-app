@@ -389,25 +389,25 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
       // Update storybook scenes array atomically with retry logic to handle race conditions
       // When scenes are generated in parallel, multiple scenes might try to update the array simultaneously
-      // We need to retry until we successfully update the array with our scene
+      // We use updated_at as an optimistic lock: only update if the row hasn't changed since we read it
       let updateSuccess = false
       let updateAttempts = 0
-      const maxUpdateAttempts = 5
-      
+      const maxUpdateAttempts = 8
+
       while (!updateSuccess && updateAttempts < maxUpdateAttempts) {
         updateAttempts++
-        
-        // Fetch current scenes
+
+        // Fetch current scenes AND updated_at as version marker
         const { data: currentStorybook, error: fetchError } = await supabaseAdmin
           .from('storybooks')
-          .select('scenes')
+          .select('scenes, updated_at')
           .eq('id', storybookId)
           .single()
 
         if (fetchError) {
           console.error(`Failed to fetch scenes for update (attempt ${updateAttempts}):`, fetchError)
           if (updateAttempts < maxUpdateAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100 * updateAttempts))
+            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
             continue
           } else {
             throw new Error(`Failed to fetch scenes after ${maxUpdateAttempts} attempts: ${fetchError.message}`)
@@ -415,12 +415,13 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         }
 
         const currentScenes = Array.isArray(currentStorybook?.scenes) ? currentStorybook.scenes : []
-        
+        const rowVersion = currentStorybook?.updated_at
+
         // Check if scene already exists (another process might have added it)
         const existingIndex = currentScenes.findIndex(
           (s: any) => s.scene_number === sceneTemplate.scene_number
         )
-        
+
         if (existingIndex >= 0 && currentScenes[existingIndex]?.image_url) {
           // Scene already exists with image, skip update
           console.log(`Scene ${sceneTemplate.scene_number} already exists in database, skipping update`)
@@ -428,7 +429,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           break
         }
 
-        // Prepare updated scenes array
+        // Prepare updated scenes array — merge our scene into the current array
         const updatedScenes = [...currentScenes]
         if (existingIndex >= 0) {
           updatedScenes[existingIndex] = sceneData
@@ -439,86 +440,58 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         // Sort scenes by scene_number to ensure correct order
         updatedScenes.sort((a: any, b: any) => (a.scene_number || 0) - (b.scene_number || 0))
 
-        // Update database with new scene
-        const { error: updateError, data: updateData } = await supabaseAdmin
+        const newTimestamp = new Date().toISOString()
+
+        // Optimistic lock: only update if updated_at hasn't changed since we read it
+        const { data: updateData, error: updateError } = await supabaseAdmin
           .from('storybooks')
           .update({
             scenes: updatedScenes,
-            updated_at: new Date().toISOString(),
+            updated_at: newTimestamp,
           })
           .eq('id', storybookId)
+          .eq('updated_at', rowVersion) // optimistic lock
           .select('scenes')
 
         if (updateError) {
           console.error(`❌ Failed to update scenes (attempt ${updateAttempts}):`, updateError)
-          console.error(`Update error details:`, JSON.stringify(updateError, null, 2))
           if (updateAttempts < maxUpdateAttempts) {
-            // Exponential backoff
-            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
+            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 150 * updateAttempts))
             continue
           } else {
             throw new Error(`Failed to update scenes after ${maxUpdateAttempts} attempts: ${updateError.message}`)
           }
         }
 
-        // Log successful update
-        if (updateData && updateData.length > 0) {
-          console.log(`✅ Scene ${sceneTemplate.scene_number} update query succeeded (attempt ${updateAttempts})`)
-        }
-
-        // Verify the update succeeded by checking if our scene is in the database
-        console.log(`Verifying scene ${sceneTemplate.scene_number} was saved to database...`)
-        const { data: verifyStorybook, error: verifyError } = await supabaseAdmin
-          .from('storybooks')
-          .select('scenes')
-          .eq('id', storybookId)
-          .single()
-
-        if (verifyError) {
-          console.error(`❌ Failed to verify scene update:`, verifyError)
+        // If no rows matched the optimistic lock, another process updated first — retry
+        if (!updateData || updateData.length === 0) {
+          console.log(`Scene ${sceneTemplate.scene_number}: optimistic lock miss (attempt ${updateAttempts}/${maxUpdateAttempts}), retrying...`)
           if (updateAttempts < maxUpdateAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
+            await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 150 * updateAttempts))
             continue
-          } else {
-            throw new Error(`Failed to verify scene update after ${maxUpdateAttempts} attempts: ${verifyError.message}`)
           }
-        }
-
-        const verifyScenes = Array.isArray(verifyStorybook?.scenes) ? verifyStorybook.scenes : []
-        const verifyScene = verifyScenes.find((s: any) => s.scene_number === sceneTemplate.scene_number)
-        
-        console.log(`Verification result for scene ${sceneTemplate.scene_number}:`, {
-          found: !!verifyScene,
-          has_image_url: !!verifyScene?.image_url,
-          image_url_matches: verifyScene?.image_url === sceneData.image_url,
-          total_scenes_in_db: verifyScenes.length,
-        })
-        
-        if (verifyScene?.image_url === sceneData.image_url) {
-          // Update succeeded
-          updateSuccess = true
-          generatedScenes = verifyScenes
-          console.log(`✅ Scene ${sceneTemplate.scene_number} completed successfully (update attempt ${updateAttempts})`)
-          // Update progress based on completed scene count (monotonically increasing)
-          const completedCount = verifyScenes.filter((s: any) => s.image_url).length
-          const newProgress = 100 + Math.round(10 + (completedCount / totalScenes) * 90)
-          await supabaseAdmin
-            .from('storybooks')
-            .update({ progress: newProgress, updated_at: new Date().toISOString() })
-            .eq('id', storybookId)
-            .lt('progress', newProgress) // Only update if current progress is lower (prevents backwards jumps)
-        } else if (verifyScene?.image_url && verifyScene.image_url !== sceneData.image_url) {
-          // Scene exists but with different URL - might be from another process
-          console.log(`⚠️ Scene ${sceneTemplate.scene_number} exists with different image_url. Expected: ${sceneData.image_url}, Found: ${verifyScene.image_url}`)
-          // Consider this a success if the scene has an image_url
-          updateSuccess = true
-          generatedScenes = verifyScenes
-          console.log(`✅ Scene ${sceneTemplate.scene_number} already exists in database, using existing`)
         } else {
-          // Update was overwritten by another process, retry
-          console.log(`Scene ${sceneTemplate.scene_number} update was overwritten or not found, retrying (attempt ${updateAttempts}/${maxUpdateAttempts})...`)
-          if (updateAttempts < maxUpdateAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
+          // Update succeeded — verify our scene is present
+          const savedScenes = Array.isArray(updateData[0]?.scenes) ? updateData[0].scenes : []
+          const savedScene = savedScenes.find((s: any) => s.scene_number === sceneTemplate.scene_number)
+
+          if (savedScene?.image_url) {
+            updateSuccess = true
+            generatedScenes = savedScenes
+            console.log(`✅ Scene ${sceneTemplate.scene_number} saved (attempt ${updateAttempts}, ${savedScenes.length} total scenes)`)
+            // Update progress monotonically
+            const completedCount = savedScenes.filter((s: any) => s.image_url).length
+            const newProgress = 100 + Math.round(10 + (completedCount / totalScenes) * 90)
+            await supabaseAdmin
+              .from('storybooks')
+              .update({ progress: newProgress, updated_at: new Date().toISOString() })
+              .eq('id', storybookId)
+              .lt('progress', newProgress)
+          } else {
+            console.log(`Scene ${sceneTemplate.scene_number}: not found after update, retrying (attempt ${updateAttempts})...`)
+            if (updateAttempts < maxUpdateAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 150 * updateAttempts))
+            }
           }
         }
       }

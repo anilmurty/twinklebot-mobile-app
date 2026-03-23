@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/generate-storybooks",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/recover-stuck-storybooks",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
