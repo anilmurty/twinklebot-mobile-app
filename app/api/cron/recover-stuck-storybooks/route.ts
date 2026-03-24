@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     // Find storybooks stuck in 'generating' for >10 minutes
     const { data: stuckBooks, error } = await supabaseAdmin
       .from('storybooks')
-      .select('id, title, character_name, status, scenes, total_scenes, template_id, updated_at, user_id')
+      .select('id, title, status, scenes, total_scenes, template_id, updated_at, user_id, character:characters(name)')
       .eq('status', 'generating')
       .lt('updated_at', fiveMinAgo)
       .order('updated_at', { ascending: true })
@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
       {
         const alertBody = [
           `Storybook: ${book.title} (${book.id})`,
-          `Character: ${book.character_name}`,
+          `Character: ${(book.character as any)?.name || 'unknown'}`,
           `User: ${book.user_id}`,
           `Scenes: ${uniqueCompleted}/${expectedTotal}`,
           `Stuck since: ${stuckSince}`,
