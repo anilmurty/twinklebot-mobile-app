@@ -108,7 +108,7 @@ export function WebLandingPage() {
       { title: "Race Day at the Track", description: "Ready, set, go!", image: assetUrl("race-day-at-the-track/race-day-at-the-track.png"), age: "2-6", scenes: 10 },
       { title: "The Garden Grows", description: "Watch a garden bloom", image: assetUrl("the-garden-grows/the-garden-grows.png"), age: "2-6", scenes: 10 },
       { title: "The Pizza Party Problem", description: "Solve a cheesy puzzle", image: assetUrl("the-pizza-party-problem/the-pizza-party-problem.png"), age: "2-6", scenes: 10 },
-      { title: "The Aquarium Helper", description: "Care for sea creatures", image: assetUrl("the-acquarium%20helper/the-acquarium%20helper.png"), age: "2-6", scenes: 10 },
+      { title: "The Aquarium Helper", description: "Care for sea creatures", image: assetUrl("the-acquarium-helper/the-acquarium-helper.png"), age: "2-6", scenes: 10 },
       { title: "The Big Shape City", description: "Shapes are everywhere", image: assetUrl("the-big-shape-city/the-big-shape-city.png"), age: "2-6", scenes: 10 },
       { title: "Visit to the Farmers Market", description: "Discover fresh foods", image: assetUrl("visit-to-the-farmers-market/visit-to-the-farmers-market.png"), age: "2-6", scenes: 10 },
     ],
