@@ -186,6 +186,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Generate a stable ETag from bucket + path (scene images are immutable once generated)
+    const etag = `"${Buffer.from(`${bucket}/${path}`).toString('base64url')}"`
+
+    // Check If-None-Match — return 304 without downloading from Supabase
+    const ifNoneMatch = request.headers.get('if-none-match')
+    if (ifNoneMatch === etag) {
+      return new NextResponse(null, {
+        status: 304,
+        headers: {
+          'ETag': etag,
+          'Cache-Control': 'private, max-age=604800, stale-while-revalidate=2592000, immutable',
+        },
+      })
+    }
+
     // Fetch the image from Supabase Storage
     const { data, error } = await supabaseAdmin.storage
       .from(bucket)
@@ -213,17 +228,14 @@ export async function GET(request: NextRequest) {
     // Convert blob to buffer
     const buffer = await data.arrayBuffer()
 
-    // Return image with caching headers
+    // Scene images are immutable once generated — cache for 7 days, stale for 30 days
     return new NextResponse(buffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
         'Content-Length': buffer.byteLength.toString(),
-        // Private cache (not CDN) for 1 hour
-        // Browser will reuse this without hitting the server
-        'Cache-Control': 'private, max-age=3600, stale-while-revalidate=86400',
-        // ETag for conditional requests (allows 304 responses)
-        'ETag': `"${bucket}-${path}-${Date.now()}"`,
+        'Cache-Control': 'private, max-age=604800, stale-while-revalidate=2592000, immutable',
+        'ETag': etag,
       },
     })
   } catch (error) {
