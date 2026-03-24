@@ -541,7 +541,7 @@ export function StorybooksTab() {
                           ) : (
                             <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={() => setResumeStorybook(storybook)}>
                               <Clock className="w-3 h-3 mr-1 animate-spin" />
-                              {isGeneratingPreview ? "Generating Preview" : "In Progress"}
+                              {isGeneratingPreview ? "Generating Preview..." : isGenerating ? "Generating Story..." : "In Progress"}
                             </Button>
                           )}
                           <button
