@@ -33,6 +33,7 @@ interface GenerateStoryDialogProps {
     description: string
     script_data?: any[]
     thumbnail_url?: string
+    thumbnail_url_full?: string
   }
 }
 
@@ -675,7 +676,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
               <div className="grid grid-cols-2 gap-3">
                 {STYLE_OPTIONS.map((style) => {
                   const isSelected = selectedStyle === style.id
-                  const imageUrl = getStyleImageUrl(story.thumbnail_url, firstSceneBasePhoto, style.imageSuffix)
+                  const imageUrl = getStyleImageUrl(story.thumbnail_url_full || story.thumbnail_url, firstSceneBasePhoto, style.imageSuffix)
                   const hasImage = imageUrl && !styleImagesFailed.has(style.id)
                   return (
                     <Card

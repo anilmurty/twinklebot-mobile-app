@@ -686,7 +686,7 @@ export function CreateStoryDialog({
               <div className="grid grid-cols-2 gap-3">
                 {STYLE_OPTIONS.map((style) => {
                   const isSelected = selectedStyle === style.id
-                  const imageUrl = getStyleImageUrl(selectedTemplateData?.thumbnail_url, firstSceneBasePhoto, style.imageSuffix)
+                  const imageUrl = getStyleImageUrl((selectedTemplateData as any)?.thumbnail_url_full || selectedTemplateData?.thumbnail_url, firstSceneBasePhoto, style.imageSuffix)
                   const hasImage = imageUrl && !styleImagesFailed.has(style.id)
                   return (
                     <Card

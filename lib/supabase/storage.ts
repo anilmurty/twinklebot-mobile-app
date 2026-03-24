@@ -58,6 +58,26 @@ export function getStorageUrl(bucket: string, path: string): string {
 }
 
 /**
+ * Get a Supabase image transform URL for optimized delivery.
+ * Requires Supabase Pro plan. Serves resized WebP images via Supabase CDN.
+ *
+ * @param bucket - Public bucket name
+ * @param path - File path within the bucket
+ * @param options - Transform options (width, quality, format)
+ */
+export function getTransformedImageUrl(
+  bucket: string,
+  path: string,
+  options: { width?: number; quality?: number; format?: string } = {}
+): string {
+  const { width = 400, quality = 75, format = 'webp' } = options
+  const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path, {
+    transform: { width, quality, format },
+  })
+  return data.publicUrl
+}
+
+/**
  * Get signed URL for a private storage file (expires in specified seconds)
  * Use this for files that need to be accessed by external services like Replicate
  */

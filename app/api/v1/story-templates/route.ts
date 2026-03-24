@@ -36,11 +36,16 @@ export async function GET(request: NextRequest) {
               ? template.thumbnail_url.slice(1) // Remove leading slash
               : template.thumbnail_url
             
-            // Get public URL from Supabase Storage (story-template-assets bucket is public)
-            const { getStorageUrl } = await import('@/lib/supabase/storage')
+            // Get optimized URL from Supabase Storage (resized WebP via image transforms)
+            const { getTransformedImageUrl, getStorageUrl } = await import('@/lib/supabase/storage')
             try {
-              result.thumbnail_url = getStorageUrl('story-template-assets', storagePath)
-              console.log(`[Template ${template.id}] Converted relative path to Supabase Storage URL: ${result.thumbnail_url}`)
+              // Serve thumbnail as optimized 400px WebP for fast loading
+              result.thumbnail_url = getTransformedImageUrl('story-template-assets', storagePath, {
+                width: 400, quality: 75, format: 'webp',
+              })
+              // Keep full-size URL for other uses (style selector, etc.)
+              result.thumbnail_url_full = getStorageUrl('story-template-assets', storagePath)
+              console.log(`[Template ${template.id}] Converted to optimized URL: ${result.thumbnail_url}`)
             } catch (err) {
               console.error(`[Template ${template.id}] Failed to get storage URL for ${storagePath}:`, err)
               result.thumbnail_url = null
