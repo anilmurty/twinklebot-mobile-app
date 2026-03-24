@@ -18,6 +18,7 @@ import {
   X
 } from "lucide-react"
 import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-constants"
+import { FeatureShowcase } from "@/components/landing/FeatureShowcase"
 
 export function WebLandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
@@ -179,6 +180,9 @@ export function WebLandingPage() {
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 How It Works
               </a>
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+                Features
+              </a>
               <a href="#stories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Stories
               </a>
@@ -220,6 +224,9 @@ export function WebLandingPage() {
             <div className="px-4 py-4 space-y-3">
               <a href="#how-it-works" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
                 How It Works
+              </a>
+              <a href="#features" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
+                Features
               </a>
               <a href="#stories" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
                 Stories
@@ -504,6 +511,9 @@ export function WebLandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Feature Showcase */}
+      <FeatureShowcase />
 
       {/* How It Works */}
       <section id="how-it-works" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
