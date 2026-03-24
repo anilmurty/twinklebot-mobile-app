@@ -4,7 +4,6 @@ import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Shar
 import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useState, useEffect } from "react"
 import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
@@ -521,7 +520,7 @@ export function StorybooksTab() {
                           {/* Bottom gradient */}
                           <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
                         </div>
-                        {/* Title + character below image */}
+                        {/* Title + character + style below image */}
                         <div className="mt-2.5 px-1">
                           <h3 className="font-semibold text-base leading-tight line-clamp-2 min-h-[2lh] text-foreground">
                             {storybook.title}
@@ -530,6 +529,12 @@ export function StorybooksTab() {
                             <span className="text-muted-foreground">STARRING</span>
                             <span className="text-primary"> · {storybook.character_name}</span>
                           </p>
+                          {storybook.style && storybook.style !== 'natural' && (
+                            <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
+                              <span className="text-muted-foreground">STYLE</span>
+                              <span className="text-primary"> · {storybook.style === 'comic-book' ? 'Comic Book' : storybook.style.charAt(0).toUpperCase() + storybook.style.slice(1)}</span>
+                            </p>
+                          )}
                         </div>
                         {/* Action buttons */}
                         <div className="flex items-center gap-2 mt-2 px-1">
@@ -607,21 +612,15 @@ export function StorybooksTab() {
                             <span className="text-muted-foreground">STARRING</span>
                             <span className="text-primary"> · {storybook.character_name}</span>
                           </p>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <p className="text-[11px] text-muted-foreground">
-                              {sceneCount} scenes · {formatDate(storybook.created_at)}
+                          {storybook.style && storybook.style !== 'natural' && (
+                            <p className="mt-0.5 text-[11px] font-semibold tracking-wider uppercase">
+                              <span className="text-muted-foreground">STYLE</span>
+                              <span className="text-primary"> · {storybook.style === 'comic-book' ? 'Comic Book' : storybook.style.charAt(0).toUpperCase() + storybook.style.slice(1)}</span>
                             </p>
-                            {storybook.style && storybook.style !== 'natural' && (
-                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-4 font-medium ${
-                                storybook.style === 'storybook' ? 'border-violet-500/50 text-violet-500' :
-                                storybook.style === 'comic-book' ? 'border-amber-500/50 text-amber-500' :
-                                storybook.style === 'cartoon' ? 'border-sky-500/50 text-sky-500' : ''
-                              }`}>
-                                {storybook.style === 'comic-book' ? 'Comic Book' :
-                                 storybook.style.charAt(0).toUpperCase() + storybook.style.slice(1)}
-                              </Badge>
-                            )}
-                          </div>
+                          )}
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {sceneCount} scenes · {formatDate(storybook.created_at)}
+                          </p>
                         </div>
                         {/* Action buttons */}
                         <div className="flex items-center gap-2 mt-2 px-1">
