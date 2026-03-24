@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { normalizeCharacterName } from '@/lib/utils/update-storybook-names'
-import { getImageProxyUrl } from '@/lib/utils/image-proxy'
 
 /**
  * GET /api/v1/characters
@@ -33,41 +32,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // Generate proxy URLs for character photos (stable URLs that allow browser caching)
-    const userId = user.data.user?.id!
-    const formatted = (characters || []).map((char: any) => {
-      let photoUrl = char.front_photo_url
+    // Generate signed URLs for character photos (direct Supabase CDN, 1-hour expiry)
+    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    const formatted = await Promise.all(
+      (characters || []).map(async (char: any) => {
+        let photoUrl = char.front_photo_url
 
-      // Convert to proxy URL for character photos
-      if (photoUrl) {
-        try {
-          // Extract path from URL (handles both public and signed URLs)
-          const urlMatch = photoUrl.match(/character-photos\/(.+?)(\?|$)/)
-          if (urlMatch) {
-            const path = urlMatch[1]
-            photoUrl = getImageProxyUrl('character-photos', path, userId)
-          } else if (photoUrl.includes('character-photos')) {
-            // Fallback: try to extract path from full URL
-            const urlObj = new URL(photoUrl)
-            const pathParts = urlObj.pathname.split('/character-photos/')
-            if (pathParts.length > 1) {
-              photoUrl = getImageProxyUrl('character-photos', pathParts[1], userId)
+        if (photoUrl) {
+          try {
+            // Extract storage path from URL
+            const urlMatch = photoUrl.match(/character-photos\/(.+?)(\?|$)/)
+            let path: string | null = null
+            if (urlMatch) {
+              path = urlMatch[1]
+            } else if (photoUrl.includes('character-photos')) {
+              const urlObj = new URL(photoUrl)
+              const pathParts = urlObj.pathname.split('/character-photos/')
+              if (pathParts.length > 1) path = pathParts[1]
             }
+            if (path) {
+              photoUrl = await getSignedUrl('character-photos', path, 3600) // 1 hour
+            }
+          } catch (err) {
+            console.error(`Failed to generate signed URL for character ${char.id}:`, err)
           }
-        } catch (err) {
-          console.error(`Failed to generate proxy URL for character ${char.id}:`, err)
-          // Keep original URL if proxy URL generation fails
         }
-      }
 
-      return {
-        id: char.id,
-        name: char.name,
-        front_photo_url: photoUrl,
-        stories_count: char.storybooks?.[0]?.count || 0,
-        created_at: char.created_at,
-      }
-    })
+        return {
+          id: char.id,
+          name: char.name,
+          front_photo_url: photoUrl,
+          stories_count: char.storybooks?.[0]?.count || 0,
+          created_at: char.created_at,
+        }
+      })
+    )
 
     return NextResponse.json({ characters: formatted || [] })
   } catch (error: any) {

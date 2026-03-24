@@ -96,14 +96,14 @@ export function usePrefetch(userReady: boolean): boolean {
         return
       }
 
-      // Split into priority (wait for these) and background (fire-and-forget)
-      const priorityUrls = urls.slice(0, PRIORITY_IMAGE_COUNT)
-      const backgroundUrls = urls.slice(PRIORITY_IMAGE_COUNT, MAX_PRELOAD_IMAGES)
+      // Start ALL image preloads immediately (browser will parallelize)
+      const allUrls = urls.slice(0, MAX_PRELOAD_IMAGES)
+      const allPromises = allUrls.map(url => preloadImage(url))
 
-      // Wait for priority images to load (or timeout)
-      const imageLoadPromise = Promise.allSettled(
-        priorityUrls.map(url => preloadImage(url))
-      )
+      // But only wait for the first N (priority) images before dismissing splash
+      const priorityPromises = allPromises.slice(0, PRIORITY_IMAGE_COUNT)
+
+      const imageLoadPromise = Promise.allSettled(priorityPromises)
 
       const imageTimeout = new Promise<void>((resolve) =>
         setTimeout(() => {
@@ -116,12 +116,6 @@ export function usePrefetch(userReady: boolean): boolean {
         const loaded = Date.now() - startTime
         console.log(`[PREFETCH] Priority images ready in ${loaded}ms`)
         markReady()
-
-        // Continue loading remaining images in background
-        backgroundUrls.forEach((url) => {
-          const img = new Image()
-          img.src = url
-        })
       })
     })
 
