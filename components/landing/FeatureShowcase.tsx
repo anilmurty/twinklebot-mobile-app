@@ -5,33 +5,33 @@ import { useState, useEffect, useCallback, useRef } from "react"
 const features = [
   {
     icon: "\u26A1",
-    label: "Ready in seconds",
+    label: "Ready in minutes",
     category: "AI story creation",
-    title: "A full story \u2014 before bedtime snacks",
+    title: "A 10 scene story \u2014 ready before you can microwave snacks",
     description:
-      "Pick a theme, upload a photo, and TwinkleBot\u2019s AI crafts a complete illustrated storybook. From first tap to final page in under 30 seconds.",
+      "Choose a story, pick a theme, customize your child as a hero, and TwinkleBot\u2019s AI engine crafts a complete illustrated storybook. From clicking \u201CGenerate\u201D to full book in under 3 minutes.",
   },
   {
-    icon: "\uD83C\uDFA8",
-    label: "The hero looks like them",
+    icon: "\uD83E\uDDB8",
+    label: "They really are the hero!",
     category: "Character customization",
     title: "Unmistakably your child",
     description:
-      "Upload a photo or customize their look \u2014 skin tone, hair, age \u2014 and watch them step right into every illustration as the star of the story.",
+      "Customize their look according to the story. Astronaut suit for the space mission. Shorts, hat and sunglasses for a day at the zoo. Or PJs for counting things around the house.",
   },
   {
     icon: "\uD83C\uDF0D",
     label: "Their adventure, their choice",
-    category: "Theme selection",
+    category: "Story selection",
     title: "Every world imaginable",
     description:
-      "Jungles, galaxies, ocean floors, ancient kingdoms \u2014 choose the setting that sparks their imagination. New themes added regularly.",
+      "From jungles, galaxies, ocean floors and futuristic robot worlds to your neighborhood farmer\u2019s market, there are 50+ stories to choose from and more added weekly.",
   },
   {
     icon: "\uD83D\uDD0A",
     label: "Stories that read themselves",
     category: "Audio narration",
-    title: "Sit back. Press play.",
+    title: "Plus play and relax, or mute and read out loud.",
     description:
       "Every story comes with warm, expressive audio narration. Perfect for pre-readers, long car rides, or when you just need five minutes.",
   },
@@ -77,72 +77,119 @@ function SpeedMockup() {
         </div>
       ))}
       <div className="mt-4 inline-flex items-center gap-2 bg-primary/15 text-primary text-xs font-semibold px-3 py-1.5 rounded-full">
-        <span>\u23F1</span> Story ready in ~18 seconds
+        <span>&#x23F1;&#xFE0F;</span> Story ready in ~3 minutes
       </div>
     </div>
   )
 }
 
 function CharacterMockup() {
-  const rows = [
-    { label: "Skin tone", options: ["\uD83C\uDFFB", "\uD83C\uDFFC", "\uD83C\uDFFD", "\uD83C\uDFFE", "\uD83C\uDFFF"], active: 2 },
-    { label: "Hair", options: ["Curly", "Straight", "Wavy", "Short", "Long"], active: 0 },
-    { label: "Age", options: ["2-3", "4-5", "6-7", "8-9", "10+"], active: 1 },
+  const cards = [
+    { src: "/looks-modal-mission-to-the-moon-boy.jpg", alt: "Mission To The Moon - Boy" },
+    { src: "/looks-modal-day-at-the-zoo-girl.jpg", alt: "Day at the Zoo - Girl" },
+    { src: "/looks-modal-counting-around-the-house-boy.jpg", alt: "Counting Around the House - Boy" },
   ]
+  const [front, setFront] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFront((prev) => (prev + 1) % cards.length)
+    }, 1600)
+    return () => clearInterval(interval)
+  }, [cards.length])
+
+  // Positions: front (top center), back-left, back-right
+  const positions = [
+    { x: 0, y: -10, rotate: 0, scale: 1, z: 3, opacity: 1 },       // front
+    { x: -50, y: 20, rotate: -12, scale: 0.85, z: 1, opacity: 0.7 }, // back-left
+    { x: 50, y: 20, rotate: 12, scale: 0.85, z: 2, opacity: 0.7 },   // back-right
+  ]
+
   return (
-    <div className="flex flex-col items-center gap-5">
-      <div className="w-20 h-20 rounded-full bg-muted border-2 border-primary flex items-center justify-center text-3xl">
-        \uD83E\uDDD2
-      </div>
-      <div className="w-full space-y-3">
-        {rows.map((r) => (
-          <div key={r.label}>
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1.5">{r.label}</p>
-            <div className="flex gap-1.5 flex-wrap">
-              {r.options.map((o, i) => (
-                <button
-                  key={o}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                    i === r.active
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {o}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="relative h-[280px] w-full flex items-center justify-center">
+      {cards.map((card, i) => {
+        // Calculate position index: 0=front, 1=back-left, 2=back-right
+        const posIdx = (i - front + cards.length) % cards.length
+        const pos = positions[posIdx]
+        return (
+          <img
+            key={card.alt}
+            src={card.src}
+            alt={card.alt}
+            className="absolute w-[150px] rounded-xl border border-border shadow-xl"
+            style={{
+              transform: `translateX(${pos.x}px) translateY(${pos.y}px) rotate(${pos.rotate}deg) scale(${pos.scale})`,
+              zIndex: pos.z,
+              opacity: pos.opacity,
+              transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease",
+            }}
+          />
+        )
+      })}
     </div>
   )
 }
 
 function ThemesMockup() {
-  const themes = [
-    { emoji: "\uD83C\uDF34", label: "Jungle" },
-    { emoji: "\uD83D\uDE80", label: "Space" },
-    { emoji: "\uD83D\uDC20", label: "Ocean" },
-    { emoji: "\uD83C\uDFF0", label: "Kingdom" },
-    { emoji: "\uD83E\uDD84", label: "Fantasy" },
-    { emoji: "\u2728", label: "Magic" },
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const assetUrl = (path: string) =>
+    `${supabaseUrl}/storage/v1/render/image/public/story-template-assets/${path}?quality=60`
+
+  const covers = [
+    { src: assetUrl("day-at-the-zoo/day-at-the-zoo.png"), label: "Day at the Zoo" },
+    { src: assetUrl("mission-to-the-moon/mission-to-the-moon.png"), label: "Mission To The Moon" },
+    { src: assetUrl("under-the-ocean/under-the-ocean.png"), label: "Underwater Adventure" },
+    { src: assetUrl("the-robot-best-friend/the-robot-best-friend.png"), label: "Robot Best Friend" },
+    { src: assetUrl("visit-to-the-farmers-market/visit-to-the-farmers-market.png"), label: "Farmer's Market" },
   ]
+
+  const [front, setFront] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFront((prev) => (prev + 1) % covers.length)
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [covers.length])
+
+  // Positions: front center, back-left, back-right, hidden-left, hidden-right
+  const positions = [
+    { x: 0, y: 0, scale: 1, z: 5, opacity: 1 },
+    { x: -60, y: 10, scale: 0.82, z: 3, opacity: 0.6 },
+    { x: 60, y: 10, scale: 0.82, z: 3, opacity: 0.6 },
+    { x: -100, y: 20, scale: 0.65, z: 1, opacity: 0.3 },
+    { x: 100, y: 20, scale: 0.65, z: 1, opacity: 0.3 },
+  ]
+
   return (
-    <div className="grid grid-cols-3 gap-2.5">
-      {themes.map((t, i) => (
-        <div
-          key={t.label}
-          className={`flex flex-col items-center gap-1.5 p-3 rounded-lg transition-colors ${
-            i === 1
-              ? "bg-primary/15 border-2 border-primary"
-              : "bg-muted border border-transparent hover:border-border"
-          }`}
-        >
-          <span className="text-2xl">{t.emoji}</span>
-          <span className="text-xs font-medium text-foreground">{t.label}</span>
-        </div>
-      ))}
+    <div className="relative h-[240px] w-full flex items-center justify-center">
+      {covers.map((cover, i) => {
+        const posIdx = (i - front + covers.length) % covers.length
+        const pos = positions[posIdx]
+        return (
+          <div
+            key={cover.label}
+            className="absolute flex flex-col items-center"
+            style={{
+              transform: `translateX(${pos.x}px) translateY(${pos.y}px) scale(${pos.scale})`,
+              zIndex: pos.z,
+              opacity: pos.opacity,
+              transition: "transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease",
+            }}
+          >
+            <img
+              src={cover.src}
+              alt={cover.label}
+              className="w-[120px] h-[160px] object-cover rounded-xl border border-border shadow-xl"
+            />
+            {posIdx === 0 && (
+              <p className="mt-2 text-xs font-medium text-foreground text-center transition-opacity duration-300">
+                {cover.label}
+              </p>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -156,7 +203,7 @@ function AudioMockup() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground truncate">Mission To The Moon</p>
-          <p className="text-xs text-muted-foreground">Chapter 1 \u00B7 2:34</p>
+          <p className="text-xs text-muted-foreground">10 SCENES &middot; 2:34</p>
         </div>
         <button className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -361,7 +408,7 @@ export function FeatureShowcase() {
                 <h3 className="text-xl sm:text-2xl font-bold text-foreground font-serif mb-2">
                   {features[active].title}
                 </h3>
-                <p className="text-muted-foreground text-sm sm:text-base mb-6 max-w-lg">
+                <p className="text-muted-foreground text-sm sm:text-base mb-6">
                   {features[active].description}
                 </p>
                 <div className="bg-muted/50 rounded-xl p-5 sm:p-6 max-w-md">
