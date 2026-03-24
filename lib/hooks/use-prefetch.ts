@@ -5,9 +5,23 @@ import { useQueryClient } from "@tanstack/react-query"
 import { storybookKeys, characterKeys, templateKeys } from "@/lib/queries"
 import { storybooksApi, charactersApi, templatesApi } from "@/lib/api-client"
 
-const SAFETY_TIMEOUT_MS = 4000
-const MIN_DISPLAY_MS = 1800
-const MAX_PRELOAD_IMAGES = 30
+const SAFETY_TIMEOUT_MS = 10000  // Hard cap: 10 seconds max splash
+const MIN_DISPLAY_MS = 1800      // Minimum splash so animations play
+const PRIORITY_IMAGE_COUNT = 8   // Wait for these many images to load before dismissing
+const MAX_PRELOAD_IMAGES = 30    // Total images to preload in background
+const IMAGE_LOAD_TIMEOUT_MS = 8000 // Give up waiting for images after this
+
+/**
+ * Preload an image and return a promise that resolves when loaded or rejects on error.
+ */
+function preloadImage(url: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve()
+    img.onerror = () => reject()
+    img.src = url
+  })
+}
 
 export function usePrefetch(userReady: boolean): boolean {
   const [dataReady, setDataReady] = useState(false)
@@ -21,8 +35,20 @@ export function usePrefetch(userReady: boolean): boolean {
     const startTime = Date.now()
 
     const safetyTimer = setTimeout(() => {
+      console.log('[PREFETCH] Safety timeout reached, dismissing splash')
       setDataReady(true)
     }, SAFETY_TIMEOUT_MS)
+
+    const markReady = () => {
+      clearTimeout(safetyTimer)
+      const elapsed = Date.now() - startTime
+      const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed)
+      if (remaining > 0) {
+        setTimeout(() => setDataReady(true), remaining)
+      } else {
+        setDataReady(true)
+      }
+    }
 
     Promise.allSettled([
       queryClient.fetchQuery({
@@ -41,21 +67,20 @@ export function usePrefetch(userReady: boolean): boolean {
         staleTime: 30 * 60 * 1000,
       }),
     ]).then((results) => {
-      // Preload thumbnail images (fire-and-forget)
-      // Prioritize template thumbnails (story library), then storybooks, then characters
+      // Collect all thumbnail URLs, prioritized: storybooks first (default tab), then templates, then characters
       const urls: string[] = []
-
-      const templatesResult = results[2]
-      if (templatesResult.status === "fulfilled" && templatesResult.value?.templates) {
-        for (const t of templatesResult.value.templates) {
-          if (t.thumbnail_url) urls.push(t.thumbnail_url)
-        }
-      }
 
       const storybooksResult = results[0]
       if (storybooksResult.status === "fulfilled" && storybooksResult.value?.storybooks) {
         for (const sb of storybooksResult.value.storybooks) {
           if (sb.thumbnail_url) urls.push(sb.thumbnail_url)
+        }
+      }
+
+      const templatesResult = results[2]
+      if (templatesResult.status === "fulfilled" && templatesResult.value?.templates) {
+        for (const t of templatesResult.value.templates) {
+          if (t.thumbnail_url) urls.push(t.thumbnail_url)
         }
       }
 
@@ -66,21 +91,38 @@ export function usePrefetch(userReady: boolean): boolean {
         }
       }
 
-      urls.slice(0, MAX_PRELOAD_IMAGES).forEach((url) => {
-        const img = new Image()
-        img.src = url
-      })
-
-      // Ensure minimum display time so animations can play
-      const elapsed = Date.now() - startTime
-      const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed)
-
-      clearTimeout(safetyTimer)
-      if (remaining > 0) {
-        setTimeout(() => setDataReady(true), remaining)
-      } else {
-        setDataReady(true)
+      if (urls.length === 0) {
+        markReady()
+        return
       }
+
+      // Split into priority (wait for these) and background (fire-and-forget)
+      const priorityUrls = urls.slice(0, PRIORITY_IMAGE_COUNT)
+      const backgroundUrls = urls.slice(PRIORITY_IMAGE_COUNT, MAX_PRELOAD_IMAGES)
+
+      // Wait for priority images to load (or timeout)
+      const imageLoadPromise = Promise.allSettled(
+        priorityUrls.map(url => preloadImage(url))
+      )
+
+      const imageTimeout = new Promise<void>((resolve) =>
+        setTimeout(() => {
+          console.log('[PREFETCH] Image load timeout, proceeding')
+          resolve()
+        }, IMAGE_LOAD_TIMEOUT_MS)
+      )
+
+      Promise.race([imageLoadPromise, imageTimeout]).then(() => {
+        const loaded = Date.now() - startTime
+        console.log(`[PREFETCH] Priority images ready in ${loaded}ms`)
+        markReady()
+
+        // Continue loading remaining images in background
+        backgroundUrls.forEach((url) => {
+          const img = new Image()
+          img.src = url
+        })
+      })
     })
 
     return () => clearTimeout(safetyTimer)

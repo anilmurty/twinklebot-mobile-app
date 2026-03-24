@@ -2,6 +2,7 @@
 
 import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Sparkles, Eye } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
+import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -482,10 +483,11 @@ export function StorybooksTab() {
                           onClick={() => isPreviewReady ? handleViewPreview(storybook) : setResumeStorybook(storybook)}
                         >
                           {thumbnailUrl ? (
-                            <img
+                            <ImageWithShimmer
                               src={thumbnailUrl}
                               alt={storybook.title}
                               className="w-full h-full object-cover"
+                              containerClassName="w-full h-full"
                             />
                           ) : (
                             <div className="w-full h-full bg-white/10 flex items-center justify-center">
@@ -581,10 +583,11 @@ export function StorybooksTab() {
                           onClick={() => handleReadStorybook(storybook.id)}
                         >
                           {thumbnailUrl ? (
-                            <img
+                            <ImageWithShimmer
                               src={thumbnailUrl}
                               alt={storybook.title}
                               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              containerClassName="w-full h-full"
                             />
                           ) : (
                             <div className="w-full h-full bg-white/10 flex items-center justify-center">

@@ -2,6 +2,7 @@
 
 import { Plus, Trash2, Sparkles, Loader2, Pencil } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
+import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
@@ -195,10 +196,11 @@ export function CharactersTab() {
                         }
                       >
                         {character.front_photo_url ? (
-                          <img
+                          <ImageWithShimmer
                             src={character.front_photo_url}
                             alt={character.name}
                             className="w-full h-full object-cover"
+                            containerClassName="w-full h-full"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.src = "/placeholder.svg"
