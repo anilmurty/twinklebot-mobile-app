@@ -26,6 +26,13 @@ function AppContent() {
     setSplashDismissed(true)
   }, [])
 
+  // Reset to storybooks tab when user changes (new sign-in)
+  useEffect(() => {
+    if (user) {
+      setActiveTab("storybooks")
+    }
+  }, [user?.id])
+
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab && ['storybooks', 'characters', 'library', 'profile'].includes(tab)) {
