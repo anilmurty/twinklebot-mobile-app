@@ -100,13 +100,13 @@ function CharacterMockup() {
 
   // Positions: front (top center), back-left, back-right
   const positions = [
-    { x: 0, y: -10, rotate: 0, scale: 1, z: 3, opacity: 1 },       // front
-    { x: -50, y: 20, rotate: -12, scale: 0.85, z: 1, opacity: 0.7 }, // back-left
-    { x: 50, y: 20, rotate: 12, scale: 0.85, z: 2, opacity: 0.7 },   // back-right
+    { x: 0, y: -15, rotate: 0, scale: 1, z: 3, opacity: 1 },       // front
+    { x: -70, y: 25, rotate: -12, scale: 0.85, z: 1, opacity: 0.7 }, // back-left
+    { x: 70, y: 25, rotate: 12, scale: 0.85, z: 2, opacity: 0.7 },   // back-right
   ]
 
   return (
-    <div className="relative h-[280px] w-full flex items-center justify-center">
+    <div className="relative h-[380px] w-full flex items-center justify-center">
       {cards.map((card, i) => {
         // Calculate position index: 0=front, 1=back-left, 2=back-right
         const posIdx = (i - front + cards.length) % cards.length
@@ -116,7 +116,7 @@ function CharacterMockup() {
             key={card.alt}
             src={card.src}
             alt={card.alt}
-            className="absolute w-[150px] rounded-xl border border-border shadow-xl"
+            className="absolute w-[220px] rounded-xl border border-border shadow-xl"
             style={{
               transform: `translateX(${pos.x}px) translateY(${pos.y}px) rotate(${pos.rotate}deg) scale(${pos.scale})`,
               zIndex: pos.z,
@@ -155,14 +155,14 @@ function ThemesMockup() {
   // Positions: front center, back-left, back-right, hidden-left, hidden-right
   const positions = [
     { x: 0, y: 0, scale: 1, z: 5, opacity: 1 },
-    { x: -60, y: 10, scale: 0.82, z: 3, opacity: 0.6 },
-    { x: 60, y: 10, scale: 0.82, z: 3, opacity: 0.6 },
-    { x: -100, y: 20, scale: 0.65, z: 1, opacity: 0.3 },
-    { x: 100, y: 20, scale: 0.65, z: 1, opacity: 0.3 },
+    { x: -80, y: 15, scale: 0.82, z: 3, opacity: 0.6 },
+    { x: 80, y: 15, scale: 0.82, z: 3, opacity: 0.6 },
+    { x: -130, y: 25, scale: 0.65, z: 1, opacity: 0.3 },
+    { x: 130, y: 25, scale: 0.65, z: 1, opacity: 0.3 },
   ]
 
   return (
-    <div className="relative h-[240px] w-full flex items-center justify-center">
+    <div className="relative h-[360px] w-full flex items-center justify-center">
       {covers.map((cover, i) => {
         const posIdx = (i - front + covers.length) % covers.length
         const pos = positions[posIdx]
@@ -180,7 +180,7 @@ function ThemesMockup() {
             <img
               src={cover.src}
               alt={cover.label}
-              className="w-[120px] h-[160px] object-cover rounded-xl border border-border shadow-xl"
+              className="w-[180px] h-[240px] object-cover rounded-xl border border-border shadow-xl"
             />
             {posIdx === 0 && (
               <p className="mt-2 text-xs font-medium text-foreground text-center transition-opacity duration-300">
@@ -320,7 +320,7 @@ export function FeatureShowcase() {
 
   return (
     <section id="features" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-3 text-center">
           What makes TwinkleBot special
@@ -395,24 +395,30 @@ export function FeatureShowcase() {
               ))}
             </div>
 
-            {/* Right panel (content + mockup) */}
-            <div className="flex-1 bg-card p-6 sm:p-8 md:p-10 min-h-[400px] flex flex-col">
+            {/* Right panel (visual + text side by side) */}
+            <div className="flex-1 bg-card p-6 sm:p-8 md:p-10 min-h-[480px] flex flex-col">
               <div
                 key={active}
                 aria-live="polite"
-                className="flex-1 animate-in fade-in duration-200"
+                className="flex-1 animate-in fade-in duration-200 flex flex-col md:flex-row gap-6 md:gap-10"
               >
-                <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-2">
-                  {features[active].category}
-                </p>
-                <h3 className="text-xl sm:text-2xl font-bold text-foreground font-serif mb-2">
-                  {features[active].title}
-                </h3>
-                <p className="text-muted-foreground text-sm sm:text-base mb-6">
-                  {features[active].description}
-                </p>
-                <div className="bg-muted/50 rounded-xl p-5 sm:p-6 max-w-md">
-                  <Mockup />
+                {/* Visual (left half) */}
+                <div className="md:w-1/2 flex items-center justify-center">
+                  <div className="bg-muted/50 rounded-xl p-5 sm:p-6 w-full h-full flex items-center justify-center">
+                    <Mockup />
+                  </div>
+                </div>
+                {/* Text (right half) */}
+                <div className="md:w-1/2 flex flex-col justify-center">
+                  <p className="text-xs font-semibold tracking-widest uppercase text-primary mb-2">
+                    {features[active].category}
+                  </p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-foreground font-serif mb-2">
+                    {features[active].title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm sm:text-base">
+                    {features[active].description}
+                  </p>
                 </div>
               </div>
 
