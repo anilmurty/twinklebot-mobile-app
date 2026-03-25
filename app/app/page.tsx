@@ -15,7 +15,7 @@ function AppContent() {
   const { user, loading } = useAuth()
   const searchParams = useSearchParams()
   const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "profile">("storybooks")
+  const [activeTab, setActiveTab] = useState<"storybooks" | "characters" | "library" | "keepsakes" | "profile">("storybooks")
   const [splashDismissed, setSplashDismissed] = useState(false)
 
   const designMode = isDesignMode()
@@ -35,7 +35,7 @@ function AppContent() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['storybooks', 'characters', 'library', 'profile'].includes(tab)) {
+    if (tab && ['storybooks', 'characters', 'library', 'keepsakes', 'profile'].includes(tab)) {
       setActiveTab(tab as typeof activeTab)
     }
   }, [searchParams])

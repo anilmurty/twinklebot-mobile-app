@@ -4,15 +4,16 @@ import { StorybooksTab } from "@/components/storybooks-tab"
 import { CharactersTab } from "@/components/characters-tab"
 import { StoryLibraryTab } from "@/components/story-library-tab"
 import { ProfileTab } from "@/components/profile-tab"
-import { BookOpen, Users, Library, User } from "lucide-react"
+import { KeepsakesTab } from "@/components/keepsakes-tab"
+import { BookOpen, Users, Library, Gift, User } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 
 interface DesktopLayoutProps {
-  activeTab: "storybooks" | "characters" | "library" | "profile"
-  onTabChange: (tab: "storybooks" | "characters" | "library" | "profile") => void
+  activeTab: "storybooks" | "characters" | "library" | "keepsakes" | "profile"
+  onTabChange: (tab: "storybooks" | "characters" | "library" | "keepsakes" | "profile") => void
 }
 
 export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
@@ -22,12 +23,12 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab && ['storybooks', 'characters', 'library', 'profile'].includes(tab)) {
+    if (tab && ['storybooks', 'characters', 'library', 'keepsakes', 'profile'].includes(tab)) {
       onTabChange(tab as typeof activeTab)
     }
   }, [searchParams, onTabChange])
 
-  const handleTabChange = (tab: "storybooks" | "characters" | "library" | "profile") => {
+  const handleTabChange = (tab: "storybooks" | "characters" | "library" | "keepsakes" | "profile") => {
     onTabChange(tab)
     // Use current pathname to preserve /app vs / route
     router.push(`${pathname}?tab=${tab}`, { scroll: false })
@@ -37,6 +38,7 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
     { id: "storybooks" as const, label: "Storybooks", icon: BookOpen },
     { id: "characters" as const, label: "Characters", icon: Users },
     { id: "library" as const, label: "Story Library", icon: Library },
+    { id: "keepsakes" as const, label: "Keepsakes", icon: Gift },
     { id: "profile" as const, label: "Profile", icon: User },
   ]
 
@@ -88,6 +90,7 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
             {activeTab === "storybooks" && <StorybooksTab />}
             {activeTab === "characters" && <CharactersTab />}
             {activeTab === "library" && <StoryLibraryTab />}
+            {activeTab === "keepsakes" && <KeepsakesTab />}
             {activeTab === "profile" && <ProfileTab />}
           </div>
         </div>

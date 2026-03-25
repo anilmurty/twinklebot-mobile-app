@@ -106,7 +106,7 @@ function CharacterMockup() {
   ]
 
   return (
-    <div className="relative h-[380px] w-full flex items-center justify-center">
+    <div className="relative h-[280px] md:h-[380px] w-full flex items-center justify-center overflow-hidden">
       {cards.map((card, i) => {
         // Calculate position index: 0=front, 1=back-left, 2=back-right
         const posIdx = (i - front + cards.length) % cards.length
@@ -116,7 +116,7 @@ function CharacterMockup() {
             key={card.alt}
             src={card.src}
             alt={card.alt}
-            className="absolute w-[220px] rounded-xl border border-border shadow-xl"
+            className="absolute w-[140px] md:w-[220px] rounded-xl border border-border shadow-xl"
             style={{
               transform: `translateX(${pos.x}px) translateY(${pos.y}px) rotate(${pos.rotate}deg) scale(${pos.scale})`,
               zIndex: pos.z,
@@ -162,7 +162,7 @@ function ThemesMockup() {
   ]
 
   return (
-    <div className="relative h-[360px] w-full flex items-center justify-center">
+    <div className="relative h-[260px] md:h-[360px] w-full flex items-center justify-center overflow-hidden">
       {covers.map((cover, i) => {
         const posIdx = (i - front + covers.length) % covers.length
         const pos = positions[posIdx]
@@ -180,7 +180,7 @@ function ThemesMockup() {
             <img
               src={cover.src}
               alt={cover.label}
-              className="w-[180px] h-[240px] object-cover rounded-xl border border-border shadow-xl"
+              className="w-[120px] h-[160px] md:w-[180px] md:h-[240px] object-cover rounded-xl border border-border shadow-xl"
             />
             {posIdx === 0 && (
               <p className="mt-2 text-xs font-medium text-foreground text-center transition-opacity duration-300">
@@ -273,6 +273,7 @@ export function FeatureShowcase() {
   const [progress, setProgress] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const tabRowRef = useRef<HTMLDivElement>(null)
 
   // Use refs for timer state to avoid stale closures and StrictMode double-invoke issues
   const progressRef = useRef(0)
@@ -300,6 +301,15 @@ export function FeatureShowcase() {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [paused])
+
+  // Scroll mobile tab row to show active tab
+  useEffect(() => {
+    const row = tabRowRef.current
+    if (!row) return
+    const btn = row.children[active] as HTMLElement
+    if (!btn) return
+    btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" })
+  }, [active])
 
   // Pause on focus within
   const handleFocus = useCallback(() => setPaused(true), [])
@@ -341,7 +351,7 @@ export function FeatureShowcase() {
         >
           {/* Mobile: horizontal tab row */}
           <div className="md:hidden overflow-x-auto scrollbar-hide">
-            <div className="flex min-w-max">
+            <div ref={tabRowRef} className="flex min-w-max">
               {features.map((f, i) => (
                 <button
                   key={i}

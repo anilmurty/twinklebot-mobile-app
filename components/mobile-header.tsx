@@ -6,6 +6,7 @@ const TAB_TITLES: Record<string, string> = {
   storybooks: "My Storybooks",
   characters: "Characters",
   library: "Story Library",
+  keepsakes: "Keepsakes",
   profile: "Profile",
 }
 
@@ -13,6 +14,7 @@ const TAB_SUBTITLES: Record<string, string> = {
   storybooks: "Your personalized home library",
   characters: "Your storybook heroes",
   library: "Choose a template",
+  keepsakes: "Coming soon",
   profile: "Your account",
 }
 

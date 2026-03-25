@@ -1,11 +1,11 @@
 "use client"
 
-import { BookOpen, Users, Library, User } from "lucide-react"
+import { BookOpen, Users, Library, Gift, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface BottomNavProps {
-  activeTab: "storybooks" | "characters" | "library" | "profile"
-  onTabChange: (tab: "storybooks" | "characters" | "library" | "profile") => void
+  activeTab: "storybooks" | "characters" | "library" | "keepsakes" | "profile"
+  onTabChange: (tab: "storybooks" | "characters" | "library" | "keepsakes" | "profile") => void
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
@@ -13,6 +13,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
     { id: "storybooks" as const, label: "Storybooks", icon: BookOpen },
     { id: "characters" as const, label: "Characters", icon: Users },
     { id: "library" as const, label: "Story Library", icon: Library },
+    { id: "keepsakes" as const, label: "Keepsakes", icon: Gift },
     { id: "profile" as const, label: "Profile", icon: User },
   ]
 
@@ -30,7 +31,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-4 py-2 transition-colors flex-1 cursor-pointer",
+                "flex flex-col items-center justify-center gap-1 px-2 py-2 transition-colors flex-1 cursor-pointer",
                 isActive ? "text-primary" : "text-muted-foreground",
               )}
             >
