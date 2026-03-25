@@ -68,11 +68,11 @@ export function getStorageUrl(bucket: string, path: string): string {
 export function getTransformedImageUrl(
   bucket: string,
   path: string,
-  options: { width?: number; quality?: number; format?: string } = {}
+  options: { width?: number; quality?: number; resize?: string } = {}
 ): string {
-  const { width = 400, quality = 75, format = 'webp' } = options
+  const { width = 400, quality = 75, resize = 'contain' } = options
   const { data } = supabaseAdmin.storage.from(bucket).getPublicUrl(path, {
-    transform: { width, quality, format },
+    transform: { width, quality, resize: resize as any },
   })
   return data.publicUrl
 }
