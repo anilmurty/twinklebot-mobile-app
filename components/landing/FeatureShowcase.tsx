@@ -302,13 +302,16 @@ export function FeatureShowcase() {
     }
   }, [paused])
 
-  // Scroll mobile tab row to show active tab
+  // Scroll mobile tab row to show active tab (without scrolling the page)
   useEffect(() => {
     const row = tabRowRef.current
     if (!row) return
     const btn = row.children[active] as HTMLElement
     if (!btn) return
-    btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" })
+    const scrollContainer = row.parentElement
+    if (!scrollContainer) return
+    const scrollLeft = btn.offsetLeft - scrollContainer.clientWidth / 2 + btn.clientWidth / 2
+    scrollContainer.scrollTo({ left: scrollLeft, behavior: "smooth" })
   }, [active])
 
   // Pause on focus within
