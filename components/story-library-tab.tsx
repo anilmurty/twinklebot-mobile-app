@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useTemplates, useNotifyInterest } from "@/lib/queries"
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
+import { trackEvent } from "@/lib/utils/analytics"
 
 interface Template {
   id: number
@@ -340,6 +341,7 @@ export function StoryLibraryTab() {
   )
 
   const handleGenerate = useCallback((template: Template) => {
+    trackEvent("template_selected", { template_id: template.id, template_title: template.title })
     setSelectedStory(template)
   }, [])
 

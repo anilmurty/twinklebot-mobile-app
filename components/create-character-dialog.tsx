@@ -9,6 +9,7 @@ import { Camera, Upload, X, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { charactersApi } from "@/lib/api-client"
+import { trackEvent } from "@/lib/utils/analytics"
 
 interface CreateCharacterDialogProps {
   open: boolean
@@ -108,6 +109,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
     try {
       setIsSubmitting(true)
       setError(null)
+      trackEvent("character_create_started")
 
       // Upload photo directly to Supabase Storage from client
       // This bypasses Vercel's 4.5MB request body limit
@@ -175,6 +177,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
       setGender("")
       setPhoto(null)
       setPreview(null)
+      trackEvent("character_create_completed", { character_name: name.trim() })
       onOpenChange(false)
       onCharacterCreated?.()
     } catch (err: any) {

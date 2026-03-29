@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation"
 import { useIsMobile } from "@/lib/utils/device-detection"
 import { isDesignMode } from "@/lib/designMode"
 import { usePrefetch } from "@/lib/hooks/use-prefetch"
+import { trackEvent } from "@/lib/utils/analytics"
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -24,6 +25,11 @@ function AppContent() {
 
   const handleFadeComplete = useCallback(() => {
     setSplashDismissed(true)
+  }, [])
+
+  const handleTabChange = useCallback((tab: typeof activeTab) => {
+    trackEvent("tab_switch", { tab })
+    setActiveTab(tab)
   }, [])
 
   // Reset to storybooks tab when user changes (new sign-in)
@@ -43,9 +49,9 @@ function AppContent() {
   // Design mode: bypass auth, no splash
   if (designMode) {
     if (isMobile) {
-      return <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
+      return <MobileLayout activeTab={activeTab} onTabChange={handleTabChange} />
     } else {
-      return <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
+      return <DesktopLayout activeTab={activeTab} onTabChange={handleTabChange} />
     }
   }
 
@@ -61,8 +67,8 @@ function AppContent() {
 
   // User exists — render app layout with splash overlay on top while data loads
   const layout = isMobile
-    ? <MobileLayout activeTab={activeTab} onTabChange={setActiveTab} />
-    : <DesktopLayout activeTab={activeTab} onTabChange={setActiveTab} />
+    ? <MobileLayout activeTab={activeTab} onTabChange={handleTabChange} />
+    : <DesktopLayout activeTab={activeTab} onTabChange={handleTabChange} />
 
   return (
     <>

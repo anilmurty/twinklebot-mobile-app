@@ -10,6 +10,7 @@ import { useState, useEffect } from "react"
 import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
 import { navigateToUrl } from "@/lib/utils/navigation"
 import { isNativeApp } from "@/lib/utils/platform"
+import { trackEvent } from "@/lib/utils/analytics"
 import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ConfirmDialog } from "@/components/confirm-dialog"
@@ -158,6 +159,7 @@ export function StorybooksTab() {
   }
 
   const handleOpenShareModal = (storybook: Storybook) => {
+    trackEvent("share_modal_opened", { storybook_id: storybook.id })
     setShareModalStorybook(storybook)
     // If share token exists, construct the share URL
     if (storybook.share_token) {
@@ -175,6 +177,7 @@ export function StorybooksTab() {
       setIsGeneratingShare(true)
       setCopiedShareUrl(false)
       const result = await generateShareMutation.mutateAsync(shareModalStorybook.id)
+      trackEvent("share_link_created", { storybook_id: shareModalStorybook.id })
       setShareUrl({ storybookId: shareModalStorybook.id, url: result.share_url })
       // Refresh storybooks list so card button updates to "Unshare"
       const { data: refreshedData } = await refetchStorybooks()
@@ -206,6 +209,7 @@ export function StorybooksTab() {
         document.execCommand('copy')
         document.body.removeChild(textarea)
       }
+      trackEvent("share_link_copied", { storybook_id: shareUrl.storybookId })
       setCopiedShareUrl(true)
       setTimeout(() => setCopiedShareUrl(false), 2000)
     } catch (err) {
@@ -216,6 +220,7 @@ export function StorybooksTab() {
   const handleRevokeShare = async () => {
     if (!shareModalStorybook) return
     try {
+      trackEvent("share_link_revoked", { storybook_id: shareModalStorybook.id })
       await revokeShareMutation.mutateAsync(shareModalStorybook.id)
       setShareUrl(null)
       setCopiedShareUrl(false)

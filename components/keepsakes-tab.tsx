@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Gift, BookOpen, Image, Coffee, Puzzle, Star, Printer } from "lucide-react"
 import { createClient } from "@/lib/supabase/client-browser"
+import { trackEvent } from "@/lib/utils/analytics"
 
 const PRODUCTS = [
   {
@@ -96,6 +97,7 @@ export function KeepsakesTab() {
       story_count_at_signup: count ?? 0,
     })
 
+    trackEvent("keepsakes_opt_in", { story_count: count ?? 0 })
     setHasOptedIn(true)
     setSaving(false)
   }
@@ -112,6 +114,7 @@ export function KeepsakesTab() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
+    trackEvent("keepsakes_product_vote", { product_id: productId, vote: newVote || "removed" })
     await supabase
       .from("keepsakes_interest")
       .update({ product_votes: newVotes })

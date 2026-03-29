@@ -11,6 +11,7 @@ import { CompactPricing } from "@/components/compact-pricing"
 import { isNativeApp } from "@/lib/utils/platform"
 import { navigateToUrl } from "@/lib/utils/navigation"
 import { getIAPPackages, purchasePackage } from "@/lib/services/iap-service"
+import { trackEvent } from "@/lib/utils/analytics"
 
 interface Scene {
   scene_number?: number
@@ -127,6 +128,7 @@ export default function StorybookViewerPage() {
       }
 
       setStorybook(data)
+      trackEvent("storybook_opened", { storybook_id: id as string, title: data.title, status: data.status })
     } catch (err: any) {
       console.error('Failed to fetch storybook:', err)
       setError(err.message || 'Failed to load storybook')

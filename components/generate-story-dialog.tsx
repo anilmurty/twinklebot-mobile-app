@@ -13,6 +13,7 @@ import { navigateToUrl } from "@/lib/utils/navigation"
 import { isNativeApp } from "@/lib/utils/platform"
 import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
 import { useCharacters } from "@/lib/queries/use-characters"
+import { trackEvent } from "@/lib/utils/analytics"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
@@ -311,6 +312,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setError(null)
     setCurrentStep("generating-preview")
     setPreviewProgress(0)
+    trackEvent("story_generation_started", { template_id: story.id, template_title: story.title, style: selectedStyle, character_id: selectedCharacter })
 
       // Step 1: Create storybook with selected look
       setPreviewProgress(10)
@@ -357,6 +359,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     try {
       setIsSubmitting(true)
       setError(null)
+      trackEvent("checkout_started", { storybook_id: storybookId, plan_id: planId, tier: selectedTier, method: isNativeApp() ? "iap" : "stripe" })
 
       if (isNativeApp()) {
         // Native IAP flow via RevenueCat
@@ -416,6 +419,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setError(null)
 
       await storybooksApi.useCredit(storybookId, useTier)
+      trackEvent("credit_used", { storybook_id: storybookId, tier: useTier })
 
       // Navigate to storybooks tab
       onOpenChange(false)

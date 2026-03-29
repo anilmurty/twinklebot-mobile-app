@@ -1,36 +1,30 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { useAuth } from "@/lib/auth-context"
 import {
   Sparkles,
   Camera,
   BookOpen,
   Wand2,
   ChevronRight,
-  Star,
   Check,
   Menu,
   X
 } from "lucide-react"
 import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-constants"
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase"
+import { trackEvent } from "@/lib/utils/analytics"
 
 export function WebLandingPage() {
-  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
-  const [isLoading, setIsLoading] = useState(false)
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [isSignUp, setIsSignUp] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState<string | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
+  const [showWaitlist, setShowWaitlist] = useState(false)
+  const [waitlistEmail, setWaitlistEmail] = useState("")
+  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
+  const [waitlistError, setWaitlistError] = useState("")
   const [heroIndex, setHeroIndex] = useState(0)
   const heroImages = ["/hero-1.jpg", "/hero-2.jpg", "/hero-3.jpg"]
 
@@ -44,38 +38,34 @@ export function WebLandingPage() {
   // Toggle to show/hide pricing section (for A/B testing)
   const showPricing = false
 
-  const handleSignInWithGoogle = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      await signInWithGoogle()
-    } catch (error: any) {
-      console.error("Sign in error:", error)
-      setError(error.message || "Sign in failed")
-    } finally {
-      setIsLoading(false)
-    }
+  const openWaitlist = () => {
+    trackEvent("cta_click", { location: "waitlist", label: "open_waitlist" })
+    setShowWaitlist(true)
+    setWaitlistStatus("idle")
+    setWaitlistError("")
+    setWaitlistEmail("")
   }
 
-  const handleEmailAuth = async () => {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!waitlistEmail.trim()) return
+    setWaitlistStatus("sending")
+    setWaitlistError("")
     try {
-      setIsLoading(true)
-      setError(null)
-      if (isSignUp) {
-        if (password !== confirmPassword) {
-          setError("Passwords do not match")
-          return
-        }
-        await signUpWithEmail(email, password)
-        alert("Account created! Please check your email to verify your account.")
-      } else {
-        await signInWithEmail(email, password)
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: waitlistEmail.trim() }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "Something went wrong. Please try again.")
       }
-    } catch (error: any) {
-      console.error("Email auth error:", error)
-      setError(error.message || "Authentication failed")
-    } finally {
-      setIsLoading(false)
+      trackEvent("waitlist_signup", { email: waitlistEmail.trim() })
+      setWaitlistStatus("success")
+    } catch (err: any) {
+      setWaitlistError(err.message)
+      setWaitlistStatus("error")
     }
   }
 
@@ -193,18 +183,14 @@ export function WebLandingPage() {
               )}
             </nav>
 
-            {/* Auth buttons */}
+            {/* CTA button */}
             <div className="hidden md:flex items-center gap-3">
-              <Link href="/app">
-                <Button variant="ghost" className="text-foreground hover:bg-muted">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/app">
-                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6">
-                  Get Started Free
-                </Button>
-              </Link>
+              <Button
+                onClick={openWaitlist}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6"
+              >
+                Get Early Access
+              </Button>
             </div>
 
             {/* Mobile menu button */}
@@ -237,14 +223,12 @@ export function WebLandingPage() {
                 </a>
               )}
               <div className="pt-3 border-t border-border space-y-2">
-                <Link href="/app" className="block">
-                  <Button variant="outline" className="w-full">Sign In</Button>
-                </Link>
-                <Link href="/app" className="block">
-                  <Button className="w-full bg-primary text-primary-foreground font-semibold">
-                    Get Started Free
-                  </Button>
-                </Link>
+                <Button
+                  onClick={() => { setMobileMenuOpen(false); openWaitlist() }}
+                  className="w-full bg-primary text-primary-foreground font-semibold"
+                >
+                  Get Early Access
+                </Button>
               </div>
             </div>
           </div>
@@ -283,16 +267,15 @@ export function WebLandingPage() {
                 </h1>
 
                 <div className="flex gap-4">
-                  <Link href="/app">
-                    <Button
-                      size="lg"
-                      className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
-                    >
-                      Create Your First Story
-                      <ChevronRight className="w-5 h-5 ml-1" />
-                    </Button>
-                  </Link>
-                  <a href="#how-it-works">
+                  <Button
+                    size="lg"
+                    onClick={openWaitlist}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+                  >
+                    Get Early Access
+                    <ChevronRight className="w-5 h-5 ml-1" />
+                  </Button>
+                  <a href="#how-it-works" onClick={() => trackEvent("cta_click", { location: "hero_desktop", label: "See How It Works" })}>
                     <Button
                       variant="outline"
                       size="lg"
@@ -304,12 +287,8 @@ export function WebLandingPage() {
                 </div>
 
                 <div className="mt-10 flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                    ))}
-                  </div>
-                  <p className="text-sm text-white/60">Loved by parents everywhere</p>
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <p className="text-sm text-white/60">Early access &mdash; limited spots</p>
                 </div>
 
                 {/* App store buttons */}
@@ -381,16 +360,15 @@ export function WebLandingPage() {
             </h1>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/app">
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
-                >
-                  Create Your First Story
-                  <ChevronRight className="w-5 h-5 ml-1" />
-                </Button>
-              </Link>
-              <a href="#how-it-works">
+              <Button
+                size="lg"
+                onClick={openWaitlist}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+              >
+                Get Early Access
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
+              <a href="#how-it-works" onClick={() => trackEvent("cta_click", { location: "hero_mobile", label: "See How It Works" })}>
                 <Button
                   variant="outline"
                   size="lg"
@@ -402,12 +380,8 @@ export function WebLandingPage() {
             </div>
 
             <div className="mt-8 flex items-center gap-2 justify-center">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground">Loved by parents everywhere</p>
+              <Sparkles className="w-5 h-5 text-primary" />
+              <p className="text-sm text-muted-foreground">Early access &mdash; limited spots</p>
             </div>
           </div>
         </div>
@@ -499,15 +473,14 @@ export function WebLandingPage() {
           </div>
 
           <div className="text-center mt-12">
-            <Link href="/app">
-              <Button
-                size="lg"
-                className="bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-8"
-              >
-                Explore All Stories
-                <ChevronRight className="w-5 h-5 ml-1" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              onClick={openWaitlist}
+              className="bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-8"
+            >
+              Get Early Access
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </Button>
           </div>
         </div>
       </section>
@@ -588,11 +561,9 @@ export function WebLandingPage() {
                 <h3 className="font-bold text-foreground">Try Before You Buy</h3>
                 <p className="text-muted-foreground text-sm">Generate a free preview to see your child in the story before purchasing</p>
               </div>
-              <Link href="/app" className="sm:ml-auto">
-                <Button variant="outline" className="border-secondary/30 text-secondary hover:bg-secondary/10">
-                  Start Free Preview
-                </Button>
-              </Link>
+              <Button variant="outline" onClick={openWaitlist} className="sm:ml-auto border-secondary/30 text-secondary hover:bg-secondary/10">
+                Get Early Access
+              </Button>
             </div>
           </div>
 
@@ -618,11 +589,9 @@ export function WebLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/app" className="block">
-                <Button variant="outline" className="w-full">
-                  Get Started
-                </Button>
-              </Link>
+              <Button variant="outline" onClick={openWaitlist} className="w-full">
+                Get Early Access
+              </Button>
             </div>
 
             {/* 2-Story Bundle */}
@@ -646,11 +615,9 @@ export function WebLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/app" className="block">
-                <Button variant="outline" className="w-full">
-                  Get Started
-                </Button>
-              </Link>
+              <Button variant="outline" onClick={openWaitlist} className="w-full">
+                Get Early Access
+              </Button>
             </div>
 
             {/* 3-Story Bundle */}
@@ -679,11 +646,9 @@ export function WebLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/app" className="block">
-                <Button className="w-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25">
-                  Get Started
-                </Button>
-              </Link>
+              <Button onClick={openWaitlist} className="w-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25">
+                Get Early Access
+              </Button>
             </div>
 
             {/* 4-Story Bundle - Best Value */}
@@ -712,11 +677,9 @@ export function WebLandingPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/app" className="block">
-                <Button className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold shadow-lg">
-                  Get Complete Library
-                </Button>
-              </Link>
+              <Button onClick={openWaitlist} className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold shadow-lg">
+                Get Early Access
+              </Button>
             </div>
           </div>
 
@@ -737,17 +700,16 @@ export function WebLandingPage() {
             Ready to Make Your Child the Star?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of parents who are creating magical memories with personalized storybooks.
+            Be among the first families to bring your child into their own story.
           </p>
-          <Link href="/app">
-            <Button
-              size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-10 h-14 text-lg"
-            >
-              Create Your First Story
-              <Sparkles className="w-5 h-5 ml-2" />
-            </Button>
-          </Link>
+          <Button
+            size="lg"
+            onClick={openWaitlist}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-10 h-14 text-lg"
+          >
+            Get Early Access
+            <Sparkles className="w-5 h-5 ml-2" />
+          </Button>
         </div>
       </section>
 
@@ -779,95 +741,70 @@ export function WebLandingPage() {
         </div>
       </footer>
 
-      {/* Auth Modal (if needed for direct sign in from marketing page) */}
-      {showAuthModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-card rounded-3xl p-8 w-full max-w-md shadow-2xl border border-border">
+      {/* Waitlist Modal */}
+      {showWaitlist && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowWaitlist(false)}>
+          <div className="bg-card rounded-3xl p-8 w-full max-w-md shadow-2xl border border-border" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground">
-                {isSignUp ? "Create Account" : "Welcome Back"}
-              </h2>
+              <h2 className="text-2xl font-bold text-foreground">Get Early Access</h2>
               <button
-                onClick={() => setShowAuthModal(false)}
+                onClick={() => setShowWaitlist(false)}
                 className="p-2 rounded-full hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
-            {error && (
-              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
-                <p className="text-sm text-destructive">{error}</p>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              <Button
-                onClick={handleSignInWithGoogle}
-                disabled={isLoading}
-                variant="outline"
-                className="w-full h-12"
-              >
-                Continue with Google
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border" />
+            {waitlistStatus === "success" ? (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-8 h-8 text-primary" />
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-card text-muted-foreground">or</span>
-                </div>
+                <h3 className="text-lg font-bold text-foreground mb-2">You&apos;re on the list!</h3>
+                <p className="text-muted-foreground text-sm">
+                  We&apos;ll send you one email when TwinkleBot is ready. No spam, ever.
+                </p>
+                <Button
+                  onClick={() => setShowWaitlist(false)}
+                  className="mt-6 w-full h-12 bg-primary text-primary-foreground font-semibold"
+                >
+                  Got it!
+                </Button>
               </div>
+            ) : (
+              <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+                <p className="text-muted-foreground text-sm">
+                  Be the first to create magical, personalized storybooks where your child is the hero.
+                </p>
 
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
-              />
-
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
-              />
-
-              {isSignUp && (
                 <input
-                  type="password"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  type="email"
+                  placeholder="Enter your email"
+                  value={waitlistEmail}
+                  onChange={(e) => setWaitlistEmail(e.target.value)}
+                  required
                   className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
                 />
-              )}
 
-              <Button
-                onClick={handleEmailAuth}
-                disabled={isLoading}
-                className="w-full h-12 bg-primary text-primary-foreground font-semibold"
-              >
-                {isLoading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
-              </Button>
+                {waitlistStatus === "error" && waitlistError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
+                    <p className="text-sm text-destructive">{waitlistError}</p>
+                  </div>
+                )}
 
-              <button
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="w-full text-center text-sm text-primary hover:text-primary/80"
-              >
-                {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
-              </button>
+                <Button
+                  type="submit"
+                  disabled={waitlistStatus === "sending"}
+                  className="w-full h-12 bg-primary text-primary-foreground font-semibold"
+                >
+                  {waitlistStatus === "sending" ? "Joining..." : "Join the Waitlist"}
+                </Button>
 
-              <p className="text-center text-xs text-muted-foreground">
-                By using TwinkleBot you agree to the{" "}
-                <a href="https://www.twinklebot.app/terms" className="underline hover:text-foreground">Terms of Service</a>
-                {" "}and the{" "}
-                <a href="https://www.twinklebot.app/privacy" className="underline hover:text-foreground">Privacy Policy</a>
-              </p>
-            </div>
+                <p className="text-center text-xs text-muted-foreground">
+                  One email when we launch. No spam, ever.
+                </p>
+              </form>
+            )}
           </div>
         </div>
       )}

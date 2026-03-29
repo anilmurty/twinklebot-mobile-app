@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
+import { trackEvent } from "@/lib/utils/analytics"
 
 const features = [
   {
@@ -323,6 +324,7 @@ export function FeatureShowcase() {
   }, [])
 
   const selectFeature = useCallback((i: number) => {
+    trackEvent("feature_tab_click", { feature_index: i, feature_label: features[i].label })
     activeRef.current = i
     progressRef.current = 0
     setActive(i)
@@ -415,9 +417,9 @@ export function FeatureShowcase() {
                 aria-live="polite"
                 className="flex-1 animate-in fade-in duration-200 flex flex-col md:flex-row gap-6 md:gap-10"
               >
-                {/* Visual (left half) */}
+                {/* Visual (left half) — fixed height to prevent layout shift */}
                 <div className="md:w-1/2 flex items-center justify-center">
-                  <div className="bg-muted/50 rounded-xl p-5 sm:p-6 w-full h-full flex items-center justify-center">
+                  <div className="bg-muted/50 rounded-xl p-5 sm:p-6 w-full h-[320px] md:h-[400px] flex items-center justify-center overflow-hidden">
                     <Mockup />
                   </div>
                 </div>
