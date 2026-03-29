@@ -10,12 +10,12 @@ import {
   BookOpen,
   Wand2,
   ChevronRight,
-  Check,
   Menu,
   X
 } from "lucide-react"
 import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-constants"
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase"
+import { PricingSection } from "@/components/PricingSection"
 import { trackEvent } from "@/lib/utils/analytics"
 
 export function WebLandingPage() {
@@ -35,8 +35,6 @@ export function WebLandingPage() {
     return () => clearInterval(timer)
   }, [heroImages.length])
 
-  // Toggle to show/hide pricing section (for A/B testing)
-  const showPricing = false
 
   const openWaitlist = () => {
     trackEvent("cta_click", { location: "waitlist", label: "open_waitlist" })
@@ -176,11 +174,9 @@ export function WebLandingPage() {
               <a href="#stories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Stories
               </a>
-              {showPricing && (
-                <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-                  Pricing
-                </a>
-              )}
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+                Pricing
+              </a>
             </nav>
 
             {/* CTA button */}
@@ -217,11 +213,9 @@ export function WebLandingPage() {
               <a href="#stories" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
                 Stories
               </a>
-              {showPricing && (
-                <a href="#pricing" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
-                  Pricing
-                </a>
-              )}
+              <a href="#pricing" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
+                Pricing
+              </a>
               <div className="pt-3 border-t border-border space-y-2">
                 <Button
                   onClick={() => { setMobileMenuOpen(false); openWaitlist() }}
@@ -535,163 +529,32 @@ export function WebLandingPage() {
               </div>
             ))}
           </div>
+
+          {/* Read-only mode callout */}
+          <div className="mt-8 lg:mt-12 flex items-center gap-4 rounded-3xl border border-border/50 bg-card px-8 py-6">
+            <span className="text-2xl flex-shrink-0">🔒</span>
+            <div>
+              <p className="text-foreground font-semibold text-lg leading-snug">
+                Don&apos;t want to upload a photo? No problem!
+              </p>
+              <p className="text-muted-foreground text-sm mt-1">
+                Browse <span className="text-primary font-semibold text-base">50+ free stories</span> with no upload, no payment, and no personal
+                information required — just create a free account and start reading
+                with your child today.
+              </p>
+              <button
+                onClick={openWaitlist}
+                className="mt-3 inline-block text-primary font-semibold text-sm hover:underline"
+              >
+                Get Early Access →
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      {showPricing && (
-      <section id="pricing" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4" style={{ fontFamily: "var(--font-display)" }}>
-              Personalized Keepsakes, Forever Yours
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Create magical storybooks your child will treasure. Each story features 10 beautifully illustrated scenes with your child as the hero.
-            </p>
-          </div>
-
-          {/* Free Preview Banner */}
-          <div className="bg-secondary/10 border border-secondary/20 rounded-2xl p-6 mb-10 text-center">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-secondary" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-bold text-foreground">Try Before You Buy</h3>
-                <p className="text-muted-foreground text-sm">Generate a free preview to see your child in the story before purchasing</p>
-              </div>
-              <Button variant="outline" onClick={openWaitlist} className="sm:ml-auto border-secondary/30 text-secondary hover:bg-secondary/10">
-                Get Early Access
-              </Button>
-            </div>
-          </div>
-
-          {/* Pricing Cards */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Single Storybook */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 flex flex-col">
-              <h3 className="text-lg font-bold text-foreground mb-1">Single Storybook</h3>
-              <p className="text-muted-foreground text-sm mb-4">One personalized adventure</p>
-              <div className="text-3xl font-bold text-foreground mb-4">
-                $7.99
-              </div>
-              <ul className="space-y-2 mb-6 flex-1">
-                {[
-                  "1 personalized storybook",
-                  "10 illustrated scenes",
-                  "HD quality images",
-                  "Yours forever",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-muted-foreground text-sm">
-                    <Check className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="outline" onClick={openWaitlist} className="w-full">
-                Get Early Access
-              </Button>
-            </div>
-
-            {/* 2-Story Bundle */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 flex flex-col">
-              <h3 className="text-lg font-bold text-foreground mb-1">2-Story Bundle</h3>
-              <p className="text-muted-foreground text-sm mb-4">Two adventures to enjoy</p>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                $13.99
-              </div>
-              <p className="text-secondary text-xs font-medium mb-4">Save $2</p>
-              <ul className="space-y-2 mb-6 flex-1">
-                {[
-                  "2 personalized storybooks",
-                  "10 scenes each",
-                  "Mix & match stories",
-                  "Yours forever",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-muted-foreground text-sm">
-                    <Check className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button variant="outline" onClick={openWaitlist} className="w-full">
-                Get Early Access
-              </Button>
-            </div>
-
-            {/* 3-Story Bundle */}
-            <div className="bg-card rounded-2xl shadow-lg border border-border p-6 flex flex-col relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md">
-                  POPULAR
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-1 mt-2">3-Story Bundle</h3>
-              <p className="text-muted-foreground text-sm mb-4">Perfect for bedtime variety</p>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                $19.99
-              </div>
-              <p className="text-secondary text-xs font-medium mb-4">Save $4</p>
-              <ul className="space-y-2 mb-6 flex-1">
-                {[
-                  "3 personalized storybooks",
-                  "10 scenes each",
-                  "Ideal for rotation",
-                  "Yours forever",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-muted-foreground text-sm">
-                    <Check className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button onClick={openWaitlist} className="w-full bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25">
-                Get Early Access
-              </Button>
-            </div>
-
-            {/* 4-Story Bundle - Best Value */}
-            <div className="bg-card rounded-2xl shadow-lg border-2 border-primary/30 p-6 flex flex-col relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <span className="px-3 py-1 bg-secondary text-secondary-foreground text-xs font-bold rounded-full shadow-md">
-                  BEST VALUE
-                </span>
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-1 mt-2">Complete Library</h3>
-              <p className="text-muted-foreground text-sm mb-4">All 4 stories at launch</p>
-              <div className="text-3xl font-bold text-foreground mb-1">
-                $24.99
-              </div>
-              <p className="text-secondary text-xs font-medium mb-4">Save $7</p>
-              <ul className="space-y-2 mb-6 flex-1">
-                {[
-                  "4 personalized storybooks",
-                  "Complete starter collection",
-                  "Maximum variety",
-                  "Yours forever",
-                ].map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-muted-foreground text-sm">
-                    <Check className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button onClick={openWaitlist} className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold shadow-lg">
-                Get Early Access
-              </Button>
-            </div>
-          </div>
-
-          {/* Trust message */}
-          <div className="text-center mt-10">
-            <p className="text-muted-foreground text-sm">
-              One-time purchase. No subscription required. Your storybooks are yours to keep forever.
-            </p>
-          </div>
-        </div>
-      </section>
-      )}
+      <PricingSection onEarlyAccess={openWaitlist} />
 
       {/* Final CTA */}
       <section className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
