@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
-  const { email } = body
+  const { email, name } = body
 
   if (!email || typeof email !== 'string' || !email.includes('@')) {
     return NextResponse.json({ error: 'A valid email address is required.' }, { status: 400 })
@@ -24,7 +24,10 @@ export async function POST(request: NextRequest) {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          ...(name ? { first_name: name } : {}),
+        }),
       }
     )
 

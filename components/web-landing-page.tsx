@@ -22,6 +22,7 @@ export function WebLandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
   const [showWaitlist, setShowWaitlist] = useState(false)
+  const [waitlistName, setWaitlistName] = useState("")
   const [waitlistEmail, setWaitlistEmail] = useState("")
   const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
   const [waitlistError, setWaitlistError] = useState("")
@@ -42,6 +43,7 @@ export function WebLandingPage() {
     setWaitlistStatus("idle")
     setWaitlistError("")
     setWaitlistEmail("")
+    setWaitlistName("")
   }
 
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
@@ -53,7 +55,7 @@ export function WebLandingPage() {
       const res = await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: waitlistEmail.trim() }),
+        body: JSON.stringify({ email: waitlistEmail.trim(), name: waitlistName.trim() }),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -641,8 +643,16 @@ export function WebLandingPage() {
                 </p>
 
                 <input
+                  type="text"
+                  placeholder="Your name"
+                  value={waitlistName}
+                  onChange={(e) => setWaitlistName(e.target.value)}
+                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
+                />
+
+                <input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Your email"
                   value={waitlistEmail}
                   onChange={(e) => setWaitlistEmail(e.target.value)}
                   required

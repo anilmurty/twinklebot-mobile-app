@@ -28,10 +28,11 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`
 
   const freeFeatures = [
-    "Browse 50+ educational stories",
+    "Choose from 50+ educational stories",
     "Full audio narration on every story",
-    "Read on web, iOS, or Android",
+    "Optimized to read or listen on phone, tablet or laptop",
     "No photo upload needed",
+    "No credit card needed. Free forever",
   ]
 
   return (
