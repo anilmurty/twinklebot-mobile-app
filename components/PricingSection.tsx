@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, Sparkles } from "lucide-react"
+import { Check } from "lucide-react"
 import { IS_EARLY_ACCESS } from "@/lib/config"
 import { trackEvent } from "@/lib/utils/analytics"
 
@@ -15,6 +15,13 @@ interface Plan {
 
 interface PricingSectionProps {
   onEarlyAccess: () => void
+}
+
+const bundleDescriptors: Record<number, string> = {
+  1: "Perfect for trying it out",
+  2: "Two bedtime adventures",
+  3: "A week of magic",
+  4: "The full experience",
 }
 
 export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
@@ -71,7 +78,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
         {/* Two-card layout */}
         <div className="grid md:grid-cols-2 gap-6 lg:gap-8">
           {/* Card 1 — Always Free */}
-          <div className="bg-card rounded-3xl border border-border/50 p-8 flex flex-col">
+          <div className="bg-card rounded-3xl border-2 border-green-500/30 p-8 flex flex-col">
             <h3 className="text-xl font-bold text-foreground mb-1">Always Free</h3>
             <p className="text-muted-foreground text-sm mb-6">
               No photo, no payment, no personal info required.
@@ -80,7 +87,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
             <ul className="space-y-3 mb-8 flex-1">
               {freeFeatures.map((feature, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-muted-foreground text-sm">
-                  <Check className="w-4 h-4 text-secondary shrink-0 mt-0.5" />
+                  <Check className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                   {feature}
                 </li>
               ))}
@@ -109,11 +116,11 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
 
             <h3 className="text-xl font-bold text-foreground mb-1 mt-1">Personalized Stories</h3>
             <p className="text-muted-foreground text-sm mb-6">
-              Your child, the hero — in minutes.
+              A story only your child can star in — theirs to keep forever.
             </p>
 
             {plans.length > 0 ? (
-              <div className="space-y-3 mb-8 flex-1">
+              <div className="space-y-3 mb-4 flex-1">
                 {plans.map((plan) => {
                   const savings = getSavings(plan)
                   const isBestValue = plan.stories_per_period === 4
@@ -121,6 +128,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
                     plan.stories_per_period === 1
                       ? "1 Story"
                       : `${plan.stories_per_period} Stories`
+                  const descriptor = bundleDescriptors[plan.stories_per_period]
 
                   return (
                     <div
@@ -129,23 +137,28 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
                         isBestValue ? "border-primary/30 bg-primary/5" : "border-border"
                       }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{label}</span>
-                        {savings > 0 && (
-                          <span className="text-[10px] font-medium text-secondary">
-                            Save {savings}%
-                          </span>
-                        )}
-                        {isBestValue && (
-                          <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
-                            BEST VALUE
-                          </span>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">{label}</span>
+                          {savings > 0 && (
+                            <span className="text-[10px] font-medium text-secondary">
+                              Save {savings}%
+                            </span>
+                          )}
+                          {isBestValue && (
+                            <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                              BEST VALUE
+                            </span>
+                          )}
+                        </div>
+                        {descriptor && (
+                          <span className="text-xs text-muted-foreground">{descriptor}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
                         {IS_EARLY_ACCESS ? (
                           <>
-                            <span className="text-sm text-muted-foreground line-through">
+                            <span className="text-sm text-muted-foreground/50 line-through">
                               {formatPrice(plan.price_amount)}
                             </span>
                             <span className="text-sm font-bold text-primary">FREE</span>
@@ -161,12 +174,16 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
                 })}
               </div>
             ) : (
-              <div className="space-y-3 mb-8 flex-1">
+              <div className="space-y-3 mb-4 flex-1">
                 {[1, 2, 3, 4].map((i) => (
                   <div key={i} className="h-12 rounded-xl bg-muted/50 animate-pulse" />
                 ))}
               </div>
             )}
+
+            <p className="text-xs text-muted-foreground mb-4">
+              One-time purchase. No subscription required. Your storybooks are yours to keep forever.
+            </p>
 
             <button
               onClick={() => {
@@ -178,13 +195,6 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
               Get Early Access →
             </button>
           </div>
-        </div>
-
-        {/* Trust message */}
-        <div className="text-center mt-10">
-          <p className="text-muted-foreground text-sm">
-            One-time purchase. No subscription required. Your storybooks are yours to keep forever.
-          </p>
         </div>
       </div>
     </section>
