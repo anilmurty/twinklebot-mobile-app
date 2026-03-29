@@ -1,17 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Check } from "lucide-react"
-import { IS_EARLY_ACCESS } from "@/lib/config"
+import { IS_EARLY_ACCESS, LANDING_PAGE_PLANS } from "@/lib/config"
 import { trackEvent } from "@/lib/utils/analytics"
-
-interface Plan {
-  id: number
-  name: string
-  price_amount: number // cents
-  stories_per_period: number
-  quality_tier: string
-}
 
 interface PricingSectionProps {
   onEarlyAccess: () => void
@@ -25,26 +16,13 @@ const bundleDescriptors: Record<number, string> = {
 }
 
 export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
-  const [plans, setPlans] = useState<Plan[]>([])
+  const plans = LANDING_PAGE_PLANS
+  const singlePrice = plans[0].price_cents
 
-  useEffect(() => {
-    fetch("/api/v1/subscription-plans")
-      .then((r) => r.json())
-      .then((data) => {
-        const premium = (data.plans || [])
-          .filter((p: Plan) => p.quality_tier === "premium" && p.stories_per_period > 0)
-          .sort((a: Plan, b: Plan) => a.stories_per_period - b.stories_per_period)
-        setPlans(premium)
-      })
-      .catch(() => {})
-  }, [])
-
-  const singlePrice = plans.find((p) => p.stories_per_period === 1)?.price_amount || 0
-
-  const getSavings = (plan: Plan): number => {
-    if (plan.stories_per_period <= 1 || !singlePrice) return 0
-    const expected = singlePrice * plan.stories_per_period
-    return Math.round(((expected - plan.price_amount) / expected) * 100)
+  const getSavings = (stories: number, priceCents: number): number => {
+    if (stories <= 1) return 0
+    const expected = singlePrice * stories
+    return Math.round(((expected - priceCents) / expected) * 100)
   }
 
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`
@@ -71,7 +49,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
             Simple, transparent pricing
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Start free. Go deeper when you&apos;re ready.
+            Start free. Personalize when you&apos;re ready.
           </p>
         </div>
 
@@ -119,67 +97,56 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
               A story only your child can star in — theirs to keep forever.
             </p>
 
-            {plans.length > 0 ? (
-              <div className="space-y-3 mb-4 flex-1">
-                {plans.map((plan) => {
-                  const savings = getSavings(plan)
-                  const isBestValue = plan.stories_per_period === 4
-                  const label =
-                    plan.stories_per_period === 1
-                      ? "1 Story"
-                      : `${plan.stories_per_period} Stories`
-                  const descriptor = bundleDescriptors[plan.stories_per_period]
+            <div className="space-y-3 mb-4 flex-1">
+              {plans.map((plan) => {
+                const savings = getSavings(plan.stories, plan.price_cents)
+                const isBestValue = plan.stories === 4
+                const label = plan.stories === 1 ? "1 Story" : `${plan.stories} Stories`
+                const descriptor = bundleDescriptors[plan.stories]
 
-                  return (
-                    <div
-                      key={plan.id}
-                      className={`flex items-center justify-between p-3 rounded-xl border ${
-                        isBestValue ? "border-primary/30 bg-primary/5" : "border-border"
-                      }`}
-                    >
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-foreground">{label}</span>
-                          {savings > 0 && (
-                            <span className="text-[10px] font-medium text-secondary">
-                              Save {savings}%
-                            </span>
-                          )}
-                          {isBestValue && (
-                            <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
-                              BEST VALUE
-                            </span>
-                          )}
-                        </div>
-                        {descriptor && (
-                          <span className="text-xs text-muted-foreground">{descriptor}</span>
-                        )}
-                      </div>
+                return (
+                  <div
+                    key={plan.stories}
+                    className={`flex items-center justify-between p-3 rounded-xl border ${
+                      isBestValue ? "border-primary/30 bg-primary/5" : "border-border"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
-                        {IS_EARLY_ACCESS ? (
-                          <>
-                            <span className="text-sm text-muted-foreground/50 line-through">
-                              {formatPrice(plan.price_amount)}
-                            </span>
-                            <span className="text-sm font-bold text-primary">FREE</span>
-                          </>
-                        ) : (
-                          <span className="text-sm font-bold text-foreground">
-                            {formatPrice(plan.price_amount)}
+                        <span className="text-sm font-medium text-foreground">{label}</span>
+                        {savings > 0 && (
+                          <span className="text-[10px] font-medium text-green-400">
+                            Save {savings}%
+                          </span>
+                        )}
+                        {isBestValue && (
+                          <span className="text-[10px] font-semibold bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                            BEST VALUE
                           </span>
                         )}
                       </div>
+                      {descriptor && (
+                        <span className="text-xs text-muted-foreground">{descriptor}</span>
+                      )}
                     </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="space-y-3 mb-4 flex-1">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-12 rounded-xl bg-muted/50 animate-pulse" />
-                ))}
-              </div>
-            )}
+                    <div className="flex items-center gap-2">
+                      {IS_EARLY_ACCESS ? (
+                        <>
+                          <span className="text-sm text-muted-foreground/50 line-through">
+                            {formatPrice(plan.price_cents)}
+                          </span>
+                          <span className="text-sm font-bold text-primary">FREE</span>
+                        </>
+                      ) : (
+                        <span className="text-sm font-bold text-foreground">
+                          {formatPrice(plan.price_cents)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
 
             <p className="text-xs text-muted-foreground mb-4">
               One-time purchase. No subscription required. Your storybooks are yours to keep forever.
