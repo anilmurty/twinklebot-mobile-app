@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sparkles, BookOpen, X, ChevronDown, ChevronUp, Share2, Check, ArrowLeft } from "lucide-react"
+import { Sparkles, BookOpen, X, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Share2, Check, ArrowLeft } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 
 interface Scene {
@@ -76,6 +76,16 @@ export default function SharedStorybookPage() {
       fetchSharedStorybook()
     }
   }, [shareToken])
+
+  // Keyboard navigation for desktop
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') handlePrevious()
+      if (e.key === 'ArrowRight') handleNext()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentScene, storybook])
 
   const fetchSharedStorybook = async () => {
     try {
@@ -338,6 +348,15 @@ export default function SharedStorybookPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
 
+              {/* Forward arrow on title page (desktop) */}
+              <button
+                onClick={handleNext}
+                className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+                aria-label="Start reading"
+              >
+                <ChevronRight className="w-6 h-6 text-white" />
+              </button>
+
               <div className="relative z-10 flex flex-col items-center justify-center p-6 md:p-12 text-center max-w-2xl mx-auto">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-serif mb-6 drop-shadow-lg">
                   {storybook.title}
@@ -494,6 +513,26 @@ export default function SharedStorybookPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Navigation arrows (visible on desktop, hidden on touch devices) */}
+              {currentScene > 0 && (
+                <button
+                  onClick={handlePrevious}
+                  className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+                  aria-label="Previous"
+                >
+                  <ChevronLeft className="w-6 h-6 text-white" />
+                </button>
+              )}
+              {currentScene < totalPages - 1 && (
+                <button
+                  onClick={handleNext}
+                  className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+                  aria-label="Next"
+                >
+                  <ChevronRight className="w-6 h-6 text-white" />
+                </button>
+              )}
 
               {/* Bottom section: story text + CTA */}
               <div className="absolute bottom-0 left-0 right-0 z-10">
