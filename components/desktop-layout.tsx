@@ -37,7 +37,7 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
   const tabs = [
     { id: "storybooks" as const, label: "Storybooks", icon: BookOpen },
     { id: "characters" as const, label: "Characters", icon: Users },
-    { id: "library" as const, label: "Story Library", icon: Library },
+    { id: "library" as const, label: "Library", icon: Library },
     { id: "keepsakes" as const, label: "Keepsakes", icon: Gift },
     { id: "profile" as const, label: "Profile", icon: User },
   ]

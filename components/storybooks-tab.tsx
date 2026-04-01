@@ -446,6 +446,15 @@ export function StorybooksTab() {
                     <Plus className="w-5 h-5" />
                     <span className="font-semibold">Create First Character</span>
                   </Button>
+                  <p className="text-sm text-muted-foreground">Or</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push("/app?tab=library")}
+                    className="w-full h-auto py-4 flex items-center justify-center gap-2"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    <span className="font-semibold">Browse Storybook Library</span>
+                  </Button>
                 </>
               ) : (
                 <>
