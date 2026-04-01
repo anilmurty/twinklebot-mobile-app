@@ -216,7 +216,7 @@ export function CharactersTab() {
                         {/* Bottom gradient */}
                         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
                         {/* Desktop hover overlay */}
-                        <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 items-center justify-center">
+                        <div className="hidden md:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-col items-center justify-center gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
@@ -231,6 +231,22 @@ export function CharactersTab() {
                             <Sparkles className="w-4 h-4 mr-1.5 inline" />
                             Create Story
                           </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleRenameClick(character) }}
+                              className="px-3 py-1.5 rounded-full bg-white/90 text-gray-900 text-xs font-semibold hover:bg-white transition-colors"
+                            >
+                              <Pencil className="w-3 h-3 mr-1 inline" />
+                              Rename
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ id: character.id, name: character.name }) }}
+                              className="px-3 py-1.5 rounded-full bg-destructive/90 text-white text-xs font-semibold hover:bg-destructive transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3 mr-1 inline" />
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
                       {/* Name + date below image */}
