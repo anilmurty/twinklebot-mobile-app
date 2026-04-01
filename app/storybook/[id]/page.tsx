@@ -128,7 +128,7 @@ export default function StorybookViewerPage() {
       }
 
       setStorybook(data)
-      trackEvent("storybook_opened", { storybook_id: id as string, title: data.title, status: data.status })
+      trackEvent("storybook_opened", { storybook_id: storybookId, title: data.title, status: data.status })
     } catch (err: any) {
       console.error('Failed to fetch storybook:', err)
       setError(err.message || 'Failed to load storybook')
