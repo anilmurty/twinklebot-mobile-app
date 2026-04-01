@@ -71,7 +71,7 @@ export function ProfileTab() {
     }
   }
 
-  const storyCredits = profile?.story_credits || 0
+  const storyCredits = (profile?.premium_credits || 0) + (profile?.basic_credits || 0) + (profile?.story_credits || 0)
   const avatarUrl = (user as any)?.user_metadata?.avatar_url || (user as any)?.user_metadata?.picture
   return (
     <div className="min-h-full">
