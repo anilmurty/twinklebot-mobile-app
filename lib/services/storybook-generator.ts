@@ -859,6 +859,46 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     } catch (err: any) {
       console.error('[STORYBOOK] Failed to send notification:', err.message)
     }
+
+    // Send admin QC email with scene thumbnails (best-effort, never throws)
+    try {
+      const { sendStoryCompletionAlert } = await import('@/lib/services/admin-alerts')
+      const { getSignedUrl } = await import('@/lib/supabase/storage')
+
+      // Generate signed URLs for scene images (24-hour expiry for email viewing)
+      const scenesWithSignedUrls = await Promise.all(
+        finalScenes.map(async (s: any) => {
+          let imageUrl = s.image_url
+          try {
+            const match = s.image_url?.match(/storybook-scenes\/(.+?)(\?|$)/)
+            if (match) {
+              imageUrl = await getSignedUrl('storybook-scenes', match[1], 86400)
+            }
+          } catch { /* keep original URL */ }
+          return { scene_number: s.scene_number, headline: s.headline, image_url: imageUrl }
+        })
+      )
+
+      // Get signed URL for character photo
+      let charPhotoUrl = character.front_photo_url
+      try {
+        const charMatch = charPhotoUrl?.match(/character-photos\/(.+?)(\?|$)/)
+        if (charMatch) {
+          charPhotoUrl = await getSignedUrl('character-photos', charMatch[1], 86400)
+        }
+      } catch { /* keep original */ }
+
+      await sendStoryCompletionAlert({
+        storybookId,
+        title: template.title,
+        characterName: character.name,
+        characterPhotoUrl: charPhotoUrl,
+        style: storybookStyle,
+        scenes: scenesWithSignedUrls,
+      })
+    } catch (err: any) {
+      console.error('[STORYBOOK] Failed to send QC email:', err.message)
+    }
   } catch (error: any) {
     // Ensure status is updated even if an unexpected error occurs
     console.error(`❌ Unexpected error during storybook generation:`, error)
