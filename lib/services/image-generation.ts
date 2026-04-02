@@ -45,11 +45,6 @@ export async function createPrediction(
     outputFormat: input.output_format,
   })
 
-  // Use 'model' field for model names (owner/name), 'version' for version hashes
-  const modelField = modelVersion.includes('/')
-    ? { model: modelVersion }
-    : { version: modelVersion }
-
   const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
     method: 'POST',
     headers: {
@@ -57,9 +52,8 @@ export async function createPrediction(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      ...modelField,
+      version: modelVersion,
       input,
-      allow_fallback_model: true,
     }),
   })
 
