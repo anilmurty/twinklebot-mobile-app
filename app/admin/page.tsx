@@ -191,7 +191,7 @@ export default function AdminPage() {
               <UserPlus className="w-4 h-4 mr-1" />
               Create User
             </Button>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground" title="Sign Out">
+            <Button variant="ghost" size="sm" onClick={async () => { await signOut(); window.location.href = '/app' }} className="text-muted-foreground" title="Sign Out">
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
