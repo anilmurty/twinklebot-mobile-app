@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ConfirmDialog } from "@/components/confirm-dialog"
-import { Loader2, Plus, Minus, Trash2, UserPlus, RefreshCw } from "lucide-react"
+import { Loader2, Plus, Minus, Trash2, UserPlus, RefreshCw, LogOut } from "lucide-react"
 
 interface AdminUser {
   id: string
@@ -46,7 +46,7 @@ async function adminFetch(path: string, options: RequestInit = {}) {
 }
 
 export default function AdminPage() {
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, signOut } = useAuth()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -178,7 +178,10 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background p-6 md:p-10">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+            <p className="text-sm text-muted-foreground">{user?.email}</p>
+          </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loading}>
               <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} />
@@ -187,6 +190,9 @@ export default function AdminPage() {
             <Button size="sm" onClick={() => setShowCreate(true)}>
               <UserPlus className="w-4 h-4 mr-1" />
               Create User
+            </Button>
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-muted-foreground" title="Sign Out">
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
