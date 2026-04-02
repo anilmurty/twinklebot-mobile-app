@@ -32,6 +32,62 @@ interface SceneTemplate {
   aspect_ratio?: string
 }
 
+/**
+ * Refund 1 story credit to the user when generation fails.
+ * Uses the storybook's quality_tier and payment_status to determine
+ * which credit pool to refund to, and only refunds if payment was completed.
+ */
+async function refundCreditOnFailure(storybookId: string): Promise<void> {
+  try {
+    const { data: storybook } = await supabaseAdmin
+      .from('storybooks')
+      .select('user_id, quality_tier, payment_status')
+      .eq('id', storybookId)
+      .single()
+
+    if (!storybook || storybook.payment_status !== 'completed') {
+      console.log(`[REFUND] No refund needed for storybook ${storybookId} (payment_status: ${storybook?.payment_status})`)
+      return
+    }
+
+    const creditColumn = storybook.quality_tier === 'premium' ? 'premium_credits' : 'basic_credits'
+
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select(creditColumn)
+      .eq('id', storybook.user_id)
+      .single()
+
+    if (!profile) {
+      console.error(`[REFUND] Profile not found for user ${storybook.user_id}`)
+      return
+    }
+
+    const currentCredits = (profile as any)[creditColumn] || 0
+    const { error: updateError } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        [creditColumn]: currentCredits + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', storybook.user_id)
+
+    if (updateError) {
+      console.error(`[REFUND] Failed to refund credit:`, updateError)
+    } else {
+      console.log(`[REFUND] Refunded 1 ${storybook.quality_tier || 'basic'} credit to user ${storybook.user_id} (now ${currentCredits + 1})`)
+    }
+
+    // Mark storybook so we don't double-refund
+    await supabaseAdmin
+      .from('storybooks')
+      .update({ payment_status: 'refunded', updated_at: new Date().toISOString() })
+      .eq('id', storybookId)
+  } catch (err: any) {
+    console.error(`[REFUND] Error refunding credit for storybook ${storybookId}:`, err.message)
+  }
+}
+
 export async function generateStorybook(storybookId: string): Promise<void> {
   const startTime = Date.now()
   console.log(`[TIMING] Storybook generation started at ${new Date().toISOString()}`)
@@ -938,7 +994,10 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     if (!statusUpdateSuccess) {
       console.error(`❌ CRITICAL: Failed to update storybook status after 3 attempts. Storybook ${storybookId} may be stuck in 'generating' status.`)
     }
-    
+
+    // Refund the user's credit since generation failed
+    await refundCreditOnFailure(storybookId)
+
     throw error // Re-throw to let caller know it failed
   }
 }
