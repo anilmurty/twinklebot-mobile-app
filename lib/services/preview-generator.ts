@@ -279,7 +279,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       basePhotoPath,
       signedVariationUrl,
       styledPrompt,
-      firstScene.aspect_ratio || 'match_input_image',
+      firstScene.aspect_ratio || '9:16',
       template.id,
       'basic'
     )

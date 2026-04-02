@@ -138,12 +138,16 @@ export async function generateCharacterVariations(
   console.log(`Character gender: ${gender}`)
 
   // Process model identifier - env var takes priority as global override
+  const DEFAULT_MODEL = 'bytedance/seedream-4.5'
   let modelIdentifier: string
-  if (process.env.NANOBANANA_MODEL_VERSION) {
-    modelIdentifier = process.env.NANOBANANA_MODEL_VERSION
+  if (process.env.IMAGE_MODEL_VERSION) {
+    modelIdentifier = process.env.IMAGE_MODEL_VERSION
     console.log(`✅ Using model from env var: ${modelIdentifier}`)
+  } else if (process.env.NANOBANANA_MODEL_VERSION) {
+    modelIdentifier = process.env.NANOBANANA_MODEL_VERSION
+    console.log(`✅ Using model from legacy env var: ${modelIdentifier}`)
   } else {
-    modelIdentifier = 'google/nano-banana-2'
+    modelIdentifier = DEFAULT_MODEL
     const { data: template, error: templateError } = templateResult
     if (!templateError && template?.generation_models) {
       const modelData = Array.isArray(template.generation_models)

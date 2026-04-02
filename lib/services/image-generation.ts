@@ -276,7 +276,7 @@ async function resolveModelVersion(modelIdentifier: string): Promise<string> {
 export async function generateImageWithNanoBanana(
   prompt: string,
   characterPhotos: string[],
-  aspectRatio: string = 'match_input_image',
+  aspectRatio: string = '9:16',
   templateId?: number // Optional: get model from template
 ): Promise<string> {
   // Get model identifier (from template or env/default)
@@ -326,7 +326,7 @@ export async function createBasePhotoAndCharacterPrediction(
   basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
-  aspectRatio: string = 'match_input_image',
+  aspectRatio: string = '9:16',
   templateId?: number, // Optional: get model from template
   qualityTier?: 'basic' | 'premium' // Optional: quality tier for model selection
 ): Promise<string> {
@@ -396,7 +396,7 @@ export async function generateImageWithBasePhotoAndCharacter(
   basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
   characterVariationUrl: string, // URL to character variation (front/left/right)
   insertionPrompt: string,
-  aspectRatio: string = 'match_input_image',
+  aspectRatio: string = '9:16',
   templateId?: number, // Optional: get model from template
   qualityTier?: 'basic' | 'premium' // Optional: quality tier for model selection
 ): Promise<string> {
