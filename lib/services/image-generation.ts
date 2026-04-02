@@ -25,6 +25,7 @@ function getReplicateToken(): string {
 
 interface ReplicatePrediction {
   id: string
+  model?: string
   status: 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled'
   output?: string
   error?: string
@@ -44,6 +45,11 @@ export async function createPrediction(
     outputFormat: input.output_format,
   })
 
+  // Use 'model' field for model names (owner/name), 'version' for version hashes
+  const modelField = modelVersion.includes('/')
+    ? { model: modelVersion }
+    : { version: modelVersion }
+
   const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
     method: 'POST',
     headers: {
@@ -51,8 +57,9 @@ export async function createPrediction(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      version: modelVersion,
+      ...modelField,
       input,
+      allow_fallback_model: true,
     }),
   })
 
@@ -97,6 +104,9 @@ export async function pollPrediction(
     if (prediction.status === 'succeeded') {
       if (!prediction.output) {
         throw new Error('Prediction succeeded but no output URL')
+      }
+      if (prediction.model) {
+        console.log(`[REPLICATE] Prediction ${predictionId} completed using model: ${prediction.model}`)
       }
       return prediction.output
     }
