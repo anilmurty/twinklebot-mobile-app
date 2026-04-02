@@ -158,26 +158,28 @@ export async function pollProviderPrediction(predictionId: string): Promise<stri
   return pollPrediction(predictionId)
 }
 
+const DEFAULT_MODEL = 'bytedance/seedream-4.5'
+
 /**
  * Get model identifier from template's generation_model_id
  * Falls back to env var or default if template model not found
  */
 async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | 'premium'): Promise<string> {
   // Env var always takes priority (acts as a global override)
+  if (process.env.IMAGE_MODEL_VERSION) {
+    console.log(`✅ Using model from env var: ${process.env.IMAGE_MODEL_VERSION}`)
+    return process.env.IMAGE_MODEL_VERSION
+  }
+  // Legacy env var support
   if (process.env.NANOBANANA_MODEL_VERSION) {
-    console.log(`✅ Using model from env var: ${process.env.NANOBANANA_MODEL_VERSION}`)
+    console.log(`✅ Using model from legacy env var: ${process.env.NANOBANANA_MODEL_VERSION}`)
     return process.env.NANOBANANA_MODEL_VERSION
   }
 
   // Quality tier selection (overrides template model)
-  if (qualityTier === 'premium') {
-    console.log(`✅ Using premium model: google/nano-banana-2`)
-    return 'google/nano-banana-2'
-  }
-
-  if (qualityTier === 'basic') {
-    console.log(`✅ Using basic model: google/nano-banana-2`)
-    return 'google/nano-banana-2'
+  if (qualityTier === 'premium' || qualityTier === 'basic') {
+    console.log(`✅ Using ${qualityTier} model: ${DEFAULT_MODEL}`)
+    return DEFAULT_MODEL
   }
 
   // If template ID provided, try to get model from template
@@ -208,8 +210,40 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
     }
   }
 
-  // Fallback default
-  return 'google/nano-banana-2'
+  return DEFAULT_MODEL
+}
+
+/**
+ * Build model-specific input params.
+ * seedream-4.5 does not support output_format and requires a real aspect_ratio
+ * (not 'match_input_image'). nano-banana models support both.
+ */
+export function buildModelInput(
+  modelIdentifier: string,
+  prompt: string,
+  imageInput: string[],
+  aspectRatio: string,
+): Record<string, any> {
+  const isSeedream = modelIdentifier.includes('seedream')
+
+  // Map invalid seedream aspect ratios to the closest valid value
+  let resolvedAspectRatio = aspectRatio
+  if (isSeedream && (aspectRatio === 'match_input_image' || !aspectRatio)) {
+    resolvedAspectRatio = '9:16'
+  }
+
+  const input: Record<string, any> = {
+    prompt,
+    image_input: imageInput,
+    aspect_ratio: resolvedAspectRatio,
+  }
+
+  // nano-banana supports output_format; seedream does not
+  if (!isSeedream) {
+    input.output_format = 'jpg'
+  }
+
+  return input
 }
 
 /**
@@ -279,12 +313,7 @@ export async function generateImageWithNanoBanana(
     aspectRatio
   })
   
-  const predictionId = await createProviderPrediction(modelVersion, {
-    prompt,
-    image_input: validPhotos,
-    aspect_ratio: aspectRatio,
-    output_format: 'jpg',
-  })
+  const predictionId = await createProviderPrediction(modelVersion, buildModelInput(modelVersion, prompt, validPhotos, aspectRatio))
 
   return pollProviderPrediction(predictionId)
 }
@@ -350,13 +379,10 @@ export async function createBasePhotoAndCharacterPrediction(
   
   // Call image generation API with both images
   // The prompt is the insertion prompt, and we pass both images
-  // nano-banana accepts multiple images in the image_input array
-  const predictionId = await createProviderPrediction(modelVersion, {
-    prompt: insertionPrompt,
-    image_input: [basePhotoUrl, characterVariationUrl], // Base photo first, then character variation
-    aspect_ratio: aspectRatio,
-    output_format: 'jpg',
-  })
+  const predictionId = await createProviderPrediction(
+    modelVersion,
+    buildModelInput(modelVersion, insertionPrompt, [basePhotoUrl, characterVariationUrl], aspectRatio)
+  )
 
   return predictionId
 }

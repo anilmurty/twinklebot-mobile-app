@@ -4,7 +4,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { generateImageWithNanoBanana, createProviderPrediction, pollProviderPrediction } from './image-generation'
+import { generateImageWithNanoBanana, createProviderPrediction, pollProviderPrediction, buildModelInput } from './image-generation'
 import { uploadToStorage, getSignedUrl, deleteFromStorage, getStorageUrl } from '@/lib/supabase/storage'
 
 export interface CharacterVariations {
@@ -244,12 +244,7 @@ export async function generateCharacterVariations(
     console.log(`[TIMING] Creating first prediction at ${new Date().toISOString()}`)
     const predictionId = await createProviderPrediction(
       modelVersion,
-      {
-        prompt: frontPrompt,
-        image_input: imageInputArray, // Use attire image if custom look selected
-        aspect_ratio: 'match_input_image',
-        output_format: 'jpg',
-      }
+      buildModelInput(modelVersion, frontPrompt, imageInputArray, '1:1')
     )
     
     console.log(`[TIMING] Created prediction ${predictionId}: ${Date.now() - predictionCreateStart}ms`)
@@ -271,8 +266,8 @@ export async function generateCharacterVariations(
     const { generateImageWithNanoBanana } = await import('./image-generation')
     frontUrl = await generateImageWithNanoBanana(
       frontPrompt,
-      imageInputArray, // Use attire image if custom look selected
-      'match_input_image',
+      imageInputArray,
+      '1:1',
       templateId // Pass template ID to get model from template
     ).then(url => {
       console.log('✅ Front variation generated:', url)
