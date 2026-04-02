@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     // Find storybooks stuck in 'generating' for >10 minutes
     const { data: stuckBooks, error } = await supabaseAdmin
       .from('storybooks')
-      .select('id, title, status, scenes, total_scenes, template_id, updated_at, user_id, character:characters(name)')
+      .select('id, title, status, scenes, template_id, updated_at, user_id, character:characters(name), template:story_templates(scene_count)')
       .eq('status', 'generating')
       .lt('updated_at', fiveMinAgo)
       .order('updated_at', { ascending: true })
@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
     for (const book of stuckBooks) {
       const scenes = Array.isArray(book.scenes) ? book.scenes : []
       const scenesWithImages = scenes.filter((s: any) => s.image_url)
-      const totalScenes = book.total_scenes || 10
+      const templateData = Array.isArray(book.template) ? book.template[0] : book.template
+      const totalScenes = (templateData as any)?.scene_count || 10
       const stuckSince = book.updated_at
 
       console.log(`[RECOVERY] Storybook ${book.id} "${book.title}": ${scenesWithImages.length}/${totalScenes} scenes, stuck since ${stuckSince}`)
