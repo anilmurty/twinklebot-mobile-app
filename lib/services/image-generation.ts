@@ -119,13 +119,13 @@ export async function pollPrediction(
 
 /**
  * Convert Replicate-style input to fal.ai input format.
- * Replicate uses `image_input`, fal uses `image_urls`.
+ * Replicate uses `image_input` or `input_images`, fal uses `image_urls`.
  */
 function toFalInput(input: Record<string, any>): Record<string, any> {
-  const { image_input, aspect_ratio, output_format, ...rest } = input
+  const { image_input, input_images, aspect_ratio, output_format, ...rest } = input
   return {
     ...rest,
-    image_urls: image_input,
+    image_urls: image_input || input_images,
     aspect_ratio: aspect_ratio === 'match_input_image' ? 'auto' : aspect_ratio,
     output_format: output_format === 'jpg' ? 'jpeg' : output_format,
   }
@@ -158,7 +158,7 @@ export async function pollProviderPrediction(predictionId: string): Promise<stri
   return pollPrediction(predictionId)
 }
 
-const DEFAULT_MODEL = 'bytedance/seedream-4.5'
+const DEFAULT_MODEL = 'black-forest-labs/flux-2-pro'
 
 /**
  * Get model identifier from template's generation_model_id
@@ -215,8 +215,10 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
 
 /**
  * Build model-specific input params.
- * seedream-4.5 does not support output_format and requires a real aspect_ratio
- * (not 'match_input_image'). nano-banana models support both.
+ * Different models use different parameter names and support different options:
+ * - nano-banana: image_input (array), output_format, match_input_image aspect ratio
+ * - seedream-4.5: image_input (array), no output_format, requires real aspect_ratio
+ * - flux-2-pro: input_images (array), no output_format, requires real aspect_ratio
  */
 export function buildModelInput(
   modelIdentifier: string,
@@ -224,22 +226,29 @@ export function buildModelInput(
   imageInput: string[],
   aspectRatio: string,
 ): Record<string, any> {
-  const isSeedream = modelIdentifier.includes('seedream')
+  const isFlux = modelIdentifier.includes('flux')
+  const isNanoBanana = modelIdentifier.includes('nano-banana')
 
-  // Map invalid seedream aspect ratios to the closest valid value
+  // Only nano-banana supports 'match_input_image'; others need a real ratio
   let resolvedAspectRatio = aspectRatio
-  if (isSeedream && (aspectRatio === 'match_input_image' || !aspectRatio)) {
+  if (!isNanoBanana && (aspectRatio === 'match_input_image' || !aspectRatio)) {
     resolvedAspectRatio = '9:16'
   }
 
   const input: Record<string, any> = {
     prompt,
-    image_input: imageInput,
     aspect_ratio: resolvedAspectRatio,
   }
 
-  // nano-banana supports output_format; seedream does not
-  if (!isSeedream) {
+  // Image input parameter name differs by model
+  if (isFlux) {
+    input.input_images = imageInput
+  } else {
+    input.image_input = imageInput
+  }
+
+  // Only nano-banana supports output_format
+  if (isNanoBanana) {
     input.output_format = 'jpg'
   }
 
