@@ -221,7 +221,8 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
  * - nano-banana: image_input (array), output_format, match_input_image aspect ratio
  * - seedream-4.5: image_input (array), no output_format, requires real aspect_ratio
  * - flux-2-pro: input_images (array), megapixels, requires real aspect_ratio
- * - flux-kontext-pro: input_image (single URI), requires real aspect_ratio
+ * - flux-kontext-pro: input_image (single URI), supports match_input_image,
+ *     output_format (jpg/png), safety_tolerance (0-6, max 2 with images)
  */
 export function buildModelInput(
   modelIdentifier: string,
@@ -233,9 +234,10 @@ export function buildModelInput(
   const isFlux = modelIdentifier.includes('flux')
   const isNanoBanana = modelIdentifier.includes('nano-banana')
 
-  // Only nano-banana supports 'match_input_image'; others need a real ratio
+  // Both nano-banana and flux-kontext support 'match_input_image'
+  // Other models need a real ratio
   let resolvedAspectRatio = aspectRatio
-  if (!isNanoBanana && (aspectRatio === 'match_input_image' || !aspectRatio)) {
+  if (!isNanoBanana && !isFluxKontext && (aspectRatio === 'match_input_image' || !aspectRatio)) {
     resolvedAspectRatio = '9:16'
   }
 
@@ -250,6 +252,8 @@ export function buildModelInput(
     // When multiple images are provided, use the last one (character variation)
     // since the prompt should describe the scene context
     input.input_image = imageInput[imageInput.length - 1]
+    input.output_format = 'jpg'
+    input.safety_tolerance = 2
   } else if (isFlux) {
     input.input_images = imageInput
     input.megapixels = '0.25'
@@ -257,7 +261,7 @@ export function buildModelInput(
     input.image_input = imageInput
   }
 
-  // Only nano-banana supports output_format
+  // nano-banana also supports output_format
   if (isNanoBanana) {
     input.output_format = 'jpg'
   }

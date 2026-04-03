@@ -4,6 +4,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateImageWithBasePhotoAndCharacter } from './image-generation'
+import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
 import {
   getCharacterVariations,
@@ -400,43 +401,63 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         console.log(`[STYLE] Applied ${storybookStyle} modifier to scene ${sceneTemplate.scene_number} prompt`)
       }
 
-      // Create prediction
-      const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
-      const predictionId = await createBasePhotoAndCharacterPrediction(
-        basePhotoPath,
-        characterImageUrl,
-        styledInsertionPrompt,
-        sceneTemplate.aspect_ratio || '9:16',
-        template.id, // Pass template ID to get model from template
-        qualityTier // Pass quality tier for model selection
-      )
-      
-      console.log(`Created prediction ${predictionId} for scene ${sceneTemplate.scene_number}`)
+      // Generate scene image
+      let storedImageUrl: string
 
-      // Progress is updated after scene is saved to DB (below), not here.
-      // This avoids backwards jumps when scenes complete out of order.
+      if (isGeminiAvailable()) {
+        // Use Google Gemini API — synchronous, no polling needed
+        const { getStorageUrl } = await import('@/lib/supabase/storage')
+        const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
+        const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-      // Poll for the result
-      const generatedImageUrl = await pollPrediction(predictionId)
-      console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
+        console.log(`[GEMINI] Generating scene ${sceneTemplate.scene_number}`)
+        const imageBuffer = await generateImageWithGemini(
+          styledInsertionPrompt,
+          [basePhotoUrl, characterImageUrl],
+          sceneTemplate.aspect_ratio || '9:16'
+        )
 
-      // Download image from Replicate
-      const imageResponse = await fetch(generatedImageUrl)
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download image: ${imageResponse.status}`)
+        // Upload buffer directly to Supabase Storage
+        const { uploadToStorage } = await import('@/lib/supabase/storage')
+        console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
+        storedImageUrl = await uploadToStorage(
+          'storybook-scenes',
+          `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
+          imageBuffer,
+          'image/jpeg'
+        )
+      } else {
+        // Fallback: use Replicate
+        console.warn('[FALLBACK] Using Replicate for scene generation')
+        const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
+        const predictionId = await createBasePhotoAndCharacterPrediction(
+          basePhotoPath,
+          characterImageUrl,
+          styledInsertionPrompt,
+          sceneTemplate.aspect_ratio || '9:16',
+          template.id,
+          qualityTier
+        )
+
+        const generatedImageUrl = await pollPrediction(predictionId)
+        console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
+
+        const imageResponse = await fetch(generatedImageUrl)
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download image: ${imageResponse.status}`)
+        }
+
+        const imageBuffer = await imageResponse.arrayBuffer()
+        const { uploadToStorage } = await import('@/lib/supabase/storage')
+        console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
+        storedImageUrl = await uploadToStorage(
+          'storybook-scenes',
+          `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
+          imageBuffer,
+          'image/jpeg'
+        )
       }
 
-      const imageBuffer = await imageResponse.arrayBuffer()
-
-      // Upload to Supabase Storage
-      const { uploadToStorage } = await import('@/lib/supabase/storage')
-      console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
-      const storedImageUrl = await uploadToStorage(
-        'storybook-scenes',
-        `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
-        imageBuffer,
-        'image/jpeg'
-      )
       console.log(`✅ Scene ${sceneTemplate.scene_number} image uploaded to storage: ${storedImageUrl}`)
 
       // Create scene data
@@ -598,15 +619,27 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       }
     }
 
-    // Generate all scenes in parallel (first attempt only)
-    console.log(`\n=== STARTING PARALLEL SCENE GENERATION (FIRST ATTEMPT) ===`)
-    console.log(`Generating ${scenesToGenerate.length} scenes concurrently...`)
+    // Generate scenes (throttled for Gemini rate limits, or fully parallel for Replicate)
+    const useGemini = isGeminiAvailable()
+    console.log(`\n=== STARTING SCENE GENERATION (FIRST ATTEMPT) ===`)
+    console.log(`Generating ${scenesToGenerate.length} scenes ${useGemini ? 'with Gemini (concurrency: 2)' : 'in parallel via Replicate'}...`)
     if (isResumingFromPreview && hasPreviewScene) {
       console.log(`[RESUME] Skipping preview scene (scene ${existingScenes[0]?.scene_number})`)
     }
-    
-    const scenePromises = scenesToGenerate.map(sceneTemplate => generateSceneFirstAttempt(sceneTemplate))
-    const results = await Promise.allSettled(scenePromises)
+
+    let results: PromiseSettledResult<void>[]
+    if (useGemini) {
+      // Throttle to concurrency 2 to stay under Gemini's 10 IPM rate limit
+      const pLimit = (await import('p-limit')).default
+      const limit = pLimit(2)
+      const scenePromises = scenesToGenerate.map(sceneTemplate =>
+        limit(() => generateSceneFirstAttempt(sceneTemplate))
+      )
+      results = await Promise.allSettled(scenePromises)
+    } else {
+      const scenePromises = scenesToGenerate.map(sceneTemplate => generateSceneFirstAttempt(sceneTemplate))
+      results = await Promise.allSettled(scenePromises)
+    }
     
     // Check for failures - only retry failed scenes sequentially
     const failures = results

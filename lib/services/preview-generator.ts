@@ -9,6 +9,7 @@ import {
   generateCharacterVariations,
 } from './character-variation-generator'
 import { generateImageWithBasePhotoAndCharacter } from './image-generation'
+import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
 
 type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
@@ -274,30 +275,51 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       console.log(`[PREVIEW] Applied ${storybookStyle} style modifier to prompt`)
     }
 
-    // Generate first scene image (always use basic model for preview)
-    const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
-      basePhotoPath,
-      signedVariationUrl,
-      styledPrompt,
-      firstScene.aspect_ratio || '9:16',
-      template.id,
-      'basic'
-    )
+    // Generate first scene image
+    const sceneFileName = `${storybookId}/scene-${firstScene.scene_number}.jpg`
+    let uploadedSceneUrl: string
 
-    console.log(`[PREVIEW] First scene image generated: ${sceneImageUrl}`)
+    if (isGeminiAvailable()) {
+      // Use Google Gemini API — no polling needed
+      const { getStorageUrl } = await import('@/lib/supabase/storage')
+      const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
+      const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-    // Upload scene image to storage
-    const sceneImageResponse = await fetch(sceneImageUrl)
-    const sceneImageBlob = await sceneImageResponse.blob()
-    const sceneImageBuffer = Buffer.from(await sceneImageBlob.arrayBuffer())
+      console.log(`[PREVIEW] Using Gemini for scene generation`)
+      const imageBuffer = await generateImageWithGemini(
+        styledPrompt,
+        [basePhotoUrl, signedVariationUrl],
+        firstScene.aspect_ratio || '9:16'
+      )
 
-    const sceneFileName = `${storybookId}/scene-${firstScene.scene_number}.png`
-    const uploadedSceneUrl = await uploadToStorage(
-      'storybook-scenes',
-      sceneFileName,
-      sceneImageBuffer,
-      'image/png'
-    )
+      uploadedSceneUrl = await uploadToStorage(
+        'storybook-scenes',
+        sceneFileName,
+        imageBuffer,
+        'image/jpeg'
+      )
+    } else {
+      // Fallback: use Replicate
+      console.warn('[FALLBACK] Using Replicate for preview scene generation')
+      const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
+        basePhotoPath,
+        signedVariationUrl,
+        styledPrompt,
+        firstScene.aspect_ratio || '9:16',
+        template.id,
+        'basic'
+      )
+
+      const sceneImageResponse = await fetch(sceneImageUrl)
+      const sceneImageBuffer = Buffer.from(await sceneImageResponse.arrayBuffer())
+
+      uploadedSceneUrl = await uploadToStorage(
+        'storybook-scenes',
+        sceneFileName,
+        sceneImageBuffer,
+        'image/jpeg'
+      )
+    }
 
     console.log(`[PREVIEW] Scene image uploaded: ${uploadedSceneUrl}`)
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Sparkles, Eye } from "lucide-react"
+import { BookOpen, Clock, Check, CheckCircle2, Loader2, Trash2, Plus, Play, Share2, Copy, X, Sparkles, Eye, AlertTriangle } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
@@ -387,6 +387,7 @@ export function StorybooksTab() {
   // Derive storybook status helpers
   const getStorybookStatus = (storybook: Storybook) => {
     const sceneCount = storybook.scenes?.length || 0
+    const isFailed = storybook.status === "failed"
     const isGenerating = storybook.status === "generating" || storybook.status === "pending"
     const isCompleted = storybook.status === "completed"
     const isPreviewPending = storybook.status === "preview_pending"
@@ -395,7 +396,7 @@ export function StorybooksTab() {
     const thumbnailUrl = isGeneratingPreview
       ? storybook.thumbnail_url || storybook.template?.thumbnail_url || storybook.first_scene_base_image
       : storybook.thumbnail_url || storybook.first_scene_image || (storybook.scenes && storybook.scenes[0]?.image_url)
-    return { sceneCount, isGenerating, isCompleted, isPreviewPending, isGeneratingPreview, isPreviewReady, thumbnailUrl }
+    return { sceneCount, isFailed, isGenerating, isCompleted, isPreviewPending, isGeneratingPreview, isPreviewReady, thumbnailUrl }
   }
 
   const handleViewPreview = (storybook: Storybook) => {
@@ -489,7 +490,7 @@ export function StorybooksTab() {
                 </h2>
                 <div className="flex gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-2 -mx-1 px-1">
                   {inProgressBooks.map((storybook) => {
-                    const { isGenerating, isGeneratingPreview, isPreviewReady, thumbnailUrl } = getStorybookStatus(storybook)
+                    const { isFailed, isGenerating, isGeneratingPreview, isPreviewReady, thumbnailUrl } = getStorybookStatus(storybook)
                     // For full generation: derive progress from scene count
                     // Start at 10% (preview exists), each additional scene adds equal share up to 100%
                     const totalScenes = storybook.total_scenes || 10
@@ -517,8 +518,16 @@ export function StorybooksTab() {
                               <BookOpen className="w-12 h-12 text-white/30" />
                             </div>
                           )}
+                          {/* Failed overlay */}
+                          {isFailed && (
+                            <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2">
+                              <AlertTriangle className="w-10 h-10 text-red-400" />
+                              <p className="text-white text-sm font-semibold">Generation Failed</p>
+                              <p className="text-white/60 text-xs text-center px-4">Credit refunded</p>
+                            </div>
+                          )}
                           {/* Generating overlay */}
-                          {(isGenerating || isGeneratingPreview) && (
+                          {!isFailed && (isGenerating || isGeneratingPreview) && (
                             <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-3">
                               <Clock className="w-10 h-10 text-white animate-spin" />
                               <div className="w-3/4">
@@ -563,7 +572,12 @@ export function StorybooksTab() {
                         </div>
                         {/* Action buttons */}
                         <div className="flex items-center gap-2 mt-2 px-1">
-                          {isPreviewReady ? (
+                          {isFailed ? (
+                            <Button size="sm" variant="destructive" className="flex-1 h-8 text-xs" disabled>
+                              <AlertTriangle className="w-3 h-3 mr-1" />
+                              Failed
+                            </Button>
+                          ) : isPreviewReady ? (
                             <Button size="sm" className="flex-1 h-8 text-xs" onClick={() => handleViewPreview(storybook)}>
                               <Play className="w-3 h-3 mr-1" />
                               View Preview
