@@ -243,6 +243,9 @@ export function buildModelInput(
   // Image input parameter name differs by model
   if (isFlux) {
     input.input_images = imageInput
+    // Lock megapixels to control cost — 0.25MP = $0.08, 1MP = $0.12-0.18
+    // 0.25MP is sufficient for story scenes and character portraits
+    input.megapixels = '0.25'
   } else {
     input.image_input = imageInput
   }
