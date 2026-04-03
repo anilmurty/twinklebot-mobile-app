@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateStorybook } from '@/lib/services/storybook-generator'
 
+// Allow up to 5 minutes for storybook generation
+export const maxDuration = 300
+
 /**
  * POST /api/cron/generate-storybooks
  * Vercel Cron Job endpoint to process pending storybooks
- * 
+ *
  * Configure in vercel.json:
  * {
  *   "crons": [{

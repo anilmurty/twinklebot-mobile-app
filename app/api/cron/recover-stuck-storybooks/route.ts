@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
+export const maxDuration = 300
+
 /**
  * POST /api/cron/recover-stuck-storybooks
  *
