@@ -122,10 +122,12 @@ export async function pollPrediction(
  * Replicate uses `image_input` or `input_images`, fal uses `image_urls`.
  */
 function toFalInput(input: Record<string, any>): Record<string, any> {
-  const { image_input, input_images, aspect_ratio, output_format, ...rest } = input
+  const { image_input, input_images, input_image, aspect_ratio, output_format, ...rest } = input
+  // Normalize image inputs: array or single URI → array for fal
+  const images = image_input || input_images || (input_image ? [input_image] : undefined)
   return {
     ...rest,
-    image_urls: image_input || input_images,
+    image_urls: images,
     aspect_ratio: aspect_ratio === 'match_input_image' ? 'auto' : aspect_ratio,
     output_format: output_format === 'jpg' ? 'jpeg' : output_format,
   }
@@ -158,7 +160,7 @@ export async function pollProviderPrediction(predictionId: string): Promise<stri
   return pollPrediction(predictionId)
 }
 
-const DEFAULT_MODEL = 'black-forest-labs/flux-2-pro'
+const DEFAULT_MODEL = 'black-forest-labs/flux-kontext-pro'
 
 /**
  * Get model identifier from template's generation_model_id
@@ -218,7 +220,8 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
  * Different models use different parameter names and support different options:
  * - nano-banana: image_input (array), output_format, match_input_image aspect ratio
  * - seedream-4.5: image_input (array), no output_format, requires real aspect_ratio
- * - flux-2-pro: input_images (array), no output_format, requires real aspect_ratio
+ * - flux-2-pro: input_images (array), megapixels, requires real aspect_ratio
+ * - flux-kontext-pro: input_image (single URI), requires real aspect_ratio
  */
 export function buildModelInput(
   modelIdentifier: string,
@@ -226,6 +229,7 @@ export function buildModelInput(
   imageInput: string[],
   aspectRatio: string,
 ): Record<string, any> {
+  const isFluxKontext = modelIdentifier.includes('flux-kontext')
   const isFlux = modelIdentifier.includes('flux')
   const isNanoBanana = modelIdentifier.includes('nano-banana')
 
@@ -241,10 +245,13 @@ export function buildModelInput(
   }
 
   // Image input parameter name differs by model
-  if (isFlux) {
+  if (isFluxKontext) {
+    // flux-kontext-pro takes a single image URI (not an array)
+    // When multiple images are provided, use the last one (character variation)
+    // since the prompt should describe the scene context
+    input.input_image = imageInput[imageInput.length - 1]
+  } else if (isFlux) {
     input.input_images = imageInput
-    // Lock megapixels to control cost — 0.25MP = $0.08, 1MP = $0.12-0.18
-    // 0.25MP is sufficient for story scenes and character portraits
     input.megapixels = '0.25'
   } else {
     input.image_input = imageInput

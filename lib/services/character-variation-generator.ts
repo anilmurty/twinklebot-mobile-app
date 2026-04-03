@@ -138,7 +138,7 @@ export async function generateCharacterVariations(
   console.log(`Character gender: ${gender}`)
 
   // Process model identifier - env var takes priority as global override
-  const DEFAULT_MODEL = 'black-forest-labs/flux-2-pro'
+  const DEFAULT_MODEL = 'black-forest-labs/flux-kontext-pro'
   let modelIdentifier: string
   if (process.env.IMAGE_MODEL_VERSION) {
     modelIdentifier = process.env.IMAGE_MODEL_VERSION
