@@ -12,16 +12,15 @@ import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
 
-type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
+type StorybookStyle = 'storybook' | 'comic-book' | 'cartoon'
 
 const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
-  natural: '',
   storybook:
-    'render the child and transform the entire scene in a watercolor children\'s book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
+    'render the character and transform the entire scene in a watercolor picture book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
   'comic-book':
-    'render the child and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
+    'render the character and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
   cartoon:
-    'render the child and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across child and background.',
+    'render the character and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across character and background.',
 }
 
 interface SceneTemplate {
@@ -87,99 +86,60 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
   console.log(`[PREVIEW] First scene: scene_number=${firstScene.scene_number}`)
 
   try {
-    // Step 1: Generate or get character variations
-    const variationsCheckStart = Date.now()
-    console.log(`[PREVIEW] Step 1: Checking character variations...`)
-    let variations = await getCharacterVariations(character.id, template.id)
-    console.log(`[TIMING] Character variations check: ${Date.now() - variationsCheckStart}ms`)
+    // Step 1: Get pre-generated avatar (generated at upload time)
+    console.log(`[PREVIEW] Step 1: Checking character avatar...`)
 
-    if (!variations) {
-      console.log(`[PREVIEW] No existing variations found. Generating...`)
-      
-      // Update progress
+    const storybookStyle = ((storybook.style as StorybookStyle) || 'cartoon') as StorybookStyle
+    const avatarStyleMap: Record<string, string> = {
+      cartoon: 'avatar_cartoon_url',
+      storybook: 'avatar_storybook_url',
+      'comic-book': 'avatar_comic_url',
+    }
+    const avatarColumn = avatarStyleMap[storybookStyle] || 'avatar_cartoon_url'
+
+    const { data: charData } = await supabaseAdmin
+      .from('characters')
+      .select('avatar_status, avatar_cartoon_url, avatar_storybook_url, avatar_comic_url')
+      .eq('id', character.id)
+      .single()
+
+    const avatarUrl = charData?.[avatarColumn as keyof typeof charData] as string | null
+
+    let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
+
+    if (avatarUrl && charData?.avatar_status === 'ready') {
+      console.log(`[PREVIEW] Using pre-generated ${storybookStyle} avatar`)
+      variations = {
+        front_variation_url: avatarUrl,
+        left_variation_url: avatarUrl,
+        right_variation_url: avatarUrl,
+      }
+      await supabaseAdmin
+        .from('storybooks')
+        .update({ progress: 50, updated_at: new Date().toISOString() })
+        .eq('id', storybookId)
+    } else if (charData?.avatar_status === 'generating') {
+      throw new Error('Character avatar is still being generated. Please wait and try again.')
+    } else {
+      // Fallback to old flow for legacy characters
+      console.log(`[PREVIEW] No avatar found, falling back to character variation generation`)
       await supabaseAdmin
         .from('storybooks')
         .update({ progress: 10, updated_at: new Date().toISOString() })
         .eq('id', storybookId)
 
-      variations = await generateCharacterVariations(
-        character.id,
-        template.id,
-        character.front_photo_url,
-        userId,
-        storybookId,
-        true // Skip existence check
-      )
-      console.log(`[PREVIEW] Character variations generated`)
-    } else {
-      console.log(`[PREVIEW] Using existing character variations`)
-      // Verify the files actually exist in storage before using them
-      const { getSignedUrl } = await import('@/lib/supabase/storage')
-      const extractStoragePath = (url: string): string | null => {
-        const publicUrlMatch = url.match(/\/character-variations\/(.+)$/)
-        if (publicUrlMatch) return publicUrlMatch[1]
-        const relativeMatch = url.match(/^character-variations\/(.+)$/)
-        if (relativeMatch) return relativeMatch[1]
-        if (!url.includes('http') && !url.includes('character-variations')) return url
-        return null
-      }
-
-      const frontPath = extractStoragePath(variations.front_variation_url)
-      let variationsValid = false
-      if (frontPath) {
-        try {
-          await getSignedUrl('character-variations', frontPath, 60) // Short expiry for check
-          variationsValid = true
-          console.log(`[PREVIEW] Verified character variation files exist in storage`)
-        } catch (error: any) {
-          console.warn(`[PREVIEW] Character variation file not found in storage, will regenerate:`, error.message)
-          variationsValid = false
-        }
+      const existingVariations = await getCharacterVariations(character.id, template.id)
+      if (existingVariations) {
+        variations = existingVariations
       } else {
-        console.warn(`[PREVIEW] Could not extract path from variation URL: ${variations.front_variation_url}`)
-        variationsValid = false
-      }
-
-      if (!variationsValid) {
-        console.log(`[PREVIEW] Character variation files missing or invalid, regenerating...`)
-        // Delete the invalid record
-        await supabaseAdmin
-          .from('character_variations')
-          .delete()
-          .eq('character_id', character.id)
-          .eq('template_id', template.id)
-        
-        // Update progress
-        await supabaseAdmin
-          .from('storybooks')
-          .update({ progress: 10, updated_at: new Date().toISOString() })
-          .eq('id', storybookId)
-
-        // Regenerate
-        try {
-          variations = await generateCharacterVariations(
-            character.id,
-            template.id,
-            character.front_photo_url,
-            userId,
-            storybookId,
-            true
-          )
-          console.log(`[PREVIEW] Character variations regenerated successfully`)
-          console.log(`[PREVIEW] New variation URLs:`, {
-            front: variations.front_variation_url,
-            left: variations.left_variation_url,
-            right: variations.right_variation_url,
-          })
-        } catch (regenerateError: any) {
-          console.error(`[PREVIEW] Failed to regenerate character variations:`, regenerateError)
-          throw new Error(`Failed to regenerate character variations: ${regenerateError.message}`)
-        }
-      } else {
-        await supabaseAdmin
-          .from('storybooks')
-          .update({ progress: 50, updated_at: new Date().toISOString() })
-          .eq('id', storybookId)
+        variations = await generateCharacterVariations(
+          character.id,
+          template.id,
+          character.front_photo_url,
+          userId,
+          storybookId,
+          true,
+        )
       }
     }
 
@@ -264,16 +224,14 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     console.log(`[PREVIEW] Constructed base photo path: ${basePhotoPath} from base_photo: ${firstScene.base_photo}`)
 
-    // Apply style modifier to insertion prompt
-    const storybookStyle = ((storybook.style as StorybookStyle) || 'natural') as StorybookStyle
+    // Build Gemini-safe insertion prompt (no age/gender references)
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
+    const safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, skin tone, and clothing. the result should look like the character was always part of this scene.'
     const styledPrompt = styleModifier
-      ? `${firstScene.insertion_prompt} ${styleModifier}`
-      : firstScene.insertion_prompt
+      ? `${safeInsertionPrompt} ${styleModifier}`
+      : safeInsertionPrompt
 
-    if (styleModifier) {
-      console.log(`[PREVIEW] Applied ${storybookStyle} style modifier to prompt`)
-    }
+    console.log(`[PREVIEW] Using Gemini-safe prompt with ${storybookStyle} modifier`)
 
     // Generate first scene image
     const sceneFileName = `${storybookId}/scene-${firstScene.scene_number}.jpg`

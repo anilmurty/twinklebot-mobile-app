@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Trash2, Sparkles, Loader2, Pencil } from "lucide-react"
+import { Plus, Trash2, Sparkles, Loader2, Pencil, AlertTriangle } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
@@ -20,6 +20,11 @@ interface Character {
   id: string
   name: string
   front_photo_url: string
+  avatar_status?: 'pending' | 'generating' | 'ready' | 'failed'
+  avatar_cartoon_url?: string
+  avatar_storybook_url?: string
+  avatar_comic_url?: string
+  avatar_error?: string
   created_at: string
 }
 
@@ -57,6 +62,16 @@ export function CharactersTab() {
     error: charactersError,
     refetch: refetchCharacters
   } = useCharacters()
+
+  // Poll when any character has avatar_status = 'generating'
+  const hasGenerating = (charactersData?.characters || []).some(
+    (c: Character) => c.avatar_status === 'generating'
+  )
+  useEffect(() => {
+    if (!hasGenerating) return
+    const interval = setInterval(() => refetchCharacters(), 5000)
+    return () => clearInterval(interval)
+  }, [hasGenerating, refetchCharacters])
 
   // Mutations
   const deleteCharacterMutation = useDeleteCharacter()
@@ -191,13 +206,13 @@ export function CharactersTab() {
                           setCreateStoryForCharacter({
                             id: character.id,
                             name: character.name,
-                            photoUrl: character.front_photo_url,
+                            photoUrl: character.avatar_cartoon_url || character.front_photo_url,
                           })
                         }
                       >
-                        {character.front_photo_url ? (
+                        {(character.avatar_cartoon_url || character.front_photo_url) ? (
                           <ImageWithShimmer
-                            src={character.front_photo_url}
+                            src={character.avatar_cartoon_url || character.front_photo_url}
                             alt={character.name}
                             className="w-full h-full object-cover"
                             containerClassName="w-full h-full"
@@ -213,6 +228,19 @@ export function CharactersTab() {
                             </span>
                           </div>
                         )}
+                        {/* Avatar generating overlay */}
+                        {character.avatar_status === 'generating' && (
+                          <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center">
+                            <Loader2 className="w-8 h-8 text-white animate-spin mb-2" />
+                            <span className="text-white text-xs font-medium">Creating avatar...</span>
+                          </div>
+                        )}
+                        {/* Avatar failed overlay */}
+                        {character.avatar_status === 'failed' && (
+                          <div className="absolute top-2 right-2 bg-destructive/90 text-white rounded-full p-1.5" title={character.avatar_error || 'Avatar generation failed'}>
+                            <AlertTriangle className="w-4 h-4" />
+                          </div>
+                        )}
                         {/* Bottom gradient */}
                         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/60 to-transparent" />
                         {/* Desktop hover overlay */}
@@ -223,7 +251,7 @@ export function CharactersTab() {
                               setCreateStoryForCharacter({
                                 id: character.id,
                                 name: character.name,
-                                photoUrl: character.front_photo_url,
+                                photoUrl: character.avatar_cartoon_url || character.front_photo_url,
                               })
                             }}
                             className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -274,7 +302,7 @@ export function CharactersTab() {
                             setCreateStoryForCharacter({
                               id: character.id,
                               name: character.name,
-                              photoUrl: character.front_photo_url,
+                              photoUrl: character.avatar_cartoon_url || character.front_photo_url,
                             })
                           }
                         >

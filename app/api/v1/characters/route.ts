@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { waitUntil } from '@vercel/functions'
 import { createServerClient } from '@/lib/supabase/server'
 import { getAuthUser } from '@/lib/supabase/auth'
 import { normalizeCharacterName } from '@/lib/utils/update-storybook-names'
+import { generateAvatars } from '@/lib/services/avatar-generator'
+
+export const maxDuration = 300
 
 /**
  * GET /api/v1/characters
@@ -22,6 +26,11 @@ export async function GET(request: NextRequest) {
         id,
         name,
         front_photo_url,
+        avatar_status,
+        avatar_cartoon_url,
+        avatar_storybook_url,
+        avatar_comic_url,
+        avatar_error,
         created_at,
         storybooks:storybooks(count)
       `)
@@ -62,6 +71,11 @@ export async function GET(request: NextRequest) {
           id: char.id,
           name: char.name,
           front_photo_url: photoUrl,
+          avatar_status: char.avatar_status || 'pending',
+          avatar_cartoon_url: char.avatar_cartoon_url,
+          avatar_storybook_url: char.avatar_storybook_url,
+          avatar_comic_url: char.avatar_comic_url,
+          avatar_error: char.avatar_error,
           stories_count: char.storybooks?.[0]?.count || 0,
           created_at: char.created_at,
         }
@@ -214,6 +228,13 @@ export async function POST(request: NextRequest) {
     if (updateError) {
       return NextResponse.json({ error: updateError.message }, { status: 500 })
     }
+
+    // Trigger background avatar generation (3 styles)
+    waitUntil(
+      generateAvatars(character.id, userId, frontUrl).catch((error) => {
+        console.error(`[AVATAR] Background generation error for character ${character.id}:`, error)
+      })
+    )
 
     return NextResponse.json(updatedCharacter, { status: 201 })
   } catch (error: any) {

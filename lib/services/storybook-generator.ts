@@ -11,16 +11,15 @@ import {
   generateCharacterVariations,
 } from './character-variation-generator'
 
-type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
+type StorybookStyle = 'storybook' | 'comic-book' | 'cartoon'
 
 const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
-  natural: '',
   storybook:
-    'render the child and transform the entire scene in a watercolor children\'s book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
+    'render the character and transform the entire scene in a watercolor picture book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
   'comic-book':
-    'render the child and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
+    'render the character and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
   cartoon:
-    'render the child and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across child and background.',
+    'render the character and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across character and background.',
 }
 
 interface SceneTemplate {
@@ -160,7 +159,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     console.log(`[QUALITY] Using quality tier: ${qualityTier}`)
 
     // Read style and look up modifier
-    const storybookStyle = ((storybook.style as StorybookStyle) || 'natural') as StorybookStyle
+    const storybookStyle = ((storybook.style as StorybookStyle) || 'cartoon') as StorybookStyle
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
     console.log(`[STYLE] Using style: ${storybookStyle}${styleModifier ? ' (modifier applied)' : ' (no modifier)'}`)
 
@@ -179,59 +178,66 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     }
 
   try {
-    // Check for existing character variations, generate if needed
-    console.log(`\n=== CHECKING CHARACTER VARIATIONS ===`)
+    // Get pre-generated avatar for this style (generated at upload time)
+    console.log(`\n=== CHECKING CHARACTER AVATAR ===`)
     console.log(`Character ID: ${character.id}`)
-    console.log(`Template ID: ${template.id}`)
-    const variationCheckStart = Date.now()
-    let variations = await getCharacterVariations(character.id, template.id)
-    console.log(`[TIMING] Checked for existing variations: ${Date.now() - variationCheckStart}ms`)
-  
-    if (!variations) {
-      console.log(`No existing variations found. Generating character variations...`)
-      try {
-        // Set progress to 10% - "Starting character creation"
-        const progressUpdateStart = Date.now()
-        await supabaseAdmin
-          .from('storybooks')
-          .update({ progress: 10, updated_at: new Date().toISOString() })
-          .eq('id', storybookId)
-        console.log(`[TIMING] Updated progress to 10%: ${Date.now() - progressUpdateStart}ms`)
+    console.log(`Style: ${storybookStyle}`)
 
-        const variationGenStart = Date.now()
-        console.log(`[TIMING] Starting character variation generation at ${new Date().toISOString()}`)
+    // Map storybook style to avatar column
+    const avatarStyleMap: Record<string, string> = {
+      cartoon: 'avatar_cartoon_url',
+      storybook: 'avatar_storybook_url',
+      'comic-book': 'avatar_comic_url',
+    }
+    const avatarColumn = avatarStyleMap[storybookStyle] || 'avatar_cartoon_url'
+
+    const { data: charData } = await supabaseAdmin
+      .from('characters')
+      .select('avatar_status, avatar_cartoon_url, avatar_storybook_url, avatar_comic_url')
+      .eq('id', character.id)
+      .single()
+
+    const avatarUrl = charData?.[avatarColumn as keyof typeof charData] as string | null
+
+    // Build a variations-compatible object using the avatar URL
+    let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
+
+    if (avatarUrl && charData?.avatar_status === 'ready') {
+      console.log(`✅ Using pre-generated ${storybookStyle} avatar: ${avatarUrl}`)
+      variations = {
+        front_variation_url: avatarUrl,
+        left_variation_url: avatarUrl,
+        right_variation_url: avatarUrl,
+      }
+      // Avatar already exists, set progress to 100%
+      await supabaseAdmin
+        .from('storybooks')
+        .update({ progress: 100, updated_at: new Date().toISOString() })
+        .eq('id', storybookId)
+    } else if (charData?.avatar_status === 'generating') {
+      // Avatar is still being generated — fail gracefully
+      throw new Error('Character avatar is still being generated. Please wait and try again.')
+    } else {
+      // No avatar yet (legacy character or failed generation) — fall back to old flow
+      console.log(`⚠️ No pre-generated avatar found (status: ${charData?.avatar_status}). Falling back to character variation generation.`)
+      await supabaseAdmin
+        .from('storybooks')
+        .update({ progress: 10, updated_at: new Date().toISOString() })
+        .eq('id', storybookId)
+
+      const existingVariations = await getCharacterVariations(character.id, template.id)
+      if (existingVariations) {
+        variations = existingVariations
+      } else {
         variations = await generateCharacterVariations(
           character.id,
           template.id,
           character.front_photo_url,
           userId,
-          storybookId, // Pass storybookId to update progress
-          true // Skip existence check since we already checked above
+          storybookId,
+          true,
         )
-        console.log(`[TIMING] Character variation generation completed: ${Date.now() - variationGenStart}ms`)
-        console.log(`✅ Character variations generated successfully`)
-      } catch (error: any) {
-        console.error(`❌ Failed to generate character variations:`, error)
-        await supabaseAdmin
-          .from('storybooks')
-          .update({
-            status: 'failed',
-            error_message: `Failed to generate character variations: ${error.message}`,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', storybookId)
-        throw error // Stop the process
       }
-    } else {
-      console.log(`✅ Using existing character variations:`)
-      console.log(`  Front: ${variations.front_variation_url}`)
-      console.log(`  Left: ${variations.left_variation_url}`)
-      console.log(`  Right: ${variations.right_variation_url}`)
-      // Character variations already exist, set progress to 100% (character generation complete)
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 100, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
     }
     console.log('=====================================\n')
 
@@ -392,14 +398,15 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         }
       }
 
-      // Apply style modifier to insertion prompt
+      // Build Gemini-safe insertion prompt (no age/gender references)
+      // The template's insertion_prompt may contain old-style language, so we use a generic safe prompt
+      // and append the style modifier
+      const safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, skin tone, and clothing. the result should look like the character was always part of this scene.'
       const styledInsertionPrompt = styleModifier
-        ? `${sceneTemplate.insertion_prompt} ${styleModifier}`
-        : sceneTemplate.insertion_prompt
+        ? `${safeInsertionPrompt} ${styleModifier}`
+        : safeInsertionPrompt
 
-      if (styleModifier) {
-        console.log(`[STYLE] Applied ${storybookStyle} modifier to scene ${sceneTemplate.scene_number} prompt`)
-      }
+      console.log(`[STYLE] Using Gemini-safe prompt with ${storybookStyle} modifier for scene ${sceneTemplate.scene_number}`)
 
       // Generate scene image
       let storedImageUrl: string
