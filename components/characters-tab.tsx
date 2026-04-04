@@ -22,8 +22,6 @@ interface Character {
   front_photo_url: string
   avatar_status?: 'pending' | 'generating' | 'ready' | 'failed'
   avatar_cartoon_url?: string
-  avatar_storybook_url?: string
-  avatar_comic_url?: string
   avatar_error?: string
   created_at: string
 }
@@ -91,7 +89,6 @@ export function CharactersTab() {
     name: string
     photoUrl?: string
   } | null>(null)
-  const [enlargedAvatar, setEnlargedAvatar] = useState<{ url: string; label: string; name: string } | null>(null)
 
   useEffect(() => {
     // Handle create dialog from URL parameter separately
@@ -278,41 +275,6 @@ export function CharactersTab() {
                           </div>
                         </div>
                       </div>
-                      {/* Avatar style thumbnails */}
-                      {character.avatar_status === 'ready' && character.avatar_cartoon_url && (
-                        <div className="flex gap-2 mt-2 px-1">
-                          {([
-                            { url: character.avatar_cartoon_url, label: 'Cartoon' },
-                            { url: character.avatar_storybook_url, label: 'Storybook' },
-                            { url: character.avatar_comic_url, label: 'Comic' },
-                          ] as { url: string | undefined; label: string }[]).map((style) => (
-                            style.url ? (
-                              <div
-                                key={style.label}
-                                className="flex-1 text-center cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setEnlargedAvatar({ url: style.url!, label: style.label, name: character.name })
-                                }}
-                              >
-                                <div className="aspect-square rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-colors">
-                                  <ImageWithShimmer
-                                    src={style.url}
-                                    alt={`${character.name} - ${style.label}`}
-                                    className="w-full h-full object-cover"
-                                    containerClassName="w-full h-full"
-                                    onError={(e) => {
-                                      const target = e.target as HTMLImageElement
-                                      target.src = "/placeholder.svg"
-                                    }}
-                                  />
-                                </div>
-                                <span className="text-[10px] text-muted-foreground mt-0.5 block">{style.label}</span>
-                              </div>
-                            ) : null
-                          ))}
-                        </div>
-                      )}
                       {/* Name + date below image */}
                       <div className="mt-2.5 px-1">
                         <h3 className="font-semibold text-base leading-tight truncate text-foreground">
@@ -482,24 +444,6 @@ export function CharactersTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Enlarged Avatar Dialog */}
-      <Dialog open={!!enlargedAvatar} onOpenChange={(open) => !open && setEnlargedAvatar(null)}>
-        <DialogContent className="max-w-sm p-2">
-          <DialogHeader className="pb-0">
-            <DialogTitle className="text-center text-base">{enlargedAvatar?.name} — {enlargedAvatar?.label}</DialogTitle>
-          </DialogHeader>
-          {enlargedAvatar && (
-            <div className="aspect-square rounded-xl overflow-hidden">
-              <ImageWithShimmer
-                src={enlargedAvatar.url}
-                alt={`${enlargedAvatar.name} - ${enlargedAvatar.label}`}
-                className="w-full h-full object-cover"
-                containerClassName="w-full h-full"
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

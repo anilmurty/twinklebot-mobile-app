@@ -90,20 +90,14 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     console.log(`[PREVIEW] Step 1: Checking character avatar...`)
 
     const storybookStyle = ((storybook.style as StorybookStyle) || 'cartoon') as StorybookStyle
-    const avatarStyleMap: Record<string, string> = {
-      cartoon: 'avatar_cartoon_url',
-      storybook: 'avatar_storybook_url',
-      'comic-book': 'avatar_comic_url',
-    }
-    const avatarColumn = avatarStyleMap[storybookStyle] || 'avatar_cartoon_url'
 
     const { data: charData } = await supabaseAdmin
       .from('characters')
-      .select('avatar_status, avatar_cartoon_url, avatar_storybook_url, avatar_comic_url')
+      .select('avatar_status, avatar_cartoon_url')
       .eq('id', character.id)
       .single()
 
-    const avatarUrl = charData?.[avatarColumn as keyof typeof charData] as string | null
+    const avatarUrl = charData?.avatar_cartoon_url as string | null
 
     let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
 

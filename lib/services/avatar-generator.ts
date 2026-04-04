@@ -1,27 +1,21 @@
 /**
  * Avatar generation service
- * Generates illustrated character avatars in 3 styles at upload time
- * using Google Gemini API (Nano Banana 2)
+ * Generates a single illustrated character avatar (cartoon style) at upload time
+ * using Google Gemini API. The style modifier during scene generation handles
+ * converting to storybook/comic styles as needed.
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateImageWithGemini } from './gemini-image'
 import { uploadToStorage, deleteFromStorage, getSignedUrl } from '@/lib/supabase/storage'
 
-type AvatarStyle = 'cartoon' | 'storybook' | 'comic'
-
-const AVATAR_PROMPTS: Record<AvatarStyle, string> = {
-  cartoon:
-    'convert this portrait into a full-length illustrated character in Pixar-style 3D animation. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.',
-  storybook:
-    'convert this portrait into a full-length illustrated character in watercolor picture book style with soft painterly textures and warm pastel palette. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.',
-  comic:
-    'convert this portrait into a full-length illustrated character in comic book art style with bold black ink outlines and flat vivid colors. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.',
-}
+const AVATAR_PROMPT =
+  'convert this portrait into a full-length illustrated character in Pixar-style 3D animation. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.'
 
 /**
- * Generate all 3 style avatars for a character.
+ * Generate cartoon avatar for a character.
  * Called in the background via waitUntil after character creation.
+ * Only generates one avatar (cartoon) — scene generation applies style modifiers.
  */
 export async function generateAvatars(
   characterId: string,
@@ -43,54 +37,47 @@ export async function generateAvatars(
     signedPhotoUrl = await getSignedUrl('character-photos', photoMatch[1], 3600)
   }
 
-  const styles: AvatarStyle[] = ['cartoon', 'storybook', 'comic']
-  const results: Record<string, string> = {}
-
   try {
-    // Generate each style sequentially to respect Gemini rate limits
-    for (const style of styles) {
-      console.log(`[AVATAR] Generating ${style} avatar for character ${characterId}`)
-      const startTime = Date.now()
+    console.log(`[AVATAR] Generating cartoon avatar for character ${characterId}`)
+    const startTime = Date.now()
 
-      const imageBuffer = await generateImageWithGemini(
-        AVATAR_PROMPTS[style],
-        [signedPhotoUrl],
-        '1:1',
-      )
+    const imageBuffer = await generateImageWithGemini(
+      AVATAR_PROMPT,
+      [signedPhotoUrl],
+      '1:1',
+    )
 
-      // Upload to storage
-      const storagePath = `${userId}/${characterId}/avatar-${style}.jpg`
-      const avatarUrl = await uploadToStorage(
-        'character-photos',
-        storagePath,
-        imageBuffer,
-        'image/jpeg',
-      )
+    // Upload to storage
+    const storagePath = `${userId}/${characterId}/avatar-cartoon.jpg`
+    const avatarUrl = await uploadToStorage(
+      'character-photos',
+      storagePath,
+      imageBuffer,
+      'image/jpeg',
+    )
 
-      results[style] = avatarUrl
-      console.log(`[AVATAR] ${style} avatar generated in ${Date.now() - startTime}ms: ${avatarUrl}`)
-    }
+    console.log(`[AVATAR] Cartoon avatar generated in ${Date.now() - startTime}ms: ${avatarUrl}`)
 
-    // All 3 succeeded — update character with avatar URLs and mark as ready
+    // Update character — store cartoon URL in all 3 fields for compatibility
     await supabaseAdmin
       .from('characters')
       .update({
         avatar_status: 'ready',
-        avatar_cartoon_url: results.cartoon,
-        avatar_storybook_url: results.storybook,
-        avatar_comic_url: results.comic,
+        avatar_cartoon_url: avatarUrl,
+        avatar_storybook_url: avatarUrl,
+        avatar_comic_url: avatarUrl,
         avatar_error: null,
       })
       .eq('id', characterId)
 
-    // Delete the original photo now that we have illustrated avatars
+    // Delete the original photo now that we have an illustrated avatar
     if (photoMatch) {
       await deleteFromStorage('character-photos', photoMatch[1]).catch((err) => {
         console.warn(`[AVATAR] Failed to delete original photo: ${err.message}`)
       })
     }
 
-    console.log(`[AVATAR] All 3 avatars generated successfully for character ${characterId}`)
+    console.log(`[AVATAR] Avatar generation complete for character ${characterId}`)
   } catch (error: any) {
     console.error(`[AVATAR] Avatar generation failed for character ${characterId}:`, error)
 
