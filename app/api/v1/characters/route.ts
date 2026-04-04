@@ -43,38 +43,46 @@ export async function GET(request: NextRequest) {
 
     // Generate signed URLs for character photos (direct Supabase CDN, 1-hour expiry)
     const { getSignedUrl } = await import('@/lib/supabase/storage')
+
+    // Helper to sign a character-photos URL
+    const signUrl = async (url: string | null): Promise<string | null> => {
+      if (!url) return null
+      try {
+        const urlMatch = url.match(/character-photos\/(.+?)(\?|$)/)
+        let path: string | null = null
+        if (urlMatch) {
+          path = urlMatch[1]
+        } else if (url.includes('character-photos')) {
+          const urlObj = new URL(url)
+          const pathParts = urlObj.pathname.split('/character-photos/')
+          if (pathParts.length > 1) path = pathParts[1]
+        }
+        if (path) {
+          return await getSignedUrl('character-photos', path, 3600)
+        }
+      } catch (err) {
+        // File may have been deleted (e.g., original photo after avatar generation)
+      }
+      return null
+    }
+
     const formatted = await Promise.all(
       (characters || []).map(async (char: any) => {
-        let photoUrl = char.front_photo_url
-
-        if (photoUrl) {
-          try {
-            // Extract storage path from URL
-            const urlMatch = photoUrl.match(/character-photos\/(.+?)(\?|$)/)
-            let path: string | null = null
-            if (urlMatch) {
-              path = urlMatch[1]
-            } else if (photoUrl.includes('character-photos')) {
-              const urlObj = new URL(photoUrl)
-              const pathParts = urlObj.pathname.split('/character-photos/')
-              if (pathParts.length > 1) path = pathParts[1]
-            }
-            if (path) {
-              photoUrl = await getSignedUrl('character-photos', path, 3600) // 1 hour
-            }
-          } catch (err) {
-            console.error(`Failed to generate signed URL for character ${char.id}:`, err)
-          }
-        }
+        const [photoUrl, cartoonUrl, storybookUrl, comicUrl] = await Promise.all([
+          signUrl(char.front_photo_url),
+          signUrl(char.avatar_cartoon_url),
+          signUrl(char.avatar_storybook_url),
+          signUrl(char.avatar_comic_url),
+        ])
 
         return {
           id: char.id,
           name: char.name,
-          front_photo_url: photoUrl,
+          front_photo_url: photoUrl || char.front_photo_url,
           avatar_status: char.avatar_status || 'pending',
-          avatar_cartoon_url: char.avatar_cartoon_url,
-          avatar_storybook_url: char.avatar_storybook_url,
-          avatar_comic_url: char.avatar_comic_url,
+          avatar_cartoon_url: cartoonUrl || char.avatar_cartoon_url,
+          avatar_storybook_url: storybookUrl || char.avatar_storybook_url,
+          avatar_comic_url: comicUrl || char.avatar_comic_url,
           avatar_error: char.avatar_error,
           stories_count: char.storybooks?.[0]?.count || 0,
           created_at: char.created_at,
