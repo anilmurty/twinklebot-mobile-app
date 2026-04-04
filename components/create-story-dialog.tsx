@@ -172,6 +172,18 @@ export function CreateStoryDialog({
     }
   }, [previewStatusData, currentStep, previewProgress, storybookId, fetchingPreviewData])
 
+  // Timeout: if preview takes longer than 90 seconds, skip to payment step
+  useEffect(() => {
+    if (currentStep !== "generating-preview" || !storybookId) return
+    const timeout = setTimeout(() => {
+      if (currentStep === "generating-preview") {
+        console.warn("[PREVIEW] Timed out waiting for preview, skipping to payment")
+        setCurrentStep("payment")
+      }
+    }, 90000)
+    return () => clearTimeout(timeout)
+  }, [currentStep, storybookId])
+
   useEffect(() => {
     if (open) {
       fetchTemplates()
