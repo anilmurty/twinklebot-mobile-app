@@ -297,10 +297,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check payment override and subscription status
-    const { data: profileWithOverride } = await supabase
+    // Check payment override, subscription status, and available credits
+    const { data: profileWithCredits } = await supabase
       .from('profiles')
-      .select('payment_override')
+      .select('payment_override, basic_credits, premium_credits')
       .eq('id', userId)
       .single()
 
@@ -311,11 +311,14 @@ export async function POST(request: NextRequest) {
       .eq('status', 'active')
       .single()
 
-    const hasPaymentOverride = profileWithOverride?.payment_override === true
+    const hasPaymentOverride = profileWithCredits?.payment_override === true
     const hasActiveSubscription = !!activeSubscription
+    const basicCredits = profileWithCredits?.basic_credits || 0
+    const premiumCredits = profileWithCredits?.premium_credits || 0
+    const hasCredits = premiumCredits > 0 || basicCredits > 0
 
-    // Subscription/override users can skip preview IF within their monthly limit
-    const shouldSkipPreview = (hasPaymentOverride || hasActiveSubscription)
+    // Skip preview if user has credits, payment override, or active subscription
+    const shouldSkipPreview = hasPaymentOverride || hasActiveSubscription || hasCredits
     const withinFreeLimit = !profile || profile.stories_generated_this_month < effectiveLimit
 
     // Always create as preview_pending initially
@@ -338,38 +341,65 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: createError.message }, { status: 500 })
     }
 
-    // If user can skip preview AND is within their free monthly limit,
-    // upgrade to pending and start full generation immediately
-    if (shouldSkipPreview && withinFreeLimit) {
-      await supabase
-        .from('storybooks')
-        .update({ status: 'pending' })
-        .eq('id', storybook.id)
-      storybook.status = 'pending'
+    // If user can skip preview, upgrade to pending and start full generation immediately
+    if (shouldSkipPreview) {
+      if (hasCredits) {
+        // Deduct a credit (prefer premium, fall back to basic)
+        const creditColumn = premiumCredits > 0 ? 'premium_credits' : 'basic_credits'
+        const currentCredits = premiumCredits > 0 ? premiumCredits : basicCredits
+        const qualityTier = premiumCredits > 0 ? 'premium' : 'basic'
 
-      // Increment monthly counter only for free generations
-      await supabase
-        .from('profiles')
-        .update({
-          stories_generated_this_month: (profile?.stories_generated_this_month || 0) + 1,
-        })
-        .eq('id', userId)
+        await supabaseAdmin
+          .from('profiles')
+          .update({
+            [creditColumn]: currentCredits - 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId)
 
-      // Create generation job
-      await supabaseAdmin
-        .from('generation_jobs')
-        .insert({
-          storybook_id: storybook.id,
-          status: 'queued',
-          total_scenes: template.scene_count || 10,
-        })
+        await supabase
+          .from('storybooks')
+          .update({
+            status: 'pending',
+            payment_status: 'completed',
+            quality_tier: qualityTier,
+          })
+          .eq('id', storybook.id)
+        storybook.status = 'pending'
+      } else if (withinFreeLimit) {
+        // Free generation (subscription/override within monthly limit)
+        await supabase
+          .from('storybooks')
+          .update({ status: 'pending' })
+          .eq('id', storybook.id)
+        storybook.status = 'pending'
 
-      // Start generation (async - don't wait)
-      if (process.env.NODE_ENV === 'development') {
-        const { generateStorybook } = await import('@/lib/services/storybook-generator')
-        generateStorybook(storybook.id).catch((error) => {
-          console.error(`Background generation error for ${storybook.id}:`, error)
-        })
+        // Increment monthly counter only for free generations
+        await supabase
+          .from('profiles')
+          .update({
+            stories_generated_this_month: (profile?.stories_generated_this_month || 0) + 1,
+          })
+          .eq('id', userId)
+      }
+
+      if (storybook.status === 'pending') {
+        // Create generation job
+        await supabaseAdmin
+          .from('generation_jobs')
+          .insert({
+            storybook_id: storybook.id,
+            status: 'queued',
+            total_scenes: template.scene_count || 10,
+          })
+
+        // Start generation (async - don't wait)
+        if (process.env.NODE_ENV === 'development') {
+          const { generateStorybook } = await import('@/lib/services/storybook-generator')
+          generateStorybook(storybook.id).catch((error) => {
+            console.error(`Background generation error for ${storybook.id}:`, error)
+          })
+        }
       }
     }
 

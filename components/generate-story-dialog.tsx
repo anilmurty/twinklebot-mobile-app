@@ -529,9 +529,19 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <h4 className="font-semibold text-sm">What happens next?</h4>
                 </div>
                 <ul className="text-xs text-muted-foreground space-y-1 ml-6 list-disc">
-                  <li>We'll generate a free preview of your storybook</li>
-                  <li>Review it before generating the full story</li>
-                  <li>Story generation takes 2-3 minutes</li>
+                  {(storyCredits > 0 || premiumCredits > 0) ? (
+                    <>
+                      <li>We'll use 1 credit and generate your full storybook</li>
+                      <li>Story generation takes 2-3 minutes</li>
+                      <li>You have {premiumCredits > 0 ? `${premiumCredits} premium` : `${storyCredits} basic`} credit{(premiumCredits > 0 ? premiumCredits : storyCredits) !== 1 ? 's' : ''} remaining</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>We'll generate a free preview of your storybook</li>
+                      <li>Review it before generating the full story</li>
+                      <li>Story generation takes 2-3 minutes</li>
+                    </>
+                  )}
                 </ul>
               </div>
 
@@ -727,7 +737,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   onClick={handleGeneratePreview}
                 >
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Generate Preview
+                  {(storyCredits > 0 || premiumCredits > 0) ? 'Generate Story' : 'Generate Preview'}
                 </Button>
               </div>
             </div>
