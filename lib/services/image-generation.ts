@@ -212,7 +212,7 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
 /**
  * Build model-specific input params.
  * Different models use different parameter names and support different options:
- * - flux-2-pro: input_images (array), supports @image1/@image2 referencing in prompts
+ * - flux-2-pro: input_images (array), use natural language referencing in prompts
  * - flux-kontext-pro: input_image (single URI), safety_tolerance
  * - nano-banana: image_input (array), output_format, match_input_image aspect ratio
  */
@@ -243,16 +243,9 @@ export function buildModelInput(
     input.input_image = imageInput[imageInput.length - 1]
     input.output_format = 'jpg'
     input.safety_tolerance = 2
-  } else if (isFlux2) {
-    // FLUX.2 Pro/Max: supports up to 8 reference images via input_image, input_image_2, etc.
-    // Prompts use @image1, @image2 syntax to reference them
-    input.input_image = imageInput[0]
-    if (imageInput.length > 1) input.input_image_2 = imageInput[1]
-    if (imageInput.length > 2) input.input_image_3 = imageInput[2]
-    if (imageInput.length > 3) input.input_image_4 = imageInput[3]
   } else if (isFlux) {
+    // FLUX.2 Pro/Max and other flux models: input_images as an array
     input.input_images = imageInput
-    input.megapixels = '0.25'
   } else {
     input.image_input = imageInput
   }

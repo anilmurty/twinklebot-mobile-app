@@ -246,15 +246,15 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       selectedLook = look as any
     }
 
-    // Build insertion prompt using @image referencing for FLUX.2 Pro
+    // Build insertion prompt using natural language referencing for FLUX.2 Pro on Replicate
     // For 'original' scenes (e.g. PJ/bedroom scenes), skip attire — let the base scene dictate clothing
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
     const useAttire = selectedLook && !selectedLook.is_original && firstScene.child_photo !== 'original'
     let insertionPrompt: string
     if (useAttire) {
-      insertionPrompt = 'Replace the child in @image1 with the child from @image2. Match the pose, position, and body orientation of the existing child in @image1. The child in the final image must have the face, hair, skin tone, and all features from @image2. Dress the child in the complete outfit shown in @image3, including shoes and footwear. Keep the background, lighting, art style, and all other elements of @image1 completely unchanged.'
+      insertionPrompt = 'Replace the child in the storybook scene (image 1) with the child from the photo with the white background (image 2). Match the pose, position, and body orientation of the existing child in the scene. The child in the final image must have the face, hair, skin tone, and all features from image 2. Dress the child in the complete outfit shown in image 3, including shoes and footwear. Keep the background, lighting, art style, and all other elements of the scene completely unchanged.'
     } else {
-      insertionPrompt = 'Replace the child in @image1 with the child from @image2. Match the pose, position, and body orientation of the existing child in @image1. The child in the final image must have the face, hair, skin tone, and all features from @image2. Dress the child in the same clothing as the child already in @image1. Keep the background, lighting, art style, and all other elements of @image1 completely unchanged.'
+      insertionPrompt = 'Replace the child in the storybook scene (image 1) with the child from the photo with the white background (image 2). Match the pose, position, and body orientation of the existing child in the scene. The child in the final image must have the face, hair, skin tone, and all features from image 2. Dress the child in the same clothing as the child already in the scene. Keep the background, lighting, art style, and all other elements of the scene completely unchanged.'
     }
     const styledPrompt = styleModifier
       ? `${insertionPrompt} ${styleModifier}`
@@ -272,7 +272,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
       const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-      // Build reference images: @image1=scene, @image2=character, @image3=attire (optional)
+      // Build reference images: image1=scene, image2=character, image3=attire (optional)
       const referenceImages = [basePhotoUrl, signedVariationUrl]
       if (useAttire && selectedLook.attire_image_url) {
         let attireUrl = selectedLook.attire_image_url

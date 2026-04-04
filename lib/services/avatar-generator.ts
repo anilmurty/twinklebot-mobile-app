@@ -10,7 +10,7 @@ import { buildModelInput, createProviderPrediction, pollProviderPrediction } fro
 import { uploadToStorage, deleteFromStorage, getSignedUrl } from '@/lib/supabase/storage'
 
 const AVATAR_PROMPT =
-  'Create a full-length hyper-realistic digital portrait of the person in @image1 standing upright, forward facing, on a plain white background. Maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from @image1. Use a natural, lifelike rendering style with soft studio lighting. If @image1 only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit.'
+  'Create a full-length hyper-realistic digital portrait of the person in the provided photo standing upright, forward facing, on a plain white background. Maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from the photo. Use a natural, lifelike rendering style with soft studio lighting. If the photo only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit.'
 
 /**
  * Generate a realistic full-body avatar for a character.
