@@ -38,11 +38,7 @@ export function ProfileTab() {
   const handleSignOut = async () => {
     try {
       await signOut()
-      if (isNativeApp()) {
-        router.push('/app')
-      } else {
-        router.push('/')
-      }
+      router.push('/app')
     } catch (err: any) {
       console.error('Sign out error:', err)
       alert(`Sign out failed: ${err.message}`)
