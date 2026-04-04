@@ -91,6 +91,7 @@ export function CharactersTab() {
     name: string
     photoUrl?: string
   } | null>(null)
+  const [enlargedAvatar, setEnlargedAvatar] = useState<{ url: string; label: string; name: string } | null>(null)
 
   useEffect(() => {
     // Handle create dialog from URL parameter separately
@@ -286,8 +287,15 @@ export function CharactersTab() {
                             { url: character.avatar_comic_url, label: 'Comic' },
                           ] as { url: string | undefined; label: string }[]).map((style) => (
                             style.url ? (
-                              <div key={style.label} className="flex-1 text-center">
-                                <div className="aspect-square rounded-lg overflow-hidden border border-border/50">
+                              <div
+                                key={style.label}
+                                className="flex-1 text-center cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  setEnlargedAvatar({ url: style.url!, label: style.label, name: character.name })
+                                }}
+                              >
+                                <div className="aspect-square rounded-lg overflow-hidden border border-border/50 hover:border-primary/50 transition-colors">
                                   <ImageWithShimmer
                                     src={style.url}
                                     alt={`${character.name} - ${style.label}`}
@@ -471,6 +479,25 @@ export function CharactersTab() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Enlarged Avatar Dialog */}
+      <Dialog open={!!enlargedAvatar} onOpenChange={(open) => !open && setEnlargedAvatar(null)}>
+        <DialogContent className="max-w-sm p-2">
+          <DialogHeader className="pb-0">
+            <DialogTitle className="text-center text-base">{enlargedAvatar?.name} — {enlargedAvatar?.label}</DialogTitle>
+          </DialogHeader>
+          {enlargedAvatar && (
+            <div className="aspect-square rounded-xl overflow-hidden">
+              <ImageWithShimmer
+                src={enlargedAvatar.url}
+                alt={`${enlargedAvatar.name} - ${enlargedAvatar.label}`}
+                className="w-full h-full object-cover"
+                containerClassName="w-full h-full"
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

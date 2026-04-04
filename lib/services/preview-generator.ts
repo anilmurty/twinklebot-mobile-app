@@ -174,33 +174,36 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
         throw new Error(`Character variation URL not found`)
       }
 
-      const extractStoragePath = (url: string): string | null => {
-        const publicUrlMatch = url.match(/\/character-variations\/(.+)$/)
-        if (publicUrlMatch) return publicUrlMatch[1]
-        const relativeMatch = url.match(/^character-variations\/(.+)$/)
-        if (relativeMatch) return relativeMatch[1]
-        if (!url.includes('http') && !url.includes('character-variations')) return url
+      // Extract bucket and path from the URL (supports character-photos and character-variations buckets)
+      const extractBucketAndPath = (url: string): { bucket: string; path: string } | null => {
+        for (const bucket of ['character-photos', 'character-variations']) {
+          const publicUrlMatch = url.match(new RegExp(`/${bucket}/(.+)$`))
+          if (publicUrlMatch) return { bucket, path: publicUrlMatch[1] }
+          const relativeMatch = url.match(new RegExp(`^${bucket}/(.+)$`))
+          if (relativeMatch) return { bucket, path: relativeMatch[1] }
+        }
+        if (!url.includes('http')) return { bucket: 'character-variations', path: url }
         return null
       }
 
-      const variationPath = extractStoragePath(characterVariationUrl)
-      if (!variationPath) {
+      const extracted = extractBucketAndPath(characterVariationUrl)
+      if (!extracted) {
         console.error(`[PREVIEW] Could not extract storage path from variation URL: ${characterVariationUrl}`)
         throw new Error(`Could not extract storage path from variation URL: ${characterVariationUrl}`)
       }
 
-      console.log(`[PREVIEW] Extracted storage path: ${variationPath} from URL: ${characterVariationUrl}`)
+      console.log(`[PREVIEW] Extracted bucket: ${extracted.bucket}, path: ${extracted.path} from URL: ${characterVariationUrl}`)
 
       try {
-        signedVariationUrl = await getSignedUrl('character-variations', variationPath, 3600)
+        signedVariationUrl = await getSignedUrl(extracted.bucket, extracted.path, 3600)
         console.log(`[PREVIEW] Created signed URL for variation: ${signedVariationUrl.substring(0, 50)}...`)
       } catch (error: any) {
-        console.warn(`[PREVIEW] Failed to create signed URL for path "${variationPath}", error: ${error.message}`)
+        console.warn(`[PREVIEW] Failed to create signed URL for path "${extracted.path}", error: ${error.message}`)
         if (characterVariationUrl.startsWith('http')) {
           console.log(`[PREVIEW] Using public URL directly: ${characterVariationUrl}`)
           signedVariationUrl = characterVariationUrl
         } else {
-          throw new Error(`Failed to create signed URL for character variation. Path: ${variationPath}, URL: ${characterVariationUrl}, Error: ${error.message}`)
+          throw new Error(`Failed to create signed URL for character variation. Bucket: ${extracted.bucket}, Path: ${extracted.path}, Error: ${error.message}`)
         }
       }
     }

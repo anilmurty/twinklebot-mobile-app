@@ -346,20 +346,22 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           throw new Error(`Character variation URL not found`)
         }
 
-        const extractStoragePath = (url: string): string | null => {
-          const match = url.match(/character-variations\/(.+)$/)
+        // Extract bucket and path from URL (supports character-photos and character-variations)
+        let variationBucket = 'character-variations'
+        let variationStoragePath: string | null = null
+        for (const bucket of ['character-photos', 'character-variations']) {
+          const match = characterVariationUrl.match(new RegExp(`/${bucket}/(.+)$`))
           if (match) {
-            return match[1]
+            variationBucket = bucket
+            variationStoragePath = match[1]
+            break
           }
-          return null
         }
-
-        const variationStoragePath = extractStoragePath(characterVariationUrl)
         if (!variationStoragePath) {
           throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
         }
 
-        characterImageUrl = await getSignedUrl('character-variations', variationStoragePath, 3600)
+        characterImageUrl = await getSignedUrl(variationBucket, variationStoragePath, 3600)
       }
 
       // Construct base photo path - extract folder from template thumbnail_url
