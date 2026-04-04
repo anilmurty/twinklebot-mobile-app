@@ -28,8 +28,6 @@ export async function GET(request: NextRequest) {
         front_photo_url,
         avatar_status,
         avatar_cartoon_url,
-        avatar_storybook_url,
-        avatar_comic_url,
         avatar_error,
         created_at,
         storybooks:storybooks(count)
@@ -44,7 +42,6 @@ export async function GET(request: NextRequest) {
     // Generate signed URLs for character photos (direct Supabase CDN, 1-hour expiry)
     const { getSignedUrl } = await import('@/lib/supabase/storage')
 
-    // Helper to sign a character-photos URL
     const signUrl = async (url: string | null): Promise<string | null> => {
       if (!url) return null
       try {
@@ -68,11 +65,9 @@ export async function GET(request: NextRequest) {
 
     const formatted = await Promise.all(
       (characters || []).map(async (char: any) => {
-        const [photoUrl, cartoonUrl, storybookUrl, comicUrl] = await Promise.all([
+        const [photoUrl, cartoonUrl] = await Promise.all([
           signUrl(char.front_photo_url),
           signUrl(char.avatar_cartoon_url),
-          signUrl(char.avatar_storybook_url),
-          signUrl(char.avatar_comic_url),
         ])
 
         return {
@@ -81,8 +76,6 @@ export async function GET(request: NextRequest) {
           front_photo_url: photoUrl || char.front_photo_url,
           avatar_status: char.avatar_status || 'pending',
           avatar_cartoon_url: cartoonUrl || char.avatar_cartoon_url,
-          avatar_storybook_url: storybookUrl || char.avatar_storybook_url,
-          avatar_comic_url: comicUrl || char.avatar_comic_url,
           avatar_error: char.avatar_error,
           stories_count: char.storybooks?.[0]?.count || 0,
           created_at: char.created_at,

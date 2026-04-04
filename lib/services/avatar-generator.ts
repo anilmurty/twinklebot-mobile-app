@@ -58,14 +58,11 @@ export async function generateAvatars(
 
     console.log(`[AVATAR] Cartoon avatar generated in ${Date.now() - startTime}ms: ${avatarUrl}`)
 
-    // Update character — store cartoon URL in all 3 fields for compatibility
     await supabaseAdmin
       .from('characters')
       .update({
         avatar_status: 'ready',
         avatar_cartoon_url: avatarUrl,
-        avatar_storybook_url: avatarUrl,
-        avatar_comic_url: avatarUrl,
         avatar_error: null,
       })
       .eq('id', characterId)
