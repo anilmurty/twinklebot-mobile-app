@@ -204,7 +204,7 @@ export async function generateCharacterVariations(
     console.log(`Using custom look with attire image`)
   } else {
     // Original look or no look selected: use prompt_modifier from DB if available, else default
-    const defaultPrompt = "keep this person in their current outfit. keep facial and body features identical to the original image. white background, forward facing and full length"
+    const defaultPrompt = "keep this person in their current outfit including shoes/footwear. keep facial and body features identical to the original image. white background, forward facing and full length"
     frontPrompt = (selectedLook?.prompt_modifier) || defaultPrompt
     imageInputArray = [signedBasePhotoUrl] // Just user photo
     console.log(`Using original look (no attire image)`)
