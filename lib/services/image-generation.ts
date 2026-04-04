@@ -35,14 +35,10 @@ export async function createPrediction(
   modelVersion: string,
   input: Record<string, any>
 ): Promise<string> {
-  // Replicate API uses "model" for model names (owner/name) and "version" for version hashes
+  // Replicate uses different endpoints for model names vs version hashes:
+  // - Model names (owner/name): POST /v1/models/{owner}/{name}/predictions
+  // - Version hashes: POST /v1/predictions with { version: "hash" }
   const isModelName = modelVersion.includes('/')
-  const bodyPayload: Record<string, any> = { input }
-  if (isModelName) {
-    bodyPayload.model = modelVersion
-  } else {
-    bodyPayload.version = modelVersion
-  }
 
   // Log the request for debugging (without sensitive data)
   console.log('Replicate API Request:', {
@@ -54,13 +50,21 @@ export async function createPrediction(
     outputFormat: input.output_format,
   })
 
-  const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
+  const url = isModelName
+    ? `${REPLICATE_API_URL}/models/${modelVersion}/predictions`
+    : `${REPLICATE_API_URL}/predictions`
+
+  const body = isModelName
+    ? { input }
+    : { version: modelVersion, input }
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Token ${getReplicateToken()}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(bodyPayload),
+    body: JSON.stringify(body),
   })
 
   if (!response.ok) {
