@@ -153,15 +153,7 @@ export function CharactersTab() {
   }
 
   const handleCharacterCreated = async () => {
-    const wasFirstCharacter = characters.length === 0
-    await refetchCharacters() // Refresh list after creation
-
-    // If this was the first character, navigate to story library
-    if (wasFirstCharacter) {
-      setTimeout(() => {
-        router.push("/app?tab=library")
-      }, 500)
-    }
+    await refetchCharacters()
   }
 
   const characterGroups = groupCharactersByMonth(characters)
