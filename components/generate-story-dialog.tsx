@@ -23,6 +23,7 @@ interface Character {
   id: string
   name: string
   front_photo_url: string
+  avatar_cartoon_url?: string
 }
 
 interface GenerateStoryDialogProps {
@@ -498,7 +499,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                                 : "items-center gap-3"
                             }`}>
                               <img
-                                src={character.front_photo_url || "/placeholder.svg"}
+                                src={character.avatar_cartoon_url || character.front_photo_url || "/placeholder.svg"}
                                 alt={character.name}
                                 className={`rounded-full object-cover border-2 ${
                                   isSelected ? "border-primary" : "border-primary/20"
@@ -607,9 +608,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                               className="sr-only"
                             />
                             <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
-                              {look.is_original && selectedCharacterData?.front_photo_url ? (
+                              {look.is_original && (selectedCharacterData?.avatar_cartoon_url || selectedCharacterData?.front_photo_url) ? (
                                 <img
-                                  src={selectedCharacterData.front_photo_url}
+                                  src={selectedCharacterData.avatar_cartoon_url || selectedCharacterData.front_photo_url}
                                   alt={look.look_name}
                                   className="w-full h-full object-cover"
                                 />
@@ -754,7 +755,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                 <div className="relative w-64 h-64 bg-gradient-to-br from-primary/20 via-accent/30 to-secondary/20 rounded-3xl flex items-center justify-center overflow-hidden">
                   {selectedCharacterData && (
                     <img
-                      src={selectedCharacterData.front_photo_url || "/placeholder.svg"}
+                      src={selectedCharacterData.avatar_cartoon_url || selectedCharacterData.front_photo_url || "/placeholder.svg"}
                       alt={selectedCharacterData.name}
                       className="w-32 h-32 rounded-full object-cover border-4 border-primary/30 shadow-lg"
                     />
