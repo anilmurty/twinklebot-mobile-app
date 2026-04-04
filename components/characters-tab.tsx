@@ -89,6 +89,7 @@ export function CharactersTab() {
     name: string
     photoUrl?: string
   } | null>(null)
+  const [enlargedAvatar, setEnlargedAvatar] = useState<{ name: string; url: string } | null>(null)
 
   useEffect(() => {
     // Handle create dialog from URL parameter separately
@@ -191,14 +192,18 @@ export function CharactersTab() {
                     <div key={character.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
                       {/* Image area */}
                       <div
-                        className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer"
-                        onClick={() =>
-                          setCreateStoryForCharacter({
-                            id: character.id,
-                            name: character.name,
-                            photoUrl: character.avatar_cartoon_url || character.front_photo_url,
-                          })
-                        }
+                        className={`relative aspect-square rounded-2xl overflow-hidden ${
+                          character.avatar_status === 'generating' || character.avatar_status === 'failed'
+                            ? 'cursor-default'
+                            : 'cursor-pointer'
+                        }`}
+                        onClick={() => {
+                          if (character.avatar_status === 'generating' || character.avatar_status === 'failed') return
+                          const url = character.avatar_cartoon_url || character.front_photo_url
+                          if (url) {
+                            setEnlargedAvatar({ name: character.name, url })
+                          }
+                        }}
                       >
                         {(character.avatar_cartoon_url || character.front_photo_url) ? (
                           <ImageWithShimmer
@@ -439,6 +444,22 @@ export function CharactersTab() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Enlarged Avatar Dialog */}
+      <Dialog open={!!enlargedAvatar} onOpenChange={(open) => !open && setEnlargedAvatar(null)}>
+        <DialogContent className="max-w-[min(24rem,calc(100vw-2rem))] p-2 sm:p-3" showCloseButton={true}>
+          {enlargedAvatar && (
+            <div className="flex flex-col items-center">
+              <img
+                src={enlargedAvatar.url}
+                alt={enlargedAvatar.name}
+                className="w-full rounded-lg object-contain"
+              />
+              <p className="mt-2 font-semibold text-center">{enlargedAvatar.name}</p>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
