@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { RadioGroup } from "@/components/ui/radio-group"
 import { Sparkles, Loader2, ChevronDown, Paintbrush, Zap, Wand2, Camera } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
@@ -619,12 +619,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                           }`}
                           onClick={() => setSelectedLookId(look.id)}
                         >
-                          <label className="flex flex-col items-center gap-3 cursor-pointer w-full">
-                            <RadioGroupItem
-                              value={look.id.toString()}
-                              id={`look-${look.id}`}
-                              className="sr-only"
-                            />
+                          <div className="flex flex-col items-center gap-3 w-full">
                             <div className="w-full aspect-[3/4] rounded-lg overflow-hidden bg-secondary flex items-center justify-center">
                               {look.is_original && (selectedCharacterData?.avatar_cartoon_url || selectedCharacterData?.front_photo_url) ? (
                                 <img
@@ -650,7 +645,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                                 </div>
                               )}
                             </div>
-                          </label>
+                          </div>
                         </Card>
                       ))}
                     </div>
