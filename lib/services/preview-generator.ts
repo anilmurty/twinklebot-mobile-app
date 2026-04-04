@@ -240,9 +240,9 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
     let safeInsertionPrompt: string
     if (selectedLook && !selectedLook.is_original) {
-      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the outfit shown in the third image. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
+      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the outfit shown in the third image. maintain the character\'s facial features and hair. critically important: preserve the exact skin tone and complexion from the character reference image — do not lighten, darken, or shift the skin color. the result should look like the character was always part of this scene.'
     } else {
-      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, skin tone, and clothing. the result should look like the character was always part of this scene.'
+      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, and clothing. critically important: preserve the exact skin tone and complexion from the character reference image — do not lighten, darken, or shift the skin color. the result should look like the character was always part of this scene.'
     }
     const styledPrompt = styleModifier
       ? `${safeInsertionPrompt} ${styleModifier}`
