@@ -35,12 +35,21 @@ export async function createPrediction(
   modelVersion: string,
   input: Record<string, any>
 ): Promise<string> {
+  // Replicate API uses "model" for model names (owner/name) and "version" for version hashes
+  const isModelName = modelVersion.includes('/')
+  const bodyPayload: Record<string, any> = { input }
+  if (isModelName) {
+    bodyPayload.model = modelVersion
+  } else {
+    bodyPayload.version = modelVersion
+  }
+
   // Log the request for debugging (without sensitive data)
   console.log('Replicate API Request:', {
-    version: modelVersion,
+    ...(isModelName ? { model: modelVersion } : { version: modelVersion }),
     inputKeys: Object.keys(input),
     promptLength: input.prompt?.length || 0,
-    imageInputCount: Array.isArray(input.image_input) ? input.image_input.length : 0,
+    imageInputCount: Array.isArray(input.input_images) ? input.input_images.length : (Array.isArray(input.image_input) ? input.image_input.length : 0),
     aspectRatio: input.aspect_ratio,
     outputFormat: input.output_format,
   })
@@ -51,10 +60,7 @@ export async function createPrediction(
       Authorization: `Token ${getReplicateToken()}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      version: modelVersion,
-      input,
-    }),
+    body: JSON.stringify(bodyPayload),
   })
 
   if (!response.ok) {
