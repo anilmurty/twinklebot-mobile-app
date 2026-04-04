@@ -332,10 +332,10 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId, selectedStyle)
       setStorybookId(storybook.id)
 
-      // If the API started generation (status=pending), skip preview and navigate to viewer
+      // If the API started generation (status=pending), skip preview and go to storybooks tab
       if (storybook.status === 'pending') {
         onOpenChange(false)
-        router.push(`/storybook/${storybook.id}`)
+        router.push("/app?tab=storybooks")
         return
       }
 
