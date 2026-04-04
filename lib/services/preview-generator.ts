@@ -221,14 +221,34 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     console.log(`[PREVIEW] Constructed base photo path: ${basePhotoPath} from base_photo: ${firstScene.base_photo}`)
 
+    // Fetch selected look for this storybook
+    let selectedLook: { attire_image_url: string; prompt_modifier: string; is_original: boolean } | null = null
+    const { data: lookData } = await supabaseAdmin
+      .from('storybooks')
+      .select('look_id, character_looks:look_id(attire_image_url, prompt_modifier, is_original)')
+      .eq('id', storybookId)
+      .single()
+
+    if (lookData?.look_id && lookData.character_looks) {
+      const look = Array.isArray(lookData.character_looks)
+        ? lookData.character_looks[0]
+        : lookData.character_looks
+      selectedLook = look as any
+    }
+
     // Build Gemini-safe insertion prompt (no age/gender references)
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
-    const safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, skin tone, and clothing. the result should look like the character was always part of this scene.'
+    let safeInsertionPrompt: string
+    if (selectedLook && !selectedLook.is_original) {
+      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the outfit shown in the third image. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
+    } else {
+      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, skin tone, and clothing. the result should look like the character was always part of this scene.'
+    }
     const styledPrompt = styleModifier
       ? `${safeInsertionPrompt} ${styleModifier}`
       : safeInsertionPrompt
 
-    console.log(`[PREVIEW] Using Gemini-safe prompt with ${storybookStyle} modifier`)
+    console.log(`[PREVIEW] Using Gemini-safe prompt with ${storybookStyle} modifier${selectedLook && !selectedLook.is_original ? ' (custom look)' : ''}`)
 
     // Generate first scene image
     const sceneFileName = `${storybookId}/scene-${firstScene.scene_number}.jpg`
@@ -240,10 +260,21 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
       const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-      console.log(`[PREVIEW] Using Gemini for scene generation`)
+      // Build reference images: base scene + character + optional attire
+      const referenceImages = [basePhotoUrl, signedVariationUrl]
+      if (selectedLook && !selectedLook.is_original && selectedLook.attire_image_url) {
+        let attireUrl = selectedLook.attire_image_url
+        if (!attireUrl.startsWith('http')) {
+          const attirePath = attireUrl.startsWith('/') ? attireUrl.slice(1) : attireUrl
+          attireUrl = getStorageUrl('story-template-assets', attirePath)
+        }
+        referenceImages.push(attireUrl)
+      }
+
+      console.log(`[PREVIEW] Using Gemini for scene generation with ${referenceImages.length} reference images`)
       const imageBuffer = await generateImageWithGemini(
         styledPrompt,
-        [basePhotoUrl, signedVariationUrl],
+        referenceImages,
         firstScene.aspect_ratio || '9:16'
       )
 
