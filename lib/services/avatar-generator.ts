@@ -37,54 +37,66 @@ export async function generateAvatars(
     signedPhotoUrl = await getSignedUrl('character-photos', photoMatch[1], 3600)
   }
 
-  try {
-    console.log(`[AVATAR] Generating realistic avatar for character ${characterId}`)
-    const startTime = Date.now()
+  const MAX_ATTEMPTS = 3
 
-    const imageBuffer = await generateImageWithGemini(
-      AVATAR_PROMPT,
-      [signedPhotoUrl],
-      '1:1',
-    )
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      console.log(`[AVATAR] Generating realistic avatar for character ${characterId} (attempt ${attempt}/${MAX_ATTEMPTS})`)
+      const startTime = Date.now()
 
-    // Upload to storage
-    const storagePath = `${userId}/${characterId}/avatar-cartoon.jpg`
-    const avatarUrl = await uploadToStorage(
-      'character-photos',
-      storagePath,
-      imageBuffer,
-      'image/jpeg',
-    )
+      const imageBuffer = await generateImageWithGemini(
+        AVATAR_PROMPT,
+        [signedPhotoUrl],
+        '1:1',
+      )
 
-    console.log(`[AVATAR] Realistic avatar generated in ${Date.now() - startTime}ms: ${avatarUrl}`)
+      // Upload to storage
+      const storagePath = `${userId}/${characterId}/avatar-cartoon.jpg`
+      const avatarUrl = await uploadToStorage(
+        'character-photos',
+        storagePath,
+        imageBuffer,
+        'image/jpeg',
+      )
 
-    await supabaseAdmin
-      .from('characters')
-      .update({
-        avatar_status: 'ready',
-        avatar_cartoon_url: avatarUrl,
-        avatar_error: null,
-      })
-      .eq('id', characterId)
+      console.log(`[AVATAR] Realistic avatar generated in ${Date.now() - startTime}ms (attempt ${attempt}): ${avatarUrl}`)
 
-    // Delete the original photo now that we have an illustrated avatar
-    if (photoMatch) {
-      await deleteFromStorage('character-photos', photoMatch[1]).catch((err) => {
-        console.warn(`[AVATAR] Failed to delete original photo: ${err.message}`)
-      })
+      await supabaseAdmin
+        .from('characters')
+        .update({
+          avatar_status: 'ready',
+          avatar_cartoon_url: avatarUrl,
+          avatar_error: null,
+        })
+        .eq('id', characterId)
+
+      // Delete the original photo now that we have an illustrated avatar
+      if (photoMatch) {
+        await deleteFromStorage('character-photos', photoMatch[1]).catch((err) => {
+          console.warn(`[AVATAR] Failed to delete original photo: ${err.message}`)
+        })
+      }
+
+      console.log(`[AVATAR] Avatar generation complete for character ${characterId}`)
+      return // Success — exit the retry loop
+    } catch (error: any) {
+      console.error(`[AVATAR] Avatar generation attempt ${attempt}/${MAX_ATTEMPTS} failed for character ${characterId}:`, error)
+
+      if (attempt < MAX_ATTEMPTS) {
+        // Exponential backoff: 2s, 4s
+        const delayMs = Math.pow(2, attempt) * 1000
+        console.log(`[AVATAR] Retrying in ${delayMs}ms...`)
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      } else {
+        // All attempts exhausted — mark as failed, keep original photo
+        await supabaseAdmin
+          .from('characters')
+          .update({
+            avatar_status: 'failed',
+            avatar_error: error.message?.substring(0, 500) || 'Unknown error',
+          })
+          .eq('id', characterId)
+      }
     }
-
-    console.log(`[AVATAR] Avatar generation complete for character ${characterId}`)
-  } catch (error: any) {
-    console.error(`[AVATAR] Avatar generation failed for character ${characterId}:`, error)
-
-    // Mark as failed, keep original photo
-    await supabaseAdmin
-      .from('characters')
-      .update({
-        avatar_status: 'failed',
-        avatar_error: error.message?.substring(0, 500) || 'Unknown error',
-      })
-      .eq('id', characterId)
   }
 }
