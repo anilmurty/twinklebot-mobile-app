@@ -12,9 +12,10 @@ import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
 
-type StorybookStyle = 'storybook' | 'comic-book' | 'cartoon'
+type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 
 const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
+  natural: '',
   storybook:
     'render the character and transform the entire scene in a watercolor picture book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
   'comic-book':
@@ -89,7 +90,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     // Step 1: Get pre-generated avatar (generated at upload time)
     console.log(`[PREVIEW] Step 1: Checking character avatar...`)
 
-    const storybookStyle = ((storybook.style as StorybookStyle) || 'cartoon') as StorybookStyle
+    const storybookStyle = ((storybook.style as StorybookStyle) || 'natural') as StorybookStyle
 
     const { data: charData } = await supabaseAdmin
       .from('characters')
@@ -252,9 +253,9 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     const useAttire = selectedLook && !selectedLook.is_original && firstScene.child_photo !== 'original'
     let safeInsertionPrompt: string
     if (useAttire) {
-      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
+      safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
     } else {
-      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
+      safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
     }
     const styledPrompt = styleModifier
       ? `${safeInsertionPrompt} ${styleModifier}`

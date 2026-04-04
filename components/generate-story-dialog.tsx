@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Sparkles, Loader2, ChevronDown, Paintbrush, Zap, Wand2 } from "lucide-react"
+import { Sparkles, Loader2, ChevronDown, Paintbrush, Zap, Wand2, Camera } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { Card } from "@/components/ui/card"
 import { charactersApi, storybooksApi, subscriptionPlansApi, paymentsApi, profileApi, characterLooksApi } from "@/lib/api-client"
@@ -41,9 +41,17 @@ interface GenerateStoryDialogProps {
 
 type GenerationStep = "character-selection" | "look-selection" | "style-selection" | "generating-preview" | "payment"
 
-type StorybookStyle = 'storybook' | 'comic-book' | 'cartoon'
+type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 
 const STYLE_OPTIONS: { id: StorybookStyle; label: string; description: string; icon: React.ReactNode; color: string; imageSuffix: string }[] = [
+  {
+    id: 'natural',
+    label: 'Natural',
+    description: 'Realistic photo style',
+    icon: <Camera className="w-5 h-5" />,
+    color: 'text-emerald-500',
+    imageSuffix: '',
+  },
   {
     id: 'storybook',
     label: 'Storybook',
@@ -127,7 +135,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [fetchingPreviewData, setFetchingPreviewData] = useState(false)
   const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('premium')
   const [premiumCredits, setPremiumCredits] = useState(0)
-  const [selectedStyle, setSelectedStyle] = useState<StorybookStyle>('cartoon')
+  const [selectedStyle, setSelectedStyle] = useState<StorybookStyle>('natural')
   const [styleImagesFailed, setStyleImagesFailed] = useState<Set<string>>(new Set())
 
   // Get first scene's base_photo for style image previews

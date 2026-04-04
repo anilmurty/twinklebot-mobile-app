@@ -1,8 +1,8 @@
 /**
  * Avatar generation service
- * Generates a single illustrated character avatar (cartoon style) at upload time
- * using Google Gemini API. The style modifier during scene generation handles
- * converting to storybook/comic styles as needed.
+ * Generates a realistic full-body character avatar at upload time using Google Gemini API.
+ * The avatar preserves the child's real appearance (face, hair, clothing, accessories).
+ * Art style (cartoon, storybook, comic, natural) is applied at scene generation time.
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -10,12 +10,12 @@ import { generateImageWithGemini } from './gemini-image'
 import { uploadToStorage, deleteFromStorage, getSignedUrl } from '@/lib/supabase/storage'
 
 const AVATAR_PROMPT =
-  'convert this portrait into a full-length illustrated character in Pixar-style 3D animation. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. the character must be wearing shoes or footwear appropriate to their outfit. standing upright, forward facing, white background.'
+  'generate a full-length photo of this person standing upright, forward facing, on a plain white background. maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from the original portrait. the result should look like a real photograph, not illustrated or cartoon. if the original photo only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit.'
 
 /**
- * Generate cartoon avatar for a character.
+ * Generate a realistic full-body avatar for a character.
  * Called in the background via waitUntil after character creation.
- * Only generates one avatar (cartoon) — scene generation applies style modifiers.
+ * Scene generation applies art style modifiers (cartoon, storybook, etc.) at render time.
  */
 export async function generateAvatars(
   characterId: string,
@@ -38,7 +38,7 @@ export async function generateAvatars(
   }
 
   try {
-    console.log(`[AVATAR] Generating cartoon avatar for character ${characterId}`)
+    console.log(`[AVATAR] Generating realistic avatar for character ${characterId}`)
     const startTime = Date.now()
 
     const imageBuffer = await generateImageWithGemini(
@@ -56,7 +56,7 @@ export async function generateAvatars(
       'image/jpeg',
     )
 
-    console.log(`[AVATAR] Cartoon avatar generated in ${Date.now() - startTime}ms: ${avatarUrl}`)
+    console.log(`[AVATAR] Realistic avatar generated in ${Date.now() - startTime}ms: ${avatarUrl}`)
 
     await supabaseAdmin
       .from('characters')

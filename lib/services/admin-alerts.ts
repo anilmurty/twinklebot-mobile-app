@@ -73,7 +73,7 @@ export async function sendStoryCompletionAlert(opts: {
     <div style="font-family:sans-serif;max-width:600px;">
       <h2 style="color:#333;">Story Generated: ${title}</h2>
       <p><strong>Character:</strong> ${characterName}</p>
-      <p><strong>Style:</strong> ${style || 'cartoon'}</p>
+      <p><strong>Style:</strong> ${style || 'natural'}</p>
       <p><strong>Storybook ID:</strong> <code>${storybookId}</code></p>
 
       <h3 style="margin-top:24px;">Character Reference</h3>
@@ -92,7 +92,7 @@ export async function sendStoryCompletionAlert(opts: {
   `
 
   await sendEmail(
-    `[QC] ${title} starring ${characterName} (${style || 'cartoon'})`,
+    `[QC] ${title} starring ${characterName} (${style || 'natural'})`,
     html
   )
 }
