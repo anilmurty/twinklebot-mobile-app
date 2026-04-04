@@ -413,9 +413,9 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       let safeInsertionPrompt: string
       if (selectedLook && !selectedLook.is_original) {
         // Custom look: tell Gemini to dress the character in the attire from the third image
-        safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the outfit shown in the third image. maintain the character\'s facial features and hair. critically important: preserve the exact skin tone and complexion from the character reference image — do not lighten, darken, or shift the skin color. the result should look like the character was always part of this scene.'
+        safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the outfit shown in the third image. maintain the character\'s facial features, hair, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
       } else {
-        safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, and clothing. critically important: preserve the exact skin tone and complexion from the character reference image — do not lighten, darken, or shift the skin color. the result should look like the character was always part of this scene.'
+        safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, clothing, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
       }
       const styledInsertionPrompt = styleModifier
         ? `${safeInsertionPrompt} ${styleModifier}`

@@ -10,7 +10,7 @@ import { generateImageWithGemini } from './gemini-image'
 import { uploadToStorage, deleteFromStorage, getSignedUrl } from '@/lib/supabase/storage'
 
 const AVATAR_PROMPT =
-  'convert this portrait into a full-length illustrated character in Pixar-style 3D animation. maintain the same facial features, hair color, hair style, and clothing from the original portrait. critically important: preserve the exact skin tone and complexion from the original photo — do not lighten, darken, or shift the skin color in any way. standing upright, forward facing, white background.'
+  'convert this portrait into a full-length illustrated character in Pixar-style 3D animation. maintain the same facial features, hair color, hair style, and clothing from the original portrait. important: the illustrated character must have the same skin tone as the person in the photo — match the exact shade and warmth of their complexion. standing upright, forward facing, white background.'
 
 /**
  * Generate cartoon avatar for a character.
