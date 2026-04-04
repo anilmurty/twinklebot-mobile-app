@@ -683,7 +683,7 @@ export function WebLandingPage() {
       )}
 
       <Dialog open={showContact} onOpenChange={setShowContact}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-w-[min(28rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Contact Us</DialogTitle>
             <DialogDescription className="pt-2 text-base">

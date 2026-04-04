@@ -246,7 +246,7 @@ export function CreateCharacterDialog({ open, onOpenChange, onCharacterCreated }
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{photo?.name}</p>
+                    <p className="font-medium text-sm truncate">{name ? `${name}'s photo` : 'Character photo'}</p>
                     <p className="text-xs text-muted-foreground">
                       {photo ? formatFileSize(photo.size) : ''}
                     </p>

@@ -910,7 +910,7 @@ export function StorybooksTab() {
           setCopiedShareUrl(false)
         }
       }}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-[min(500px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Share Link</DialogTitle>
             <DialogDescription>

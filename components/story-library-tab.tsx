@@ -612,7 +612,7 @@ export function StoryLibraryTab() {
       )}
 
       <Dialog open={showFeedbackDialog} onOpenChange={setShowFeedbackDialog}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-w-[min(500px,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl">
               <Lightbulb className="w-5 h-5 text-primary inline mr-2" />
