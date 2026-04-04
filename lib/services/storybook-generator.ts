@@ -518,6 +518,11 @@ export async function generateStorybook(storybookId: string): Promise<void> {
           .single()
 
         if (fetchError) {
+          // PGRST116 = 0 rows returned — storybook was deleted or no longer exists
+          if (fetchError.code === 'PGRST116') {
+            console.warn(`Storybook ${storybookId} no longer exists (deleted?), aborting scene update`)
+            return
+          }
           console.error(`Failed to fetch scenes for update (attempt ${updateAttempts}):`, fetchError)
           if (updateAttempts < maxUpdateAttempts) {
             await new Promise(resolve => setTimeout(resolve, 100 * Math.pow(2, updateAttempts - 1)))
