@@ -355,7 +355,13 @@ export function CharactersTab() {
         open={!!deleteConfirm}
         onOpenChange={(open) => !open && setDeleteConfirm(null)}
         title="Delete Character"
-        description={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
+        description={(() => {
+          const char = characters.find((c: Character) => c.id === deleteConfirm?.id)
+          const count = (char as any)?.stories_count || 0
+          return count > 0
+            ? `Are you sure you want to delete "${deleteConfirm?.name}"? This will also delete ${count} storybook${count !== 1 ? 's' : ''} created with this character. This action cannot be undone.`
+            : `Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`
+        })()}
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={handleDeleteConfirm}

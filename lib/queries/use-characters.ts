@@ -72,11 +72,13 @@ export function useUpdateCharacter() {
  */
 export function useDeleteCharacter() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: (id: string) => charactersApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: characterKeys.lists() })
+      // Storybooks are cascade-deleted with the character, so refresh that cache too
+      queryClient.invalidateQueries({ queryKey: ['storybooks'] })
     },
   })
 }
