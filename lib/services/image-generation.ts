@@ -166,7 +166,7 @@ const DEFAULT_MODEL = 'black-forest-labs/flux-kontext-pro'
  * Get model identifier from template's generation_model_id
  * Falls back to env var or default if template model not found
  */
-async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | 'premium'): Promise<string> {
+async function getModelIdentifier(templateId?: number): Promise<string> {
   // Env var always takes priority (acts as a global override)
   if (process.env.IMAGE_MODEL_VERSION) {
     console.log(`✅ Using model from env var: ${process.env.IMAGE_MODEL_VERSION}`)
@@ -176,12 +176,6 @@ async function getModelIdentifier(templateId?: number, qualityTier?: 'basic' | '
   if (process.env.NANOBANANA_MODEL_VERSION) {
     console.log(`✅ Using model from legacy env var: ${process.env.NANOBANANA_MODEL_VERSION}`)
     return process.env.NANOBANANA_MODEL_VERSION
-  }
-
-  // Quality tier selection (overrides template model)
-  if (qualityTier === 'premium' || qualityTier === 'basic') {
-    console.log(`✅ Using ${qualityTier} model: ${DEFAULT_MODEL}`)
-    return DEFAULT_MODEL
   }
 
   // If template ID provided, try to get model from template
@@ -351,10 +345,9 @@ export async function createBasePhotoAndCharacterPrediction(
   insertionPrompt: string,
   aspectRatio: string = '9:16',
   templateId?: number, // Optional: get model from template
-  qualityTier?: 'basic' | 'premium' // Optional: quality tier for model selection
 ): Promise<string> {
-  // Get model identifier (from quality tier, template, or env/default)
-  const modelIdentifier = await getModelIdentifier(templateId, qualityTier)
+  // Get model identifier (from template, or env/default)
+  const modelIdentifier = await getModelIdentifier(templateId)
   const modelVersion = await resolveModelVersion(modelIdentifier)
   
   // Validate inputs
@@ -421,7 +414,6 @@ export async function generateImageWithBasePhotoAndCharacter(
   insertionPrompt: string,
   aspectRatio: string = '9:16',
   templateId?: number, // Optional: get model from template
-  qualityTier?: 'basic' | 'premium' // Optional: quality tier for model selection
 ): Promise<string> {
   const predictionId = await createBasePhotoAndCharacterPrediction(
     basePhotoPath,
@@ -429,7 +421,6 @@ export async function generateImageWithBasePhotoAndCharacter(
     insertionPrompt,
     aspectRatio,
     templateId,
-    qualityTier
   )
   return pollProviderPrediction(predictionId)
 }

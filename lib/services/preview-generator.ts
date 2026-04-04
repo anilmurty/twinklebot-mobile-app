@@ -293,7 +293,6 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
         styledPrompt,
         firstScene.aspect_ratio || '9:16',
         template.id,
-        'basic'
       )
 
       const sceneImageResponse = await fetch(sceneImageUrl)
