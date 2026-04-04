@@ -449,7 +449,7 @@ export function CharactersTab() {
 
       {/* Enlarged Avatar Dialog */}
       <Dialog open={!!enlargedAvatar} onOpenChange={(open) => !open && setEnlargedAvatar(null)}>
-        <DialogContent className="max-w-[min(24rem,calc(100vw-2rem))] p-2 sm:p-3" showCloseButton={true}>
+        <DialogContent className="max-w-[min(24rem,calc(100vw-2rem))] p-2 sm:p-3" showCloseButton={false}>
           {enlargedAvatar && (
             <div className="flex flex-col items-center">
               <img
@@ -458,6 +458,13 @@ export function CharactersTab() {
                 className="w-full rounded-lg object-contain"
               />
               <p className="mt-2 font-semibold text-center">{enlargedAvatar.name}</p>
+              <Button
+                variant="outline"
+                className="mt-3 w-full"
+                onClick={() => setEnlargedAvatar(null)}
+              >
+                Close
+              </Button>
             </div>
           )}
         </DialogContent>
