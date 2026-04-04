@@ -277,6 +277,34 @@ export function CharactersTab() {
                           </div>
                         </div>
                       </div>
+                      {/* Avatar style thumbnails */}
+                      {character.avatar_status === 'ready' && character.avatar_cartoon_url && (
+                        <div className="flex gap-2 mt-2 px-1">
+                          {([
+                            { url: character.avatar_cartoon_url, label: 'Cartoon' },
+                            { url: character.avatar_storybook_url, label: 'Storybook' },
+                            { url: character.avatar_comic_url, label: 'Comic' },
+                          ] as { url: string | undefined; label: string }[]).map((style) => (
+                            style.url ? (
+                              <div key={style.label} className="flex-1 text-center">
+                                <div className="aspect-square rounded-lg overflow-hidden border border-border/50">
+                                  <ImageWithShimmer
+                                    src={style.url}
+                                    alt={`${character.name} - ${style.label}`}
+                                    className="w-full h-full object-cover"
+                                    containerClassName="w-full h-full"
+                                    onError={(e) => {
+                                      const target = e.target as HTMLImageElement
+                                      target.src = "/placeholder.svg"
+                                    }}
+                                  />
+                                </div>
+                                <span className="text-[10px] text-muted-foreground mt-0.5 block">{style.label}</span>
+                              </div>
+                            ) : null
+                          ))}
+                        </div>
+                      )}
                       {/* Name + date below image */}
                       <div className="mt-2.5 px-1">
                         <h3 className="font-semibold text-base leading-tight truncate text-foreground">
