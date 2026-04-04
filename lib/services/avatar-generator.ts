@@ -12,11 +12,11 @@ type AvatarStyle = 'cartoon' | 'storybook' | 'comic'
 
 const AVATAR_PROMPTS: Record<AvatarStyle, string> = {
   cartoon:
-    'convert this portrait into a Pixar-style 3D animated character. maintain the same facial features, hair color, hair style, and skin tone from the original portrait. white background, forward facing, standing upright, full length, illustrated style.',
+    'convert this portrait into a full-length illustrated character in Pixar-style 3D animation. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.',
   storybook:
-    'convert this portrait into a watercolor picture book illustration character. maintain the same facial features, hair color, hair style, and skin tone from the original portrait. soft painterly textures, warm pastel palette. white background, forward facing, standing upright, full length.',
+    'convert this portrait into a full-length illustrated character in watercolor picture book style with soft painterly textures and warm pastel palette. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.',
   comic:
-    'convert this portrait into a comic book art style character. bold black ink outlines, flat vivid colors. maintain the same facial features, hair color, hair style, and skin tone from the original portrait. white background, forward facing, standing upright, full length.',
+    'convert this portrait into a full-length illustrated character in comic book art style with bold black ink outlines and flat vivid colors. maintain the same facial features, hair color, hair style, skin tone, and clothing from the original portrait. standing upright, forward facing, white background.',
 }
 
 /**
