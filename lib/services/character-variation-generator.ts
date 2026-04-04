@@ -4,8 +4,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { generateImageWithNanoBanana, createProviderPrediction, pollProviderPrediction, buildModelInput } from './image-generation'
-import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
+import { createProviderPrediction, pollProviderPrediction, buildModelInput } from './image-generation'
 import { uploadToStorage, getSignedUrl, deleteFromStorage, getStorageUrl } from '@/lib/supabase/storage'
 
 export interface CharacterVariations {
@@ -243,12 +242,15 @@ export async function generateCharacterVariations(
   const totalTimeBeforePrediction = Date.now() - variationGenStartTime
   console.log(`[TIMING] ⏱️  TOTAL TIME BEFORE GENERATION: ${totalTimeBeforePrediction}ms (${(totalTimeBeforePrediction/1000).toFixed(2)}s)`)
 
-  if (isGeminiAvailable()) {
-    // Use Google Gemini API (Nano Banana 2) — no polling needed
-    console.log(`[GEMINI] Using Gemini for character variation`)
+  {
+    // Generate character variation via Replicate (FLUX.2 Pro)
+    console.log(`[FLUX] Using Replicate for character variation`)
     const genStart = Date.now()
-    const imageBuffer = await generateImageWithGemini(frontPrompt, imageInputArray, '1:1')
-    console.log(`[TIMING] Gemini generation completed: ${Date.now() - genStart}ms`)
+
+    const predictionId = await createProviderPrediction(
+      modelVersion,
+      buildModelInput(modelVersion, frontPrompt, imageInputArray, '1:1')
+    )
 
     if (storybookId) {
       await supabaseAdmin
@@ -257,39 +259,9 @@ export async function generateCharacterVariations(
         .eq('id', storybookId)
     }
 
-    // Upload buffer directly to Supabase Storage (no download step needed)
-    console.log(`Uploading variation to Supabase Storage...`)
-    console.log(`Storage bucket: character-variations`)
-    console.log(`Storage path: ${storagePath}`)
-    try {
-      frontVariationUrl = await uploadToStorage('character-variations', `${storagePath}/front.jpg`, imageBuffer, 'image/jpeg')
-      console.log('✅ Front variation uploaded:', frontVariationUrl)
-    } catch (err: any) {
-      console.error('❌ Failed to upload front variation:', err)
-      throw new Error(`Failed to upload front variation to storage. Make sure 'character-variations' bucket exists in Supabase. Error: ${err.message}`)
-    }
-  } else {
-    // Fallback: use Replicate
-    console.warn('[FALLBACK] GOOGLE_AI_API_KEY not set, falling back to Replicate for character variation')
-    let frontUrl: string
-
-    if (storybookId) {
-      const predictionId = await createProviderPrediction(
-        modelVersion,
-        buildModelInput(modelVersion, frontPrompt, imageInputArray, '1:1')
-      )
-
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 50, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
-
-      frontUrl = await pollProviderPrediction(predictionId)
-      console.log('✅ Front variation generated:', frontUrl)
-    } else {
-      frontUrl = await generateImageWithNanoBanana(frontPrompt, imageInputArray, '1:1', templateId)
-      console.log('✅ Front variation generated:', frontUrl)
-    }
+    const frontUrl = await pollProviderPrediction(predictionId)
+    console.log(`[TIMING] Replicate generation completed: ${Date.now() - genStart}ms`)
+    console.log('✅ Front variation generated:', frontUrl)
 
     // Download from Replicate and upload to Supabase Storage
     console.log(`Downloading generated variation and uploading to storage...`)

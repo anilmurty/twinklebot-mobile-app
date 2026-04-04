@@ -160,7 +160,7 @@ export async function pollProviderPrediction(predictionId: string): Promise<stri
   return pollPrediction(predictionId)
 }
 
-const DEFAULT_MODEL = 'black-forest-labs/flux-kontext-pro'
+const DEFAULT_MODEL = 'black-forest-labs/flux-2-pro'
 
 /**
  * Get model identifier from template's generation_model_id
@@ -212,11 +212,9 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
 /**
  * Build model-specific input params.
  * Different models use different parameter names and support different options:
+ * - flux-2-pro: input_images (array), supports @image1/@image2 referencing in prompts
+ * - flux-kontext-pro: input_image (single URI), safety_tolerance
  * - nano-banana: image_input (array), output_format, match_input_image aspect ratio
- * - seedream-4.5: image_input (array), no output_format, requires real aspect_ratio
- * - flux-2-pro: input_images (array), megapixels, requires real aspect_ratio
- * - flux-kontext-pro: input_image (single URI), supports match_input_image,
- *     output_format (jpg/png), safety_tolerance (0-6, max 2 with images)
  */
 export function buildModelInput(
   modelIdentifier: string,
@@ -225,11 +223,11 @@ export function buildModelInput(
   aspectRatio: string,
 ): Record<string, any> {
   const isFluxKontext = modelIdentifier.includes('flux-kontext')
+  const isFlux2 = modelIdentifier.includes('flux-2')
   const isFlux = modelIdentifier.includes('flux')
   const isNanoBanana = modelIdentifier.includes('nano-banana')
 
-  // Both nano-banana and flux-kontext support 'match_input_image'
-  // Other models need a real ratio
+  // Resolve aspect ratio — flux-2-pro and other non-kontext/non-nano models need a real ratio
   let resolvedAspectRatio = aspectRatio
   if (!isNanoBanana && !isFluxKontext && (aspectRatio === 'match_input_image' || !aspectRatio)) {
     resolvedAspectRatio = '9:16'
@@ -242,12 +240,16 @@ export function buildModelInput(
 
   // Image input parameter name differs by model
   if (isFluxKontext) {
-    // flux-kontext-pro takes a single image URI (not an array)
-    // When multiple images are provided, use the last one (character variation)
-    // since the prompt should describe the scene context
     input.input_image = imageInput[imageInput.length - 1]
     input.output_format = 'jpg'
     input.safety_tolerance = 2
+  } else if (isFlux2) {
+    // FLUX.2 Pro/Max: supports up to 8 reference images via input_image, input_image_2, etc.
+    // Prompts use @image1, @image2 syntax to reference them
+    input.input_image = imageInput[0]
+    if (imageInput.length > 1) input.input_image_2 = imageInput[1]
+    if (imageInput.length > 2) input.input_image_3 = imageInput[2]
+    if (imageInput.length > 3) input.input_image_4 = imageInput[3]
   } else if (isFlux) {
     input.input_images = imageInput
     input.megapixels = '0.25'

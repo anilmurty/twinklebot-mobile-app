@@ -4,7 +4,6 @@
 
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateImageWithBasePhotoAndCharacter } from './image-generation'
-import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
 import {
   getCharacterVariations,
@@ -16,11 +15,11 @@ type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
   natural: '',
   storybook:
-    'render the character and transform the entire scene in a watercolor picture book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
+    'Render the entire scene in a watercolor picture book illustration style with soft painterly textures, warm pastel palette, and gentle visible brushstrokes.',
   'comic-book':
-    'render the character and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
+    'Render the entire scene in comic book art style with bold black ink outlines, flat vivid colors, and high contrast.',
   cartoon:
-    'render the character and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across character and background.',
+    'Render the entire scene in 3D animated movie style with smooth surfaces, vibrant saturated colors, and soft studio lighting.',
 }
 
 interface SceneTemplate {
@@ -393,88 +392,66 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         }
       }
 
-      // Build Gemini-safe insertion prompt (no age/gender references)
+      // Build insertion prompt using @image referencing for FLUX.2 Pro
       // For 'original' scenes (e.g. PJ/bedroom scenes), skip attire — let the base scene dictate clothing
       const useAttire = selectedLook && !selectedLook.is_original && sceneTemplate.child_photo !== 'original'
-      let safeInsertionPrompt: string
+      let insertionPrompt: string
       if (useAttire) {
-        // Custom look: tell Gemini to dress the character in the attire from the third image
-        safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
+        // Custom look: @image1=scene, @image2=character, @image3=attire
+        insertionPrompt = 'Replace the child in @image1 with the child from @image2. Match the pose, position, and body orientation of the existing child in @image1. The child in the final image must have the face, hair, skin tone, and all features from @image2. Dress the child in the complete outfit shown in @image3, including shoes and footwear. Keep the background, lighting, art style, and all other elements of @image1 completely unchanged.'
       } else {
-        safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
+        // Original attire: @image1=scene, @image2=character
+        insertionPrompt = 'Replace the child in @image1 with the child from @image2. Match the pose, position, and body orientation of the existing child in @image1. The child in the final image must have the face, hair, skin tone, and all features from @image2. Dress the child in the same clothing as the child already in @image1. Keep the background, lighting, art style, and all other elements of @image1 completely unchanged.'
       }
       const styledInsertionPrompt = styleModifier
-        ? `${safeInsertionPrompt} ${styleModifier}`
-        : safeInsertionPrompt
+        ? `${insertionPrompt} ${styleModifier}`
+        : insertionPrompt
 
-      console.log(`[STYLE] Using Gemini-safe prompt with ${storybookStyle} modifier for scene ${sceneTemplate.scene_number}${useAttire ? ' (custom look)' : sceneTemplate.child_photo === 'original' ? ' (original/no attire)' : ''}`)
+      console.log(`[STYLE] Using FLUX.2 prompt with ${storybookStyle} modifier for scene ${sceneTemplate.scene_number}${useAttire ? ' (custom look)' : sceneTemplate.child_photo === 'original' ? ' (original/no attire)' : ''}`)
 
-      // Generate scene image
+      // Generate scene image via Replicate (FLUX.2 Pro)
       let storedImageUrl: string
 
-      if (isGeminiAvailable()) {
-        // Use Google Gemini API — synchronous, no polling needed
-        const { getStorageUrl } = await import('@/lib/supabase/storage')
-        const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
-        const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
+      const { getStorageUrl } = await import('@/lib/supabase/storage')
+      const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
+      const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-        // Build reference images array: base scene + character avatar + optional attire
-        const referenceImages = [basePhotoUrl, characterImageUrl]
-        if (useAttire && selectedLook.attire_image_url) {
-          let attireUrl = selectedLook.attire_image_url
-          if (!attireUrl.startsWith('http')) {
-            const attirePath = attireUrl.startsWith('/') ? attireUrl.slice(1) : attireUrl
-            attireUrl = getStorageUrl('story-template-assets', attirePath)
-          }
-          referenceImages.push(attireUrl)
+      // Build reference images array: @image1=scene, @image2=character, @image3=attire (optional)
+      const referenceImages = [basePhotoUrl, characterImageUrl]
+      if (useAttire && selectedLook.attire_image_url) {
+        let attireUrl = selectedLook.attire_image_url
+        if (!attireUrl.startsWith('http')) {
+          const attirePath = attireUrl.startsWith('/') ? attireUrl.slice(1) : attireUrl
+          attireUrl = getStorageUrl('story-template-assets', attirePath)
         }
-
-        console.log(`[GEMINI] Generating scene ${sceneTemplate.scene_number} with ${referenceImages.length} reference images`)
-        const imageBuffer = await generateImageWithGemini(
-          styledInsertionPrompt,
-          referenceImages,
-          sceneTemplate.aspect_ratio || '9:16'
-        )
-
-        // Upload buffer directly to Supabase Storage
-        const { uploadToStorage } = await import('@/lib/supabase/storage')
-        console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
-        storedImageUrl = await uploadToStorage(
-          'storybook-scenes',
-          `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
-          imageBuffer,
-          'image/jpeg'
-        )
-      } else {
-        // Fallback: use Replicate
-        console.warn('[FALLBACK] Using Replicate for scene generation')
-        const { createBasePhotoAndCharacterPrediction, pollPrediction } = await import('./image-generation')
-        const predictionId = await createBasePhotoAndCharacterPrediction(
-          basePhotoPath,
-          characterImageUrl,
-          styledInsertionPrompt,
-          sceneTemplate.aspect_ratio || '9:16',
-          template.id,
-        )
-
-        const generatedImageUrl = await pollPrediction(predictionId)
-        console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
-
-        const imageResponse = await fetch(generatedImageUrl)
-        if (!imageResponse.ok) {
-          throw new Error(`Failed to download image: ${imageResponse.status}`)
-        }
-
-        const imageBuffer = await imageResponse.arrayBuffer()
-        const { uploadToStorage } = await import('@/lib/supabase/storage')
-        console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
-        storedImageUrl = await uploadToStorage(
-          'storybook-scenes',
-          `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
-          imageBuffer,
-          'image/jpeg'
-        )
+        referenceImages.push(attireUrl)
       }
+
+      console.log(`[FLUX] Generating scene ${sceneTemplate.scene_number} with ${referenceImages.length} reference images`)
+      const { buildModelInput, createProviderPrediction, pollProviderPrediction } = await import('./image-generation')
+      const modelIdentifier = process.env.IMAGE_MODEL_VERSION || 'black-forest-labs/flux-2-pro'
+      const predictionId = await createProviderPrediction(
+        modelIdentifier,
+        buildModelInput(modelIdentifier, styledInsertionPrompt, referenceImages, sceneTemplate.aspect_ratio || '9:16')
+      )
+
+      const generatedImageUrl = await pollProviderPrediction(predictionId)
+      console.log(`Scene ${sceneTemplate.scene_number} generated successfully:`, generatedImageUrl)
+
+      const imageResponse = await fetch(generatedImageUrl)
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to download image: ${imageResponse.status}`)
+      }
+
+      const imageBuffer = await imageResponse.arrayBuffer()
+      const { uploadToStorage } = await import('@/lib/supabase/storage')
+      console.log(`Uploading scene ${sceneTemplate.scene_number} image to storage...`)
+      storedImageUrl = await uploadToStorage(
+        'storybook-scenes',
+        `${storybookId}/scene-${sceneTemplate.scene_number}.jpg`,
+        imageBuffer,
+        'image/jpeg'
+      )
 
       console.log(`✅ Scene ${sceneTemplate.scene_number} image uploaded to storage: ${storedImageUrl}`)
 
@@ -642,24 +619,15 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       }
     }
 
-    // Generate scenes (throttled for Gemini rate limits, or fully parallel for Replicate)
-    const useGemini = isGeminiAvailable()
+    // Generate all scenes in parallel via Replicate (FLUX.2 Pro)
     console.log(`\n=== STARTING SCENE GENERATION (FIRST ATTEMPT) ===`)
-    console.log(`Generating ${scenesToGenerate.length} scenes ${useGemini ? 'with Gemini (concurrency: 5)' : 'in parallel via Replicate'}...`)
+    console.log(`Generating ${scenesToGenerate.length} scenes in parallel via Replicate...`)
     if (isResumingFromPreview && hasPreviewScene) {
       console.log(`[RESUME] Skipping preview scene (scene ${existingScenes[0]?.scene_number})`)
     }
 
     let results: PromiseSettledResult<void>[]
-    if (useGemini) {
-      // Throttle concurrency to stay under Gemini's 10 IPM Tier 1 rate limit
-      const pLimit = (await import('p-limit')).default
-      const limit = pLimit(5)
-      const scenePromises = scenesToGenerate.map(sceneTemplate =>
-        limit(() => generateSceneFirstAttempt(sceneTemplate))
-      )
-      results = await Promise.allSettled(scenePromises)
-    } else {
+    {
       const scenePromises = scenesToGenerate.map(sceneTemplate => generateSceneFirstAttempt(sceneTemplate))
       results = await Promise.allSettled(scenePromises)
     }
