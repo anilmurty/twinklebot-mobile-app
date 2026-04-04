@@ -624,16 +624,16 @@ export async function generateStorybook(storybookId: string): Promise<void> {
     // Generate scenes (throttled for Gemini rate limits, or fully parallel for Replicate)
     const useGemini = isGeminiAvailable()
     console.log(`\n=== STARTING SCENE GENERATION (FIRST ATTEMPT) ===`)
-    console.log(`Generating ${scenesToGenerate.length} scenes ${useGemini ? 'with Gemini (concurrency: 2)' : 'in parallel via Replicate'}...`)
+    console.log(`Generating ${scenesToGenerate.length} scenes ${useGemini ? 'with Gemini (concurrency: 5)' : 'in parallel via Replicate'}...`)
     if (isResumingFromPreview && hasPreviewScene) {
       console.log(`[RESUME] Skipping preview scene (scene ${existingScenes[0]?.scene_number})`)
     }
 
     let results: PromiseSettledResult<void>[]
     if (useGemini) {
-      // Throttle to concurrency 2 to stay under Gemini's 10 IPM rate limit
+      // Throttle concurrency to stay under Gemini's 10 IPM Tier 1 rate limit
       const pLimit = (await import('p-limit')).default
-      const limit = pLimit(2)
+      const limit = pLimit(5)
       const scenePromises = scenesToGenerate.map(sceneTemplate =>
         limit(() => generateSceneFirstAttempt(sceneTemplate))
       )
