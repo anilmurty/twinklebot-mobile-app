@@ -393,18 +393,20 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       }
 
       // Build Gemini-safe insertion prompt (no age/gender references)
+      // For 'original' scenes (e.g. PJ/bedroom scenes), skip attire — let the base scene dictate clothing
+      const useAttire = selectedLook && !selectedLook.is_original && sceneTemplate.child_photo !== 'original'
       let safeInsertionPrompt: string
-      if (selectedLook && !selectedLook.is_original) {
+      if (useAttire) {
         // Custom look: tell Gemini to dress the character in the attire from the third image
         safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
       } else {
-        safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. maintain the character\'s facial features, hair, clothing, shoes, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
+        safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
       }
       const styledInsertionPrompt = styleModifier
         ? `${safeInsertionPrompt} ${styleModifier}`
         : safeInsertionPrompt
 
-      console.log(`[STYLE] Using Gemini-safe prompt with ${storybookStyle} modifier for scene ${sceneTemplate.scene_number}${selectedLook && !selectedLook.is_original ? ' (custom look)' : ''}`)
+      console.log(`[STYLE] Using Gemini-safe prompt with ${storybookStyle} modifier for scene ${sceneTemplate.scene_number}${useAttire ? ' (custom look)' : sceneTemplate.child_photo === 'original' ? ' (original/no attire)' : ''}`)
 
       // Generate scene image
       let storedImageUrl: string
@@ -417,7 +419,7 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
         // Build reference images array: base scene + character avatar + optional attire
         const referenceImages = [basePhotoUrl, characterImageUrl]
-        if (selectedLook && !selectedLook.is_original && selectedLook.attire_image_url) {
+        if (useAttire && selectedLook.attire_image_url) {
           let attireUrl = selectedLook.attire_image_url
           if (!attireUrl.startsWith('http')) {
             const attirePath = attireUrl.startsWith('/') ? attireUrl.slice(1) : attireUrl
