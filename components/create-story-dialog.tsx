@@ -322,10 +322,10 @@ export function CreateStoryDialog({
       const storybook = await storybooksApi.create(characterId, selectedTemplate, selectedLookId, selectedStyle)
       setStorybookId(storybook.id)
 
-      // If the API started generation (status=pending), skip preview and navigate away
+      // If the API started generation (status=pending), skip preview and navigate to viewer
       if (storybook.status === 'pending') {
         onOpenChange(false)
-        router.push("/app?tab=storybooks")
+        router.push(`/storybook/${storybook.id}`)
         return
       }
 
@@ -370,9 +370,9 @@ export function CreateStoryDialog({
         if (success) {
           // Purchase succeeded — RevenueCat webhook will add credits,
           // auto-use one credit for the pending storybook, and start generation.
-          // Just navigate to storybooks tab where polling will show progress.
+          // Navigate to storybook viewer where polling will show progress.
           onOpenChange(false)
-          router.push("/app?tab=storybooks")
+          router.push(`/storybook/${storybookId}`)
         }
         setIsSubmitting(false)
       } else {
@@ -406,10 +406,10 @@ export function CreateStoryDialog({
       setError(null)
 
       await storybooksApi.useCredit(storybookId)
-      
-      // Navigate to storybooks tab
+
+      // Navigate to storybook viewer
       onOpenChange(false)
-      router.push("/app?tab=storybooks")
+      router.push(`/storybook/${storybookId}`)
     } catch (err: any) {
       console.error("Failed to use credit:", err)
       setError(err.message || "Failed to use credit. Please try again.")
@@ -420,7 +420,11 @@ export function CreateStoryDialog({
   const handleMaybeLater = () => {
     // Storybook is already saved as preview_pending, just close the dialog
     onOpenChange(false)
-    router.push("/app?tab=storybooks")
+    if (storybookId) {
+      router.push(`/storybook/${storybookId}`)
+    } else {
+      router.push("/app?tab=storybooks")
+    }
   }
 
   const selectedTemplateData = templates.find((t) => t.id === selectedTemplate)
@@ -796,7 +800,11 @@ export function CreateStoryDialog({
                     className="flex-1"
                     onClick={() => {
                       onOpenChange(false)
-                      router.push("/app?tab=storybooks")
+                      if (storybookId) {
+                        router.push(`/storybook/${storybookId}`)
+                      } else {
+                        router.push("/app?tab=storybooks")
+                      }
                     }}
                   >
                     Close

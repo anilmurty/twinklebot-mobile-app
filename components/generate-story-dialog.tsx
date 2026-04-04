@@ -320,10 +320,10 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId, selectedStyle)
       setStorybookId(storybook.id)
 
-      // If the API started generation (status=pending), skip preview and navigate away
+      // If the API started generation (status=pending), skip preview and navigate to viewer
       if (storybook.status === 'pending') {
         onOpenChange(false)
-        router.push("/app?tab=storybooks")
+        router.push(`/storybook/${storybook.id}`)
         return
       }
 
@@ -382,9 +382,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
         if (success) {
           // Purchase succeeded — RevenueCat webhook will add credits,
           // auto-use one credit for the pending storybook, and start generation.
-          // Just navigate to storybooks tab where polling will show progress.
+          // Navigate to storybook viewer where polling will show progress.
           onOpenChange(false)
-          router.push("/app?tab=storybooks")
+          router.push(`/storybook/${storybookId}`)
         }
         setIsSubmitting(false)
       } else {
@@ -422,9 +422,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       await storybooksApi.useCredit(storybookId, useTier)
       trackEvent("credit_used", { storybook_id: storybookId, tier: useTier })
 
-      // Navigate to storybooks tab
+      // Navigate to storybook viewer
       onOpenChange(false)
-      router.push("/app?tab=storybooks")
+      router.push(`/storybook/${storybookId}`)
     } catch (err: any) {
       console.error("Failed to use credit:", err)
       setError(err.message || "Failed to use credit. Please try again.")
@@ -435,7 +435,11 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const handleMaybeLater = () => {
     // Storybook is already saved as preview_pending, just close the dialog
     onOpenChange(false)
-    router.push("/app?tab=storybooks")
+    if (storybookId) {
+      router.push(`/storybook/${storybookId}`)
+    } else {
+      router.push("/app?tab=storybooks")
+    }
   }
 
   const selectedCharacterData = characters.find((c) => c.id === selectedCharacter)
@@ -797,7 +801,11 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                     className="flex-1"
                     onClick={() => {
                       onOpenChange(false)
-                      router.push("/app?tab=storybooks")
+                      if (storybookId) {
+                        router.push(`/storybook/${storybookId}`)
+                      } else {
+                        router.push("/app?tab=storybooks")
+                      }
                     }}
                   >
                     Close
