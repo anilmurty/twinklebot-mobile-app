@@ -309,21 +309,28 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       let characterImageUrl: string
 
       if (sceneTemplate.child_photo === 'original') {
-        // Use the child's original uploaded photo (not the character variation)
-        const originalPhotoUrl = character.front_photo_url
-        if (!originalPhotoUrl) {
-          throw new Error(`Character original photo URL not found`)
-        }
-
-        // Extract storage path and create signed URL
-        const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
-        if (match) {
-          characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
+        // Use avatar if available (original photo may have been deleted after avatar generation)
+        if (avatarUrl && charData?.avatar_status === 'ready') {
+          const match = avatarUrl.match(/character-photos\/(.+)$/)
+          if (match) {
+            characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
+          } else {
+            characterImageUrl = avatarUrl
+          }
+          console.log(`Scene ${sceneTemplate.scene_number}: using avatar for 'original' scene (original photo deleted)`)
         } else {
-          // Already a full/signed URL
-          characterImageUrl = originalPhotoUrl
+          const originalPhotoUrl = character.front_photo_url
+          if (!originalPhotoUrl) {
+            throw new Error(`Character original photo URL not found`)
+          }
+          const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
+          if (match) {
+            characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
+          } else {
+            characterImageUrl = originalPhotoUrl
+          }
+          console.log(`Scene ${sceneTemplate.scene_number}: using child's original photo`)
         }
-        console.log(`Scene ${sceneTemplate.scene_number}: using child's original photo`)
       } else {
         // Use the character variation (front/left/right)
         let characterVariationUrl = variations.front_variation_url
@@ -976,8 +983,8 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         })
       )
 
-      // Get signed URL for character photo
-      let charPhotoUrl = character.front_photo_url
+      // Get signed URL for character photo (prefer avatar over original photo)
+      let charPhotoUrl = (avatarUrl && charData?.avatar_status === 'ready') ? avatarUrl : character.front_photo_url
       try {
         const charMatch = charPhotoUrl?.match(/character-photos\/(.+?)(\?|$)/)
         if (charMatch) {

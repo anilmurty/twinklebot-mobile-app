@@ -148,18 +148,28 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     let signedVariationUrl: string
 
     if (firstScene.child_photo === 'original') {
-      // Use the child's original uploaded photo
-      const originalPhotoUrl = character.front_photo_url
-      if (!originalPhotoUrl) {
-        throw new Error(`Character original photo URL not found`)
-      }
-      const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
-      if (match) {
-        signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
+      // Use avatar if available (original photo may have been deleted after avatar generation)
+      if (avatarUrl && charData?.avatar_status === 'ready') {
+        const match = avatarUrl.match(/character-photos\/(.+)$/)
+        if (match) {
+          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
+        } else {
+          signedVariationUrl = avatarUrl
+        }
+        console.log(`[PREVIEW] Using avatar for 'original' scene ${firstScene.scene_number} (original photo deleted)`)
       } else {
-        signedVariationUrl = originalPhotoUrl
+        const originalPhotoUrl = character.front_photo_url
+        if (!originalPhotoUrl) {
+          throw new Error(`Character original photo URL not found`)
+        }
+        const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
+        if (match) {
+          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
+        } else {
+          signedVariationUrl = originalPhotoUrl
+        }
+        console.log(`[PREVIEW] Using child's original photo for scene ${firstScene.scene_number}`)
       }
-      console.log(`[PREVIEW] Using child's original photo for scene ${firstScene.scene_number}`)
     } else {
       // Use the character variation (front/left/right)
       const characterVariationUrl = variations.front_variation_url
