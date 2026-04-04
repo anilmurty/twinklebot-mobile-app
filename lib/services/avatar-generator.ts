@@ -10,7 +10,7 @@ import { generateImageWithGemini } from './gemini-image'
 import { uploadToStorage, deleteFromStorage, getSignedUrl } from '@/lib/supabase/storage'
 
 const AVATAR_PROMPT =
-  'generate a full-length photo of this person standing upright, forward facing, on a plain white background. maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from the original portrait. the result should look like a real photograph, not illustrated or cartoon. if the original photo only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit.'
+  'create a full-length hyper-realistic digital portrait of this person standing upright, forward facing, on a plain white background. maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from the original portrait. use a natural, lifelike rendering style with soft studio lighting. if the original photo only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit.'
 
 /**
  * Generate a realistic full-body avatar for a character.
