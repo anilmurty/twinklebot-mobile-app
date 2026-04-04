@@ -252,9 +252,9 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     const useAttire = selectedLook && !selectedLook.is_original && firstScene.child_photo !== 'original'
     let safeInsertionPrompt: string
     if (useAttire) {
-      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
+      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
     } else {
-      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and exact skin tone — the skin shade must match the character reference image precisely. the result should look like the character was always part of this scene.'
+      safeInsertionPrompt = 'place the illustrated character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
     }
     const styledPrompt = styleModifier
       ? `${safeInsertionPrompt} ${styleModifier}`
