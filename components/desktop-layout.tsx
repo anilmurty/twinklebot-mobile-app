@@ -8,7 +8,7 @@ import { KeepsakesTab } from "@/components/keepsakes-tab"
 import { BookOpen, Users, Library, Gift, User } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 
 interface DesktopLayoutProps {
@@ -20,11 +20,16 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  const mainContentRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const tab = searchParams.get('tab')
     if (tab && ['storybooks', 'characters', 'library', 'keepsakes', 'profile'].includes(tab)) {
       onTabChange(tab as typeof activeTab)
+      // Scroll content area to top when navigating via URL (e.g. after creating a story/character)
+      requestAnimationFrame(() => {
+        mainContentRef.current?.scrollTo({ top: 0 })
+      })
     }
   }, [searchParams, onTabChange])
 
@@ -32,6 +37,10 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
     onTabChange(tab)
     // Use current pathname to preserve /app vs / route
     router.push(`${pathname}?tab=${tab}`, { scroll: false })
+    // Scroll content area to top on tab switch
+    requestAnimationFrame(() => {
+      mainContentRef.current?.scrollTo({ top: 0 })
+    })
   }
 
   const tabs = [
@@ -85,7 +94,7 @@ export function DesktopLayout({ activeTab, onTabChange }: DesktopLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden bg-background">
-        <div className="flex-1 overflow-auto">
+        <div ref={mainContentRef} className="flex-1 overflow-auto">
           <div className="max-w-7xl mx-auto w-full h-full">
             {activeTab === "storybooks" && <StorybooksTab />}
             {activeTab === "characters" && <CharactersTab />}

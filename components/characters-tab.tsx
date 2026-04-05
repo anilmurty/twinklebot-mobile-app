@@ -155,6 +155,12 @@ export function CharactersTab() {
 
   const handleCharacterCreated = async () => {
     await refetchCharacters()
+    // On desktop, scroll the main content area to the top so the new character is visible
+    // (on mobile the bottom nav doesn't obscure the top, so this is harmless)
+    requestAnimationFrame(() => {
+      const scrollContainer = document.querySelector('main .overflow-auto')
+      if (scrollContainer) scrollContainer.scrollTo({ top: 0, behavior: 'smooth' })
+    })
   }
 
   const characterGroups = groupCharactersByMonth(characters)
