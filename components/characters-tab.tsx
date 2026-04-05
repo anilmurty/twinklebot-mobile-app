@@ -249,10 +249,11 @@ export function CharactersTab() {
                                 photoUrl: character.avatar_cartoon_url || character.front_photo_url,
                               })
                             }}
-                            className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                            disabled={character.avatar_status !== 'ready'}
+                            className={`px-4 py-2 rounded-full text-sm font-semibold transition-opacity ${character.avatar_status !== 'ready' ? 'bg-gray-500 text-gray-300 cursor-not-allowed opacity-50' : 'bg-primary text-primary-foreground hover:opacity-90'}`}
                           >
                             <Sparkles className="w-4 h-4 mr-1.5 inline" />
-                            Create Story
+                            {character.avatar_status === 'generating' ? 'Creating...' : 'Create Story'}
                           </button>
                           <div className="flex gap-2">
                             <button
@@ -293,6 +294,7 @@ export function CharactersTab() {
                         <Button
                           size="sm"
                           className="flex-1 h-8 text-xs"
+                          disabled={character.avatar_status !== 'ready'}
                           onClick={() =>
                             setCreateStoryForCharacter({
                               id: character.id,
@@ -302,7 +304,7 @@ export function CharactersTab() {
                           }
                         >
                           <Sparkles className="w-3 h-3 mr-1" />
-                          Create Story
+                          {character.avatar_status === 'generating' ? 'Creating...' : 'Create Story'}
                         </Button>
                         <button
                           onClick={() => handleRenameClick(character)}
