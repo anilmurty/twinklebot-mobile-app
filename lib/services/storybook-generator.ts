@@ -5,6 +5,7 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
+import { sendStoryFailureAlert } from './admin-alerts'
 
 type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 
@@ -977,6 +978,35 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
     // Refund the user's credit since generation failed
     await refundCreditOnFailure(storybookId)
+
+    // Send failure alert email (best-effort)
+    try {
+      const scenesTotal = template?.script_data?.scenes?.length || 0
+      // Count scenes that were successfully generated
+      const { data: currentSb } = await supabaseAdmin
+        .from('storybooks')
+        .select('scenes')
+        .eq('id', storybookId)
+        .single()
+      const scenesCompleted = Array.isArray(currentSb?.scenes)
+        ? currentSb.scenes.filter((s: any) => s.image_url).length
+        : 0
+
+      await sendStoryFailureAlert({
+        storybookId,
+        title: template?.title || 'Unknown',
+        characterName: character?.name || 'Unknown',
+        style: storybookStyle,
+        errorMessage: error.message || String(error),
+        errorStack: error.stack,
+        phase: 'full-generation',
+        scenesCompleted,
+        scenesTotal,
+        durationMs: Date.now() - startTime,
+      })
+    } catch (alertErr: any) {
+      console.error('[STORYBOOK] Failed to send failure alert:', alertErr.message)
+    }
 
     throw error // Re-throw to let caller know it failed
   }

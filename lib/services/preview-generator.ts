@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
+import { sendStoryFailureAlert } from './admin-alerts'
 
 type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 
@@ -284,7 +285,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     }
   } catch (error: any) {
     console.error(`[PREVIEW] Preview generation failed:`, error)
-    
+
     // Update storybook status to failed
     await supabaseAdmin
       .from('storybooks')
@@ -294,6 +295,23 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
         updated_at: new Date().toISOString(),
       })
       .eq('id', storybookId)
+
+    // Send failure alert email (best-effort)
+    try {
+      const storybookStyle = ((storybook.style as StorybookStyle) || 'natural') as StorybookStyle
+      await sendStoryFailureAlert({
+        storybookId,
+        title: template.title,
+        characterName: character.name,
+        style: storybookStyle,
+        errorMessage: error.message || String(error),
+        errorStack: error.stack,
+        phase: 'preview',
+        durationMs: Date.now() - previewStartTime,
+      })
+    } catch (alertErr: any) {
+      console.error('[PREVIEW] Failed to send failure alert:', alertErr.message)
+    }
 
     throw error
   }

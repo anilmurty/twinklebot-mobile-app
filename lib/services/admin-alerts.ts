@@ -1,6 +1,6 @@
 /**
  * Admin alert emails via Resend API.
- * Used for QC notifications after story generation.
+ * Used for QC notifications and failure alerts.
  */
 
 const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL || ''
@@ -93,6 +93,71 @@ export async function sendStoryCompletionAlert(opts: {
 
   await sendEmail(
     `[QC] ${title} starring ${characterName} (${style || 'natural'})`,
+    html
+  )
+}
+
+/**
+ * Send an alert email when storybook or preview generation fails.
+ * Includes error message, stack trace, and context for debugging.
+ */
+export async function sendStoryFailureAlert(opts: {
+  storybookId: string
+  title: string
+  characterName: string
+  style?: string
+  errorMessage: string
+  errorStack?: string
+  phase: 'preview' | 'full-generation'
+  scenesCompleted?: number
+  scenesTotal?: number
+  durationMs?: number
+}): Promise<void> {
+  const {
+    storybookId, title, characterName, style,
+    errorMessage, errorStack, phase,
+    scenesCompleted, scenesTotal, durationMs,
+  } = opts
+
+  const durationStr = durationMs ? `${(durationMs / 1000).toFixed(1)}s` : 'unknown'
+  const sceneInfo = scenesTotal
+    ? `${scenesCompleted ?? 0}/${scenesTotal} scenes completed`
+    : 'N/A'
+
+  const vercelLogsUrl = `https://vercel.com/twinklebot/twinklebot-mobile-app/logs?search=${encodeURIComponent(storybookId)}`
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;">
+      <h2 style="color:#cc0000;">Generation Failed: ${title}</h2>
+      <table cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-size:14px;">
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Phase:</strong></td><td>${phase}</td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Character:</strong></td><td>${characterName}</td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Style:</strong></td><td>${style || 'natural'}</td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Storybook ID:</strong></td><td><code>${storybookId}</code></td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Duration:</strong></td><td>${durationStr}</td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Scenes:</strong></td><td>${sceneInfo}</td></tr>
+      </table>
+
+      <h3 style="margin-top:24px;color:#cc0000;">Error</h3>
+      <pre style="background:#f5f5f5;padding:12px;border-radius:6px;overflow-x:auto;font-size:13px;border:1px solid #ddd;">${errorMessage}</pre>
+
+      ${errorStack ? `
+        <h3 style="margin-top:16px;color:#888;">Stack Trace</h3>
+        <pre style="background:#f9f9f9;padding:12px;border-radius:6px;overflow-x:auto;font-size:11px;color:#666;border:1px solid #eee;max-height:300px;">${errorStack}</pre>
+      ` : ''}
+
+      <p style="margin-top:24px;">
+        <a href="${vercelLogsUrl}" style="display:inline-block;background:#333;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;">View Vercel Logs</a>
+      </p>
+
+      <p style="margin-top:12px;color:#888;font-size:12px;">
+        Timestamp: ${new Date().toISOString()}
+      </p>
+    </div>
+  `
+
+  await sendEmail(
+    `[FAILED] ${phase === 'preview' ? 'Preview' : 'Story'}: ${title} starring ${characterName}`,
     html
   )
 }

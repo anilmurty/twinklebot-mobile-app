@@ -1,12 +1,12 @@
 /**
  * Google Gemini image generation service
- * Uses Nano Banana 2 (gemini-3.1-flash-image-preview) for character variation
- * and scene insertion, replacing Replicate.
+ * Uses Nano Banana Pro (gemini-3-pro-image-preview) for character avatar
+ * and scene insertion.
  */
 
 import { GoogleGenAI } from '@google/genai'
 
-const DEFAULT_MODEL = 'gemini-3.1-flash-image-preview'
+const DEFAULT_MODEL = 'gemini-3-pro-image-preview'
 
 function getGeminiClient(): GoogleGenAI {
   const apiKey = process.env.GOOGLE_AI_API_KEY
