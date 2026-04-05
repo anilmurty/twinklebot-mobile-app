@@ -342,12 +342,13 @@ export function CreateStoryDialog({
       }
 
       // Step 2: Generate preview (async - don't wait)
-      setPreviewProgress(20)
       storybooksApi.generatePreview(storybook.id).catch((err: any) => {
         console.error("Preview generation error:", err)
       })
 
-      // Don't navigate automatically - let user close modal when ready
+      // Always redirect to storybooks tab to show in-progress generation
+      onOpenChange(false)
+      router.push("/app?tab=storybooks")
     } catch (err: any) {
       console.error("Failed to generate preview:", err)
       setError(err.message || "Failed to start preview generation")
