@@ -272,12 +272,20 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       }
 
       // Use the avatar for all scenes — attire is applied at scene generation time via reference images
-      const { getSignedUrl } = await import('@/lib/supabase/storage')
+      // Download from private storage and convert to base64 data URI so Replicate can always access it
       let characterImageUrl: string
 
-      const match = avatarUrl!.match(/character-photos\/(.+)$/)
-      if (match) {
-        characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
+      const avatarMatch = avatarUrl!.match(/character-photos\/(.+?)(\?|$)/)
+      if (avatarMatch) {
+        const { data: avatarBlob, error: avatarDlError } = await supabaseAdmin.storage
+          .from('character-photos')
+          .download(avatarMatch[1])
+        if (avatarDlError || !avatarBlob) {
+          throw new Error(`Failed to download avatar: ${avatarDlError?.message || 'no data'}`)
+        }
+        const avatarBuffer = Buffer.from(await avatarBlob.arrayBuffer())
+        characterImageUrl = `data:image/jpeg;base64,${avatarBuffer.toString('base64')}`
+        console.log(`[AVATAR] Downloaded avatar as base64 data URI (${Math.round(avatarBuffer.length / 1024)}KB)`)
       } else {
         characterImageUrl = avatarUrl!
       }

@@ -114,12 +114,20 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       .update({ progress: 60, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
 
-    // Get signed URL for the avatar
-    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    // Download avatar from private storage and convert to base64 data URI
+    // Signed URLs from private buckets may not be accessible to Replicate
     let signedAvatarUrl: string
-    const avatarMatch = avatarUrl.match(/character-photos\/(.+)$/)
+    const avatarMatch = avatarUrl.match(/character-photos\/(.+?)(\?|$)/)
     if (avatarMatch) {
-      signedAvatarUrl = await getSignedUrl('character-photos', avatarMatch[1], 3600)
+      const { data: avatarBlob, error: avatarDlError } = await supabaseAdmin.storage
+        .from('character-photos')
+        .download(avatarMatch[1])
+      if (avatarDlError || !avatarBlob) {
+        throw new Error(`Failed to download avatar: ${avatarDlError?.message || 'no data'}`)
+      }
+      const avatarBuffer = Buffer.from(await avatarBlob.arrayBuffer())
+      signedAvatarUrl = `data:image/jpeg;base64,${avatarBuffer.toString('base64')}`
+      console.log(`[AVATAR] Downloaded avatar as base64 data URI (${Math.round(avatarBuffer.length / 1024)}KB)`)
     } else {
       signedAvatarUrl = avatarUrl
     }
