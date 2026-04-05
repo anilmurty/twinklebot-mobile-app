@@ -182,10 +182,19 @@ export function CharactersTab() {
             </Button>
           </Card>
         ) : characters.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground mb-4">No characters yet</p>
-            <p className="text-sm text-muted-foreground">Create your first character to start generating storybooks!</p>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-16 space-y-6">
+            <div className="w-20 h-20 rounded-full bg-green-800/60 flex items-center justify-center">
+              <Users className="w-10 h-10 text-green-400" />
+            </div>
+            <p className="text-lg font-semibold text-foreground">No Characters Yet</p>
+            <Button
+              onClick={() => setShowCreateDialog(true)}
+              className="bg-primary text-primary-foreground font-semibold px-8 py-3"
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              Create First Character
+            </Button>
+          </div>
         ) : (
           <div className="space-y-8 md:space-y-10">
             {characterGroups.map((group) => (
