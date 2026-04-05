@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Trash2, Sparkles, Loader2, Pencil, AlertTriangle } from "lucide-react"
+import { Plus, Trash2, Sparkles, Loader2, Pencil, AlertTriangle, Users } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
