@@ -6,7 +6,7 @@ import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { paymentsApi, subscriptionPlansApi, storybooksApi, profileApi } from "@/lib/api-client"
 import { navigateToUrl } from "@/lib/utils/navigation"
 import { isNativeApp } from "@/lib/utils/platform"
@@ -89,6 +89,8 @@ export function StorybooksTab() {
   const [selectedTier, setSelectedTier] = useState<'basic' | 'premium'>('premium')
   const [premiumCredits, setPremiumCredits] = useState(0)
 
+  const highlightId = searchParams.get("highlight")
+
   // Refresh when tab becomes active (in case user navigated from story creation)
   useEffect(() => {
     const tab = searchParams.get("tab")
@@ -96,6 +98,19 @@ export function StorybooksTab() {
       refetchStorybooks()
     }
   }, [searchParams, refetchStorybooks])
+
+  // Scroll the highlighted storybook into view after data loads
+  useEffect(() => {
+    if (!highlightId || loading || storybooks.length === 0) return
+    // Small delay to let DOM render
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`storybook-${highlightId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' })
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [highlightId, loading, storybooks])
 
   // Auto-update resumeStorybook from storybooks list polling data
   // This handles: (1) progress updates during generation, (2) preview completion detection
@@ -506,7 +521,7 @@ export function StorybooksTab() {
                       : Math.min(storybook.progress || 0, 100)
 
                     return (
-                      <div key={storybook.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+                      <div key={storybook.id} id={`storybook-${storybook.id}`} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
                         {/* Image area */}
                         <div
                           className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"
@@ -619,7 +634,7 @@ export function StorybooksTab() {
                     const { sceneCount, thumbnailUrl } = getStorybookStatus(storybook)
 
                     return (
-                      <div key={storybook.id} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
+                      <div key={storybook.id} id={`storybook-${storybook.id}`} className="flex-shrink-0 w-[70vw] sm:w-[45vw] md:w-[280px] lg:w-[260px] snap-start group">
                         {/* Image area */}
                         <div
                           className="relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer"

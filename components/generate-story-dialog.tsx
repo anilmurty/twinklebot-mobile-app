@@ -137,6 +137,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   const [premiumCredits, setPremiumCredits] = useState(0)
   const [selectedStyle, setSelectedStyle] = useState<StorybookStyle>('natural')
   const [styleImagesFailed, setStyleImagesFailed] = useState<Set<string>>(new Set())
+  const [isDirectGeneration, setIsDirectGeneration] = useState(false)
 
   // Get first scene's base_photo for style image previews
   const firstSceneBasePhoto = (() => {
@@ -150,8 +151,8 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     return first?.base_photo as string | undefined
   })()
 
-  // Poll for preview status while generating
-  const shouldPollPreview = currentStep === "generating-preview" && !!storybookId
+  // Poll for preview status while generating (skip polling for direct generation — no preview step)
+  const shouldPollPreview = currentStep === "generating-preview" && !!storybookId && !isDirectGeneration
   const { data: previewStatusData } = useStorybookStatus(storybookId || '', shouldPollPreview)
 
   // React to preview status updates from the status endpoint (polls every 3s via TanStack Query)
@@ -192,8 +193,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   }, [previewStatusData, currentStep, previewProgress, storybookId, fetchingPreviewData])
 
   // Timeout: if preview takes longer than 90 seconds, skip to payment step
+  // (only for preview flow, not direct generation)
   useEffect(() => {
-    if (currentStep !== "generating-preview" || !storybookId) return
+    if (currentStep !== "generating-preview" || !storybookId || isDirectGeneration) return
     const timeout = setTimeout(() => {
       if (currentStep === "generating-preview") {
         console.warn("[PREVIEW] Timed out waiting for preview, skipping to payment")
@@ -201,7 +203,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       }
     }, 90000)
     return () => clearTimeout(timeout)
-  }, [currentStep, storybookId])
+  }, [currentStep, storybookId, isDirectGeneration])
 
   useEffect(() => {
     if (open) {
@@ -221,6 +223,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       setPremiumCredits(0)
       setSelectedStyle('cartoon')
       setStyleImagesFailed(new Set())
+      setIsDirectGeneration(false)
     }
   }, [open, story.id])
 
@@ -332,9 +335,9 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId, selectedStyle)
       setStorybookId(storybook.id)
 
-      // If the API started generation (status=pending), stay on generating-preview step
-      // Dialog stays open — user can close it manually
+      // If the API started generation (status=pending), user had credits — full generation started directly
       if (storybook.status === 'pending') {
+        setIsDirectGeneration(true)
         return
       }
 
@@ -343,8 +346,6 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       storybooksApi.generatePreview(storybook.id).catch((err: any) => {
         console.error("Preview generation error:", err)
       })
-
-      // Don't navigate automatically - let user close modal when ready
     } catch (err: any) {
       console.error("Failed to generate preview:", err)
       setError(err.message || "Failed to start preview generation")
@@ -452,9 +453,11 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       onOpenChange(isOpen)
-      // When dialog closes, always navigate to storybooks tab
+      // When dialog closes, navigate to storybooks tab with the generating storybook highlighted
       if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
-        router.push("/app?tab=storybooks")
+        const params = new URLSearchParams({ tab: 'storybooks' })
+        if (storybookId) params.set('highlight', storybookId)
+        router.push(`/app?${params.toString()}`)
       }
     }}>
       <DialogContent className="max-w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
@@ -765,19 +768,26 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
         {currentStep === "generating-preview" && (
           <>
             <DialogHeader>
-              <DialogTitle className="text-2xl">Generating Preview</DialogTitle>
-              <DialogDescription>Creating a magical preview just for you</DialogDescription>
+              <DialogTitle className="text-2xl">
+                {isDirectGeneration ? "Story Generation Started" : "Generating Preview"}
+              </DialogTitle>
+              <DialogDescription>
+                {isDirectGeneration
+                  ? `${selectedCharacterData?.name}'s adventure is being created`
+                  : "Creating a magical preview just for you"}
+              </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-8 py-8">
-              {/* Progress indicator with 3 segments */}
-              <div className="flex items-center justify-center gap-2">
-                <div className="h-1.5 flex-1 bg-primary rounded-full" />
-                <div
-                  className={`h-1.5 flex-1 rounded-full transition-colors ${previewProgress >= 50 ? "bg-primary" : "bg-muted"}`}
-                />
-                <div className="h-1.5 flex-1 bg-muted rounded-full" />
-              </div>
+              {!isDirectGeneration && (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-1.5 flex-1 bg-primary rounded-full" />
+                  <div
+                    className={`h-1.5 flex-1 rounded-full transition-colors ${previewProgress >= 50 ? "bg-primary" : "bg-muted"}`}
+                  />
+                  <div className="h-1.5 flex-1 bg-muted rounded-full" />
+                </div>
+              )}
 
               <div className="flex flex-col items-center justify-center space-y-6">
                 <div className="relative w-64 h-64 bg-gradient-to-br from-primary/20 via-accent/30 to-secondary/20 rounded-3xl flex items-center justify-center overflow-hidden">
@@ -797,14 +807,20 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <h3 className="text-xl font-bold">
                     Bringing {selectedCharacterData?.name} into {story.title}...
                   </h3>
-                  <Progress value={previewProgress} className="w-full h-2" />
-                  <p className="text-sm text-muted-foreground">{Math.round(previewProgress)}% complete</p>
+                  {!isDirectGeneration && (
+                    <>
+                      <Progress value={previewProgress} className="w-full h-2" />
+                      <p className="text-sm text-muted-foreground">{Math.round(previewProgress)}% complete</p>
+                    </>
+                  )}
                 </div>
               </div>
 
               <div className="space-y-4 pt-4">
                 <p className="text-center text-sm text-muted-foreground">
-                  Feel free to close this. We will let you know when the preview is ready.
+                  {isDirectGeneration
+                    ? "Story generation takes 2-3 minutes. You can close this and check progress on the Storybooks tab."
+                    : "Feel free to close this. We will let you know when the preview is ready."}
                 </p>
                 <div className="flex gap-2">
                   <Button

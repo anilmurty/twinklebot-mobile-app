@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Trash2, Sparkles, Loader2, Pencil, AlertTriangle } from "lucide-react"
+import { Plus, Trash2, Sparkles, Loader2, Pencil, AlertTriangle, Users } from "lucide-react"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { ImageWithShimmer } from "@/components/ui/image-shimmer"
 import { Card } from "@/components/ui/card"
@@ -176,10 +176,24 @@ export function CharactersTab() {
             </Button>
           </Card>
         ) : characters.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground mb-4">No characters yet</p>
-            <p className="text-sm text-muted-foreground">Create your first character to start generating storybooks!</p>
-          </Card>
+          <div className="flex flex-col items-center justify-center py-16 px-6 space-y-6 text-center">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
+              <Users className="w-10 h-10 text-primary" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">No Characters Yet</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Create your first character to start generating personalized storybooks!
+              </p>
+            </div>
+            <Button
+              onClick={() => setShowCreateDialog(true)}
+              className="w-full max-w-xs h-auto py-4 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-semibold">Create First Character</span>
+            </Button>
+          </div>
         ) : (
           <div className="space-y-8 md:space-y-10">
             {characterGroups.map((group) => (
