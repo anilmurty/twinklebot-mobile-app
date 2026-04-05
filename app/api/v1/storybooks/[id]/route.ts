@@ -125,16 +125,13 @@ export async function DELETE(
     // Check ownership and get storybook data including character_id and template_id
     const { data: storybook } = await supabase
       .from('storybooks')
-      .select('id, user_id, character_id, template_id, scenes')
+      .select('id, user_id, scenes')
       .eq('id', id)
       .single()
 
     if (!storybook || storybook.user_id !== user.data.user?.id) {
       return NextResponse.json({ error: 'Storybook not found' }, { status: 404 })
     }
-
-    const characterId = storybook.character_id
-    const templateId = storybook.template_id
 
     // Delete scenes from storage
     const { deleteFromStorage } = await import('@/lib/supabase/storage')
@@ -222,26 +219,6 @@ export async function DELETE(
     // deleting it does not allow them to create more stories.
     // This prevents the workaround of creating/deleting stories to bypass limits.
     // The counter only resets monthly via cron job.
-
-    // Check if any other storybooks exist for this character-template combination
-    const { data: remainingStorybooks } = await supabase
-      .from('storybooks')
-      .select('id')
-      .eq('character_id', characterId)
-      .eq('template_id', templateId)
-      .limit(1)
-
-    // If no other storybooks exist for this combination, delete character variations
-    if (!remainingStorybooks || remainingStorybooks.length === 0) {
-      const { deleteCharacterVariations } = await import('@/lib/services/character-variation-generator')
-      try {
-        await deleteCharacterVariations(characterId, templateId, user.data.user?.id!)
-        console.log(`Deleted character variations for character ${characterId} and template ${templateId}`)
-      } catch (err) {
-        console.error(`Failed to delete character variations:`, err)
-        // Don't fail the request if variation deletion fails
-      }
-    }
 
     return new NextResponse(null, { status: 204 })
   } catch (error: any) {

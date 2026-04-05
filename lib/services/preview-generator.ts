@@ -1,13 +1,9 @@
 /**
  * Preview generation service
- * Generates character variations + first scene only for preview
+ * Generates first scene only for preview
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import {
-  getCharacterVariations,
-  generateCharacterVariations,
-} from './character-variation-generator'
 import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
@@ -42,7 +38,7 @@ export interface PreviewResult {
 }
 
 /**
- * Generate preview: character variations + first scene only
+ * Generate preview: first scene only
  */
 export async function generatePreview(storybookId: string): Promise<PreviewResult> {
   const previewStartTime = Date.now()
@@ -100,42 +96,16 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     const avatarUrl = charData?.avatar_cartoon_url as string | null
 
-    let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
-
     if (avatarUrl && charData?.avatar_status === 'ready') {
-      console.log(`[PREVIEW] Using pre-generated ${storybookStyle} avatar`)
-      variations = {
-        front_variation_url: avatarUrl,
-        left_variation_url: avatarUrl,
-        right_variation_url: avatarUrl,
-      }
+      console.log(`[PREVIEW] Using portrait`)
       await supabaseAdmin
         .from('storybooks')
         .update({ progress: 50, updated_at: new Date().toISOString() })
         .eq('id', storybookId)
     } else if (charData?.avatar_status === 'generating') {
-      throw new Error('Character avatar is still being generated. Please wait and try again.')
+      throw new Error('Character portrait is still being generated. Please wait and try again.')
     } else {
-      // Fallback to old flow for legacy characters
-      console.log(`[PREVIEW] No avatar found, falling back to character variation generation`)
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 10, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
-
-      const existingVariations = await getCharacterVariations(character.id, template.id)
-      if (existingVariations) {
-        variations = existingVariations
-      } else {
-        variations = await generateCharacterVariations(
-          character.id,
-          template.id,
-          character.front_photo_url,
-          userId,
-          storybookId,
-          true,
-        )
-      }
+      throw new Error('Character portrait not found. Please re-create the character.')
     }
 
     // Step 2: Generate first scene
@@ -145,72 +115,14 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       .update({ progress: 60, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
 
+    // Get signed URL for the character portrait
     const { getSignedUrl } = await import('@/lib/supabase/storage')
+    const avatarMatch = avatarUrl.match(/character-photos\/(.+?)(\?|$)/)
     let signedVariationUrl: string
-
-    if (firstScene.child_photo === 'original') {
-      // Use avatar if available (original photo may have been deleted after avatar generation)
-      if (avatarUrl && charData?.avatar_status === 'ready') {
-        const match = avatarUrl.match(/character-photos\/(.+)$/)
-        if (match) {
-          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
-        } else {
-          signedVariationUrl = avatarUrl
-        }
-        console.log(`[PREVIEW] Using avatar for 'original' scene ${firstScene.scene_number} (original photo deleted)`)
-      } else {
-        const originalPhotoUrl = character.front_photo_url
-        if (!originalPhotoUrl) {
-          throw new Error(`Character original photo URL not found`)
-        }
-        const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
-        if (match) {
-          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
-        } else {
-          signedVariationUrl = originalPhotoUrl
-        }
-        console.log(`[PREVIEW] Using child's original photo for scene ${firstScene.scene_number}`)
-      }
+    if (avatarMatch) {
+      signedVariationUrl = await getSignedUrl('character-photos', avatarMatch[1], 3600)
     } else {
-      // Use the character variation (front/left/right)
-      const characterVariationUrl = variations.front_variation_url
-
-      if (!characterVariationUrl) {
-        throw new Error(`Character variation URL not found`)
-      }
-
-      // Extract bucket and path from the URL (supports character-photos and character-variations buckets)
-      const extractBucketAndPath = (url: string): { bucket: string; path: string } | null => {
-        for (const bucket of ['character-photos', 'character-variations']) {
-          const publicUrlMatch = url.match(new RegExp(`/${bucket}/(.+)$`))
-          if (publicUrlMatch) return { bucket, path: publicUrlMatch[1] }
-          const relativeMatch = url.match(new RegExp(`^${bucket}/(.+)$`))
-          if (relativeMatch) return { bucket, path: relativeMatch[1] }
-        }
-        if (!url.includes('http')) return { bucket: 'character-variations', path: url }
-        return null
-      }
-
-      const extracted = extractBucketAndPath(characterVariationUrl)
-      if (!extracted) {
-        console.error(`[PREVIEW] Could not extract storage path from variation URL: ${characterVariationUrl}`)
-        throw new Error(`Could not extract storage path from variation URL: ${characterVariationUrl}`)
-      }
-
-      console.log(`[PREVIEW] Extracted bucket: ${extracted.bucket}, path: ${extracted.path} from URL: ${characterVariationUrl}`)
-
-      try {
-        signedVariationUrl = await getSignedUrl(extracted.bucket, extracted.path, 3600)
-        console.log(`[PREVIEW] Created signed URL for variation: ${signedVariationUrl.substring(0, 50)}...`)
-      } catch (error: any) {
-        console.warn(`[PREVIEW] Failed to create signed URL for path "${extracted.path}", error: ${error.message}`)
-        if (characterVariationUrl.startsWith('http')) {
-          console.log(`[PREVIEW] Using public URL directly: ${characterVariationUrl}`)
-          signedVariationUrl = characterVariationUrl
-        } else {
-          throw new Error(`Failed to create signed URL for character variation. Bucket: ${extracted.bucket}, Path: ${extracted.path}, Error: ${error.message}`)
-        }
-      }
+      signedVariationUrl = avatarUrl
     }
 
     // Construct base photo path - extract folder from template thumbnail_url

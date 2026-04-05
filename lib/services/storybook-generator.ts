@@ -3,13 +3,8 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { generateImageWithBasePhotoAndCharacter } from './image-generation'
 import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
-import {
-  getCharacterVariations,
-  generateCharacterVariations,
-} from './character-variation-generator'
 
 type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 
@@ -189,45 +184,16 @@ export async function generateStorybook(storybookId: string): Promise<void> {
 
     const avatarUrl = charData?.avatar_cartoon_url as string | null
 
-    // Build a variations-compatible object using the avatar URL
-    let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
-
     if (avatarUrl && charData?.avatar_status === 'ready') {
-      console.log(`✅ Using pre-generated ${storybookStyle} avatar: ${avatarUrl}`)
-      variations = {
-        front_variation_url: avatarUrl,
-        left_variation_url: avatarUrl,
-        right_variation_url: avatarUrl,
-      }
-      // Avatar already exists, set progress to 100%
+      console.log(`✅ Using portrait: ${avatarUrl}`)
       await supabaseAdmin
         .from('storybooks')
         .update({ progress: 100, updated_at: new Date().toISOString() })
         .eq('id', storybookId)
     } else if (charData?.avatar_status === 'generating') {
-      // Avatar is still being generated — fail gracefully
-      throw new Error('Character avatar is still being generated. Please wait and try again.')
+      throw new Error('Character portrait is still being generated. Please wait and try again.')
     } else {
-      // No avatar yet (legacy character or failed generation) — fall back to old flow
-      console.log(`⚠️ No pre-generated avatar found (status: ${charData?.avatar_status}). Falling back to character variation generation.`)
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 10, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
-
-      const existingVariations = await getCharacterVariations(character.id, template.id)
-      if (existingVariations) {
-        variations = existingVariations
-      } else {
-        variations = await generateCharacterVariations(
-          character.id,
-          template.id,
-          character.front_photo_url,
-          userId,
-          storybookId,
-          true,
-        )
-      }
+      throw new Error('Character portrait not found. Please re-create the character.')
     }
     console.log('=====================================\n')
 
@@ -306,56 +272,14 @@ export async function generateStorybook(storybookId: string): Promise<void> {
         throw new Error(`Scene ${sceneTemplate.scene_number} missing insertion_prompt field`)
       }
 
+      // Get signed URL for the character portrait (stored in private character-photos bucket)
       const { getSignedUrl } = await import('@/lib/supabase/storage')
+      const avatarMatch = avatarUrl!.match(/character-photos\/(.+?)(\?|$)/)
       let characterImageUrl: string
-
-      if (sceneTemplate.child_photo === 'original') {
-        // Use avatar if available (original photo may have been deleted after avatar generation)
-        if (avatarUrl && charData?.avatar_status === 'ready') {
-          const match = avatarUrl.match(/character-photos\/(.+)$/)
-          if (match) {
-            characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
-          } else {
-            characterImageUrl = avatarUrl
-          }
-          console.log(`Scene ${sceneTemplate.scene_number}: using avatar for 'original' scene (original photo deleted)`)
-        } else {
-          const originalPhotoUrl = character.front_photo_url
-          if (!originalPhotoUrl) {
-            throw new Error(`Character original photo URL not found`)
-          }
-          const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
-          if (match) {
-            characterImageUrl = await getSignedUrl('character-photos', match[1], 3600)
-          } else {
-            characterImageUrl = originalPhotoUrl
-          }
-          console.log(`Scene ${sceneTemplate.scene_number}: using child's original photo`)
-        }
+      if (avatarMatch) {
+        characterImageUrl = await getSignedUrl('character-photos', avatarMatch[1], 3600)
       } else {
-        // Use the character variation (front/left/right)
-        let characterVariationUrl = variations.front_variation_url
-
-        if (!characterVariationUrl) {
-          throw new Error(`Character variation URL not found`)
-        }
-
-        // Extract bucket and path from URL (supports character-photos and character-variations)
-        let variationBucket = 'character-variations'
-        let variationStoragePath: string | null = null
-        for (const bucket of ['character-photos', 'character-variations']) {
-          const match = characterVariationUrl.match(new RegExp(`/${bucket}/(.+)$`))
-          if (match) {
-            variationBucket = bucket
-            variationStoragePath = match[1]
-            break
-          }
-        }
-        if (!variationStoragePath) {
-          throw new Error(`Could not extract storage path from character variation URL: ${characterVariationUrl}`)
-        }
-
-        characterImageUrl = await getSignedUrl(variationBucket, variationStoragePath, 3600)
+        characterImageUrl = avatarUrl!
       }
 
       // Construct base photo path - extract folder from template thumbnail_url
