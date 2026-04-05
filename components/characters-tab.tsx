@@ -175,7 +175,7 @@ export function CharactersTab() {
               Retry
             </Button>
           </Card>
-        ) : characters.length === 0 ? (
+        ) : characters.length === 0 && !showCreateDialog ? (
           <div className="flex flex-col items-center justify-center py-16 px-6 space-y-6 text-center">
             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
               <Users className="w-10 h-10 text-primary" />

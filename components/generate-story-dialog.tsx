@@ -452,13 +452,16 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      onOpenChange(isOpen)
-      // When dialog closes, navigate to storybooks tab with the generating storybook highlighted
       if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
+        // Navigate to storybooks tab with the generating storybook highlighted
         const params = new URLSearchParams({ tab: 'storybooks' })
         if (storybookId) params.set('highlight', storybookId)
         router.push(`/app?${params.toString()}`)
+        // Delay closing so router.push executes before parent unmounts the dialog
+        setTimeout(() => onOpenChange(false), 50)
+        return
       }
+      onOpenChange(isOpen)
     }}>
       <DialogContent className="max-w-[min(42rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
         {currentStep === "character-selection" && (
