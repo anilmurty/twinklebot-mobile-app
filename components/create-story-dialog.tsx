@@ -384,7 +384,7 @@ export function CreateStoryDialog({
           // auto-use one credit for the pending storybook, and start generation.
           // Navigate to storybook viewer where polling will show progress.
           onOpenChange(false)
-          router.push(`/storybook/${storybookId}`)
+          router.push("/app?tab=storybooks")
         }
         setIsSubmitting(false)
       } else {
@@ -421,7 +421,7 @@ export function CreateStoryDialog({
 
       // Navigate to storybook viewer
       onOpenChange(false)
-      router.push(`/storybook/${storybookId}`)
+      router.push("/app?tab=storybooks")
     } catch (err: any) {
       console.error("Failed to use credit:", err)
       setError(err.message || "Failed to use credit. Please try again.")
@@ -433,7 +433,7 @@ export function CreateStoryDialog({
     // Storybook is already saved as preview_pending, just close the dialog
     onOpenChange(false)
     if (storybookId) {
-      router.push(`/storybook/${storybookId}`)
+      router.push("/app?tab=storybooks")
     } else {
       router.push("/app?tab=storybooks")
     }
@@ -813,7 +813,7 @@ export function CreateStoryDialog({
                     onClick={() => {
                       onOpenChange(false)
                       if (storybookId) {
-                        router.push(`/storybook/${storybookId}`)
+                        router.push("/app?tab=storybooks")
                       } else {
                         router.push("/app?tab=storybooks")
                       }
