@@ -62,7 +62,9 @@ export async function generateImageWithGemini(
   }))
 
   const genStart = Date.now()
-  const response = await ai.models.generateContent({
+  const GEMINI_TIMEOUT_MS = 90_000 // 90 seconds — fail fast so retries have time
+
+  const generatePromise = ai.models.generateContent({
     model: DEFAULT_MODEL,
     contents: [...imageContents, { text: prompt }],
     config: {
@@ -72,6 +74,12 @@ export async function generateImageWithGemini(
       },
     },
   })
+
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Gemini generation timed out after ${GEMINI_TIMEOUT_MS / 1000}s`)), GEMINI_TIMEOUT_MS)
+  )
+
+  const response = await Promise.race([generatePromise, timeoutPromise])
   console.log(`[GEMINI] Generation completed: ${Date.now() - genStart}ms`)
 
   // Extract image from response
