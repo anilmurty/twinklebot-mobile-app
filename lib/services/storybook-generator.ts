@@ -397,11 +397,11 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       const useAttire = selectedLook && !selectedLook.is_original && sceneTemplate.child_photo !== 'original'
       let insertionPrompt: string
       if (useAttire) {
-        // Custom look: image 1=scene, image 2=character, image 3=attire
-        insertionPrompt = 'Replace the child in the storybook scene (image 1) with the child from the photo with the white background (image 2). Match the pose, position, and body orientation of the existing child in the scene. The child in the final image must have the face, hair, skin tone, and all features from image 2. Dress the child in the complete outfit shown in image 3, including shoes and footwear. Keep the background, lighting, art style, and all other elements of the scene completely unchanged.'
+        // Custom look: scene + character + attire images
+        insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing child in scene. The child in the final image must have the face, hair, skin tone, and all features from the child in the white background photo. Dress the child in the complete outfit shown in the third image, including shoes and footwear. Keep the background, lighting, art style, and all other elements of scene completely unchanged.'
       } else {
-        // Original attire: image 1=scene, image 2=character
-        insertionPrompt = 'Replace the child in the storybook scene (image 1) with the child from the photo with the white background (image 2). Match the pose, position, and body orientation of the existing child in the scene. The child in the final image must have the face, hair, skin tone, and all features from image 2. Dress the child in the same clothing as the child already in the scene. Keep the background, lighting, art style, and all other elements of the scene completely unchanged.'
+        // Original attire: scene + character images
+        insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing child in scene. The child in the final image must have the face, hair, skin tone, and all features from the child in the white background photo. Dress the child in the complete outfit shown in white background photo, including shoes and footwear. Keep the background, lighting, art style, and all other elements of scene completely unchanged.'
       }
       const styledInsertionPrompt = styleModifier
         ? `${insertionPrompt} ${styleModifier}`
