@@ -35,15 +35,6 @@ export async function DELETE(
     // Storybooks
     await supabaseAdmin.from('storybooks').delete().eq('user_id', id)
 
-    // Character variations
-    const { data: chars } = await supabaseAdmin.from('characters').select('id').eq('user_id', id)
-    if (chars && chars.length > 0) {
-      await supabaseAdmin
-        .from('character_variations')
-        .delete()
-        .in('character_id', chars.map(c => c.id))
-    }
-
     // Characters
     await supabaseAdmin.from('characters').delete().eq('user_id', id)
 

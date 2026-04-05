@@ -1,13 +1,9 @@
 /**
  * Preview generation service
- * Generates character variations + first scene only for preview
+ * Generates first scene only for preview
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import {
-  getCharacterVariations,
-  generateCharacterVariations,
-} from './character-variation-generator'
 import { buildModelInput, createProviderPrediction, pollProviderPrediction } from './image-generation'
 import { uploadToStorage } from '@/lib/supabase/storage'
 
@@ -99,15 +95,8 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     const avatarUrl = charData?.avatar_cartoon_url as string | null
 
-    let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
-
     if (avatarUrl && charData?.avatar_status === 'ready') {
-      console.log(`[PREVIEW] Using pre-generated ${storybookStyle} avatar`)
-      variations = {
-        front_variation_url: avatarUrl,
-        left_variation_url: avatarUrl,
-        right_variation_url: avatarUrl,
-      }
+      console.log(`[PREVIEW] Using pre-generated avatar`)
       await supabaseAdmin
         .from('storybooks')
         .update({ progress: 50, updated_at: new Date().toISOString() })
@@ -115,26 +104,7 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     } else if (charData?.avatar_status === 'generating') {
       throw new Error('Character avatar is still being generated. Please wait and try again.')
     } else {
-      // Fallback to old flow for legacy characters
-      console.log(`[PREVIEW] No avatar found, falling back to character variation generation`)
-      await supabaseAdmin
-        .from('storybooks')
-        .update({ progress: 10, updated_at: new Date().toISOString() })
-        .eq('id', storybookId)
-
-      const existingVariations = await getCharacterVariations(character.id, template.id)
-      if (existingVariations) {
-        variations = existingVariations
-      } else {
-        variations = await generateCharacterVariations(
-          character.id,
-          template.id,
-          character.front_photo_url,
-          userId,
-          storybookId,
-          true,
-        )
-      }
+      throw new Error('Character avatar not found. Please re-create the character.')
     }
 
     // Step 2: Generate first scene
@@ -144,72 +114,14 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       .update({ progress: 60, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
 
+    // Get signed URL for the avatar
     const { getSignedUrl } = await import('@/lib/supabase/storage')
-    let signedVariationUrl: string
-
-    if (firstScene.child_photo === 'original') {
-      // Use avatar if available (original photo may have been deleted after avatar generation)
-      if (avatarUrl && charData?.avatar_status === 'ready') {
-        const match = avatarUrl.match(/character-photos\/(.+)$/)
-        if (match) {
-          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
-        } else {
-          signedVariationUrl = avatarUrl
-        }
-        console.log(`[PREVIEW] Using avatar for 'original' scene ${firstScene.scene_number} (original photo deleted)`)
-      } else {
-        const originalPhotoUrl = character.front_photo_url
-        if (!originalPhotoUrl) {
-          throw new Error(`Character original photo URL not found`)
-        }
-        const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
-        if (match) {
-          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
-        } else {
-          signedVariationUrl = originalPhotoUrl
-        }
-        console.log(`[PREVIEW] Using child's original photo for scene ${firstScene.scene_number}`)
-      }
+    let signedAvatarUrl: string
+    const avatarMatch = avatarUrl.match(/character-photos\/(.+)$/)
+    if (avatarMatch) {
+      signedAvatarUrl = await getSignedUrl('character-photos', avatarMatch[1], 3600)
     } else {
-      // Use the character variation (front/left/right)
-      const characterVariationUrl = variations.front_variation_url
-
-      if (!characterVariationUrl) {
-        throw new Error(`Character variation URL not found`)
-      }
-
-      // Extract bucket and path from the URL (supports character-photos and character-variations buckets)
-      const extractBucketAndPath = (url: string): { bucket: string; path: string } | null => {
-        for (const bucket of ['character-photos', 'character-variations']) {
-          const publicUrlMatch = url.match(new RegExp(`/${bucket}/(.+)$`))
-          if (publicUrlMatch) return { bucket, path: publicUrlMatch[1] }
-          const relativeMatch = url.match(new RegExp(`^${bucket}/(.+)$`))
-          if (relativeMatch) return { bucket, path: relativeMatch[1] }
-        }
-        if (!url.includes('http')) return { bucket: 'character-variations', path: url }
-        return null
-      }
-
-      const extracted = extractBucketAndPath(characterVariationUrl)
-      if (!extracted) {
-        console.error(`[PREVIEW] Could not extract storage path from variation URL: ${characterVariationUrl}`)
-        throw new Error(`Could not extract storage path from variation URL: ${characterVariationUrl}`)
-      }
-
-      console.log(`[PREVIEW] Extracted bucket: ${extracted.bucket}, path: ${extracted.path} from URL: ${characterVariationUrl}`)
-
-      try {
-        signedVariationUrl = await getSignedUrl(extracted.bucket, extracted.path, 3600)
-        console.log(`[PREVIEW] Created signed URL for variation: ${signedVariationUrl.substring(0, 50)}...`)
-      } catch (error: any) {
-        console.warn(`[PREVIEW] Failed to create signed URL for path "${extracted.path}", error: ${error.message}`)
-        if (characterVariationUrl.startsWith('http')) {
-          console.log(`[PREVIEW] Using public URL directly: ${characterVariationUrl}`)
-          signedVariationUrl = characterVariationUrl
-        } else {
-          throw new Error(`Failed to create signed URL for character variation. Bucket: ${extracted.bucket}, Path: ${extracted.path}, Error: ${error.message}`)
-        }
-      }
+      signedAvatarUrl = avatarUrl
     }
 
     // Construct base photo path - extract folder from template thumbnail_url
@@ -252,9 +164,9 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     const useAttire = selectedLook && !selectedLook.is_original && firstScene.child_photo !== 'original'
     let insertionPrompt: string
     if (useAttire) {
-      insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing child in scene. The child in the final image must have the face, hair, skin tone, and all features from the child in the white background photo. Dress the child in the complete outfit shown in the third image, including shoes and footwear. Keep the background, lighting, art style, and all other elements of scene completely unchanged. It is very important that the character in the final generated image have the physical features (eyes, hair and skintone in particular) as the character in the white background photo.'
+      insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing character in the scene. The character in the final image must have the face, hair, skin tone, and all physical features from the character in the white background photo. Dress the child in the complete outfit shown in the third image, including shoes, footwear and any accessories or none if there are none in the attire photo. Keep the background, lighting, art style, and all other elements of the scene completely unchanged. It is very important that the character in the final generated image have the physical features (eyes, hair and skintone in particular) as the character in the white background photo and be dressed in the attire shown in the third photo.'
     } else {
-      insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing child in scene. The child in the final image must have the face, hair, skin tone, and all features from the child in the white background photo. Dress the child in the complete outfit shown in white background photo, including shoes and footwear. Keep the background, lighting, art style, and all other elements of scene completely unchanged. It is very important that the character in the final generated image have the physical features (eyes, hair and skintone in particular) as the character in the white background photo.'
+      insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing character in the scene. The character in the final image must have the face, hair, skin tone, and all physical features from the character in the white background photo. Dress the child in the complete outfit shown in white background photo, including shoes and footwear. Keep the background, lighting, art style, and all other elements of the scene completely unchanged. It is very important that the character in the final generated image have the physical features (eyes, hair and skintone in particular) as the character in the white background photo.'
     }
     const styledPrompt = styleModifier
       ? `${insertionPrompt} ${styleModifier}`
@@ -272,8 +184,8 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
       const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-      // Build reference images: image1=scene, image2=character, image3=attire (optional)
-      const referenceImages = [basePhotoUrl, signedVariationUrl]
+      // Build reference images: image1=scene, image2=character avatar, image3=attire (optional)
+      const referenceImages = [basePhotoUrl, signedAvatarUrl]
       if (useAttire && selectedLook.attire_image_url) {
         let attireUrl = selectedLook.attire_image_url
         if (!attireUrl.startsWith('http')) {
