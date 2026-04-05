@@ -341,8 +341,9 @@ export async function generateStorybook(storybookId: string): Promise<void> {
       const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
       const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-      // Build reference images array: image1=scene, image2=character, image3=attire (optional)
-      const referenceImages = [basePhotoUrl, characterImageUrl]
+      // Build reference images array: image1=character (white bg), image2=scene, image3=attire (optional)
+      // Order matters for FLUX.2 Pro — avatar must be first for reliable character likeness
+      const referenceImages = [characterImageUrl, basePhotoUrl]
       if (useAttire && selectedLook.attire_image_url) {
         let attireUrl = selectedLook.attire_image_url
         if (!attireUrl.startsWith('http')) {
