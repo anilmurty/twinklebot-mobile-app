@@ -385,10 +385,16 @@ export function StorybooksTab() {
   }
 
   // Derive storybook status helpers
+  const GENERATION_TIMEOUT_MS = 7 * 60 * 1000 // 7 minutes — show as failed so user can retry
+
   const getStorybookStatus = (storybook: Storybook) => {
     const sceneCount = storybook.scenes?.length || 0
-    const isFailed = storybook.status === "failed"
-    const isGenerating = storybook.status === "generating" || storybook.status === "pending"
+    const isGeneratingServer = storybook.status === "generating" || storybook.status === "pending"
+    // Client-side timeout: if generating for >7 minutes, treat as failed
+    const isTimedOut = isGeneratingServer && storybook.created_at &&
+      (Date.now() - new Date(storybook.created_at).getTime()) > GENERATION_TIMEOUT_MS
+    const isFailed = storybook.status === "failed" || isTimedOut
+    const isGenerating = isGeneratingServer && !isTimedOut
     const isCompleted = storybook.status === "completed"
     const isPreviewPending = storybook.status === "preview_pending"
     const isGeneratingPreview = isPreviewPending && sceneCount === 0
