@@ -332,21 +332,20 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
       const storybook = await storybooksApi.create(selectedCharacter, story.id, selectedLookId, selectedStyle)
       setStorybookId(storybook.id)
 
-      // If the API started generation (status=pending), skip preview and go to storybooks tab
+      // If the API started generation (status=pending), skip preview and navigate to viewer
       if (storybook.status === 'pending') {
         onOpenChange(false)
-        router.push("/app?tab=storybooks")
+        router.push(`/storybook/${storybook.id}`)
         return
       }
 
       // Step 2: Generate preview (async - don't wait)
+      setPreviewProgress(20)
       storybooksApi.generatePreview(storybook.id).catch((err: any) => {
         console.error("Preview generation error:", err)
       })
 
-      // Always redirect to storybooks tab to show in-progress generation
-      onOpenChange(false)
-      router.push("/app?tab=storybooks")
+      // Don't navigate automatically - let user close modal when ready
     } catch (err: any) {
       console.error("Failed to generate preview:", err)
       setError(err.message || "Failed to start preview generation")
@@ -397,7 +396,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
           // auto-use one credit for the pending storybook, and start generation.
           // Navigate to storybook viewer where polling will show progress.
           onOpenChange(false)
-          router.push("/app?tab=storybooks")
+          router.push(`/storybook/${storybookId}`)
         }
         setIsSubmitting(false)
       } else {
@@ -437,7 +436,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
 
       // Navigate to storybook viewer
       onOpenChange(false)
-      router.push("/app?tab=storybooks")
+      router.push(`/storybook/${storybookId}`)
     } catch (err: any) {
       console.error("Failed to use credit:", err)
       setError(err.message || "Failed to use credit. Please try again.")
@@ -449,7 +448,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     // Storybook is already saved as preview_pending, just close the dialog
     onOpenChange(false)
     if (storybookId) {
-      router.push("/app?tab=storybooks")
+      router.push(`/storybook/${storybookId}`)
     } else {
       router.push("/app?tab=storybooks")
     }
@@ -815,7 +814,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                     onClick={() => {
                       onOpenChange(false)
                       if (storybookId) {
-                        router.push("/app?tab=storybooks")
+                        router.push(`/storybook/${storybookId}`)
                       } else {
                         router.push("/app?tab=storybooks")
                       }

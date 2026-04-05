@@ -35,36 +35,26 @@ export async function createPrediction(
   modelVersion: string,
   input: Record<string, any>
 ): Promise<string> {
-  // Replicate uses different endpoints for model names vs version hashes:
-  // - Model names (owner/name): POST /v1/models/{owner}/{name}/predictions
-  // - Version hashes: POST /v1/predictions with { version: "hash" }
-  const isModelName = modelVersion.includes('/')
-
   // Log the request for debugging (without sensitive data)
   console.log('Replicate API Request:', {
-    ...(isModelName ? { model: modelVersion } : { version: modelVersion }),
+    version: modelVersion,
     inputKeys: Object.keys(input),
     promptLength: input.prompt?.length || 0,
-    imageInputCount: Array.isArray(input.input_images) ? input.input_images.length : (Array.isArray(input.image_input) ? input.image_input.length : 0),
+    imageInputCount: Array.isArray(input.image_input) ? input.image_input.length : 0,
     aspectRatio: input.aspect_ratio,
     outputFormat: input.output_format,
   })
 
-  const url = isModelName
-    ? `${REPLICATE_API_URL}/models/${modelVersion}/predictions`
-    : `${REPLICATE_API_URL}/predictions`
-
-  const body = isModelName
-    ? { input }
-    : { version: modelVersion, input }
-
-  const response = await fetch(url, {
+  const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
     method: 'POST',
     headers: {
       Authorization: `Token ${getReplicateToken()}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      version: modelVersion,
+      input,
+    }),
   })
 
   if (!response.ok) {
@@ -170,7 +160,7 @@ export async function pollProviderPrediction(predictionId: string): Promise<stri
   return pollPrediction(predictionId)
 }
 
-const DEFAULT_MODEL = 'black-forest-labs/flux-2-pro'
+const DEFAULT_MODEL = 'black-forest-labs/flux-kontext-pro'
 
 /**
  * Get model identifier from template's generation_model_id
@@ -222,9 +212,11 @@ async function getModelIdentifier(templateId?: number): Promise<string> {
 /**
  * Build model-specific input params.
  * Different models use different parameter names and support different options:
- * - flux-2-pro: input_images (array), use natural language referencing in prompts
- * - flux-kontext-pro: input_image (single URI), safety_tolerance
  * - nano-banana: image_input (array), output_format, match_input_image aspect ratio
+ * - seedream-4.5: image_input (array), no output_format, requires real aspect_ratio
+ * - flux-2-pro: input_images (array), megapixels, requires real aspect_ratio
+ * - flux-kontext-pro: input_image (single URI), supports match_input_image,
+ *     output_format (jpg/png), safety_tolerance (0-6, max 2 with images)
  */
 export function buildModelInput(
   modelIdentifier: string,
@@ -233,11 +225,11 @@ export function buildModelInput(
   aspectRatio: string,
 ): Record<string, any> {
   const isFluxKontext = modelIdentifier.includes('flux-kontext')
-  const isFlux2 = modelIdentifier.includes('flux-2')
   const isFlux = modelIdentifier.includes('flux')
   const isNanoBanana = modelIdentifier.includes('nano-banana')
 
-  // Resolve aspect ratio — flux-2-pro and other non-kontext/non-nano models need a real ratio
+  // Both nano-banana and flux-kontext support 'match_input_image'
+  // Other models need a real ratio
   let resolvedAspectRatio = aspectRatio
   if (!isNanoBanana && !isFluxKontext && (aspectRatio === 'match_input_image' || !aspectRatio)) {
     resolvedAspectRatio = '9:16'
@@ -250,12 +242,15 @@ export function buildModelInput(
 
   // Image input parameter name differs by model
   if (isFluxKontext) {
+    // flux-kontext-pro takes a single image URI (not an array)
+    // When multiple images are provided, use the last one (character variation)
+    // since the prompt should describe the scene context
     input.input_image = imageInput[imageInput.length - 1]
     input.output_format = 'jpg'
     input.safety_tolerance = 2
   } else if (isFlux) {
-    // FLUX.2 Pro/Max and other flux models: input_images as an array
     input.input_images = imageInput
+    input.megapixels = '0.25'
   } else {
     input.image_input = imageInput
   }
@@ -340,3 +335,92 @@ export async function generateImageWithNanoBanana(
   return pollProviderPrediction(predictionId)
 }
 
+/**
+ * Create a prediction for base photo + character variation + insertion prompt
+ * Returns the prediction ID (does not wait for completion)
+ */
+export async function createBasePhotoAndCharacterPrediction(
+  basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
+  characterVariationUrl: string, // URL to character variation (front/left/right)
+  insertionPrompt: string,
+  aspectRatio: string = '9:16',
+  templateId?: number, // Optional: get model from template
+): Promise<string> {
+  // Get model identifier (from template, or env/default)
+  const modelIdentifier = await getModelIdentifier(templateId)
+  const modelVersion = await resolveModelVersion(modelIdentifier)
+  
+  // Validate inputs
+  if (!basePhotoPath || basePhotoPath.trim().length === 0) {
+    throw new Error('Base photo path is required')
+  }
+  
+  if (!characterVariationUrl || characterVariationUrl.trim().length === 0) {
+    throw new Error('Character variation URL is required')
+  }
+  
+  if (!insertionPrompt || insertionPrompt.trim().length === 0) {
+    throw new Error('Insertion prompt is required')
+  }
+  
+  // Validate URLs
+  try {
+    new URL(characterVariationUrl)
+  } catch {
+    throw new Error('Invalid character variation URL')
+  }
+
+  // Base photos should be in Supabase Storage (story-template-assets bucket)
+  // Convert path like "/day-at-the-zoo/entrance.jpeg" to "day-at-the-zoo/entrance.jpeg"
+  const storagePath = basePhotoPath.startsWith('/') 
+    ? basePhotoPath.slice(1)
+    : basePhotoPath
+
+  // Get public URL from Supabase Storage
+  const { getStorageUrl } = await import('@/lib/supabase/storage')
+  const basePhotoUrl = getStorageUrl('story-template-assets', storagePath)
+
+  console.log('\n=== SCENE IMAGE GENERATION ===')
+  console.log(`Model identifier: ${modelIdentifier}`)
+  console.log(`Model version: ${modelVersion}`)
+  console.log(`Base photo URL: ${basePhotoUrl}`)
+  console.log(`Character variation URL: ${characterVariationUrl}`)
+  console.log(`\n--- INSERTION PROMPT (sent to Replicate) ---`)
+  console.log(insertionPrompt)
+  console.log(`\n--- END INSERTION PROMPT ---`)
+  console.log(`Aspect ratio: ${aspectRatio}`)
+  console.log(`Image input array: [basePhotoUrl, characterVariationUrl]`)
+  
+  console.log('=====================================\n')
+  
+  // Call image generation API with both images
+  // The prompt is the insertion prompt, and we pass both images
+  const predictionId = await createProviderPrediction(
+    modelVersion,
+    buildModelInput(modelVersion, insertionPrompt, [basePhotoUrl, characterVariationUrl], aspectRatio)
+  )
+
+  return predictionId
+}
+
+/**
+ * Generate image using base photo + character variation + insertion prompt
+ * This is the new approach for improved image quality and consistency
+ * This function creates a prediction and polls for the result
+ */
+export async function generateImageWithBasePhotoAndCharacter(
+  basePhotoPath: string, // Path to base photo in Supabase Storage (story-template-assets bucket)
+  characterVariationUrl: string, // URL to character variation (front/left/right)
+  insertionPrompt: string,
+  aspectRatio: string = '9:16',
+  templateId?: number, // Optional: get model from template
+): Promise<string> {
+  const predictionId = await createBasePhotoAndCharacterPrediction(
+    basePhotoPath,
+    characterVariationUrl,
+    insertionPrompt,
+    aspectRatio,
+    templateId,
+  )
+  return pollProviderPrediction(predictionId)
+}

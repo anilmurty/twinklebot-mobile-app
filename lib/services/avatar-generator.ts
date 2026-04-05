@@ -1,16 +1,16 @@
 /**
  * Avatar generation service
- * Generates a realistic full-body character avatar at upload time using Replicate (FLUX.2 Pro).
+ * Generates a realistic full-body character avatar at upload time using Google Gemini API.
  * The avatar preserves the child's real appearance (face, hair, clothing, accessories).
  * Art style (cartoon, storybook, comic, natural) is applied at scene generation time.
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { buildModelInput, createProviderPrediction, pollProviderPrediction } from './image-generation'
+import { generateImageWithGemini } from './gemini-image'
 import { uploadToStorage, deleteFromStorage, getSignedUrl } from '@/lib/supabase/storage'
 
 const AVATAR_PROMPT =
-  'Create a full-length hyper-realistic digital portrait of the person in the provided photo standing upright, forward facing, arms on either side, on a plain white background. Maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from the photo. If the photo only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit. It is very important that the generated portrait has identical features to the provided image. they need to look like they are the same person. pay specific attention to detail on the skin tone, eyes, eye color, facial features, fair style and hair color and makre sure they are identical to the input image'
+  'create a full-length hyper-realistic digital portrait of this person standing upright, forward facing, on a plain white background. maintain the same facial features, hair color, hair style, skin tone, clothing, accessories, and shoes/footwear from the original portrait. use a natural, lifelike rendering style with soft studio lighting. if the original photo only shows the upper body, infer appropriate clothing and footwear for the lower body that matches the visible outfit.'
 
 /**
  * Generate a realistic full-body avatar for a character.
@@ -30,7 +30,7 @@ export async function generateAvatars(
     .update({ avatar_status: 'generating' })
     .eq('id', characterId)
 
-  // Get a signed URL for the photo (needed for Replicate to fetch it)
+  // Get a signed URL for the photo (needed for Gemini to fetch it)
   let signedPhotoUrl = photoUrl
   const photoMatch = photoUrl.match(/character-photos\/(.+?)(\?|$)/)
   if (photoMatch) {
@@ -44,21 +44,13 @@ export async function generateAvatars(
       console.log(`[AVATAR] Generating realistic avatar for character ${characterId} (attempt ${attempt}/${MAX_ATTEMPTS})`)
       const startTime = Date.now()
 
-      const modelIdentifier = process.env.IMAGE_MODEL_VERSION || 'black-forest-labs/flux-2-pro'
-      const predictionId = await createProviderPrediction(
-        modelIdentifier,
-        buildModelInput(modelIdentifier, AVATAR_PROMPT, [signedPhotoUrl], '1:1')
+      const imageBuffer = await generateImageWithGemini(
+        AVATAR_PROMPT,
+        [signedPhotoUrl],
+        '1:1',
       )
 
-      const generatedImageUrl = await pollProviderPrediction(predictionId)
-
-      // Download and upload to Supabase Storage
-      const imageResponse = await fetch(generatedImageUrl)
-      if (!imageResponse.ok) {
-        throw new Error(`Failed to download avatar image: ${imageResponse.status}`)
-      }
-      const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-
+      // Upload to storage
       const storagePath = `${userId}/${characterId}/avatar-cartoon.jpg`
       const avatarUrl = await uploadToStorage(
         'character-photos',

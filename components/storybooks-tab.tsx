@@ -137,8 +137,6 @@ export function StorybooksTab() {
 
   const handleCharacterCreated = () => {
     refetchCharacters()
-    // Navigate to characters tab so user can see avatar generation progress
-    router.push("/app?tab=characters")
   }
 
   const formatDate = (dateString: string) => {

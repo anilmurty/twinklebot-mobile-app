@@ -1,10 +1,15 @@
 /**
  * Preview generation service
- * Generates first scene only for preview
+ * Generates character variations + first scene only for preview
  */
 
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { buildModelInput, createProviderPrediction, pollProviderPrediction } from './image-generation'
+import {
+  getCharacterVariations,
+  generateCharacterVariations,
+} from './character-variation-generator'
+import { generateImageWithBasePhotoAndCharacter } from './image-generation'
+import { generateImageWithGemini, isGeminiAvailable } from './gemini-image'
 import { uploadToStorage } from '@/lib/supabase/storage'
 
 type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
@@ -12,11 +17,11 @@ type StorybookStyle = 'natural' | 'storybook' | 'comic-book' | 'cartoon'
 const STYLE_MODIFIERS: Record<StorybookStyle, string> = {
   natural: '',
   storybook:
-    'Render the entire scene in a watercolor picture book illustration style with soft painterly textures, warm pastel palette, and gentle visible brushstrokes.',
+    'render the character and transform the entire scene in a watercolor picture book illustration style, soft painterly textures, warm pastel palette, gentle visible brushstrokes, professional picture book quality, maintaining consistent style across all scene elements.',
   'comic-book':
-    'Render the entire scene in comic book art style with bold black ink outlines, flat vivid colors, and high contrast.',
+    'render the character and transform the entire scene in comic book art style, bold black ink outlines applied consistently to all elements including background, flat vivid colors, dynamic composition, high contrast, professional comic illustration.',
   cartoon:
-    'Render the entire scene in 3D animated movie style with smooth surfaces, vibrant saturated colors, and soft studio lighting.',
+    'render the character and transform the entire scene in 3D animated movie style, smooth surfaces, vibrant saturated colors, soft studio lighting, Pixar-quality render, bright and cheerful, consistent style across character and background.',
 }
 
 interface SceneTemplate {
@@ -95,8 +100,15 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
 
     const avatarUrl = charData?.avatar_cartoon_url as string | null
 
+    let variations: { front_variation_url: string; left_variation_url: string; right_variation_url: string }
+
     if (avatarUrl && charData?.avatar_status === 'ready') {
-      console.log(`[PREVIEW] Using pre-generated avatar`)
+      console.log(`[PREVIEW] Using pre-generated ${storybookStyle} avatar`)
+      variations = {
+        front_variation_url: avatarUrl,
+        left_variation_url: avatarUrl,
+        right_variation_url: avatarUrl,
+      }
       await supabaseAdmin
         .from('storybooks')
         .update({ progress: 50, updated_at: new Date().toISOString() })
@@ -104,7 +116,26 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
     } else if (charData?.avatar_status === 'generating') {
       throw new Error('Character avatar is still being generated. Please wait and try again.')
     } else {
-      throw new Error('Character avatar not found. Please re-create the character.')
+      // Fallback to old flow for legacy characters
+      console.log(`[PREVIEW] No avatar found, falling back to character variation generation`)
+      await supabaseAdmin
+        .from('storybooks')
+        .update({ progress: 10, updated_at: new Date().toISOString() })
+        .eq('id', storybookId)
+
+      const existingVariations = await getCharacterVariations(character.id, template.id)
+      if (existingVariations) {
+        variations = existingVariations
+      } else {
+        variations = await generateCharacterVariations(
+          character.id,
+          template.id,
+          character.front_photo_url,
+          userId,
+          storybookId,
+          true,
+        )
+      }
     }
 
     // Step 2: Generate first scene
@@ -114,22 +145,72 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       .update({ progress: 60, updated_at: new Date().toISOString() })
       .eq('id', storybookId)
 
-    // Download avatar from private storage and convert to base64 data URI
-    // Signed URLs from private buckets may not be accessible to Replicate
-    let signedAvatarUrl: string
-    const avatarMatch = avatarUrl.match(/character-photos\/(.+?)(\?|$)/)
-    if (avatarMatch) {
-      const { data: avatarBlob, error: avatarDlError } = await supabaseAdmin.storage
-        .from('character-photos')
-        .download(avatarMatch[1])
-      if (avatarDlError || !avatarBlob) {
-        throw new Error(`Failed to download avatar: ${avatarDlError?.message || 'no data'}`)
+    const { getSignedUrl } = await import('@/lib/supabase/storage')
+    let signedVariationUrl: string
+
+    if (firstScene.child_photo === 'original') {
+      // Use avatar if available (original photo may have been deleted after avatar generation)
+      if (avatarUrl && charData?.avatar_status === 'ready') {
+        const match = avatarUrl.match(/character-photos\/(.+)$/)
+        if (match) {
+          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
+        } else {
+          signedVariationUrl = avatarUrl
+        }
+        console.log(`[PREVIEW] Using avatar for 'original' scene ${firstScene.scene_number} (original photo deleted)`)
+      } else {
+        const originalPhotoUrl = character.front_photo_url
+        if (!originalPhotoUrl) {
+          throw new Error(`Character original photo URL not found`)
+        }
+        const match = originalPhotoUrl.match(/character-photos\/(.+)$/)
+        if (match) {
+          signedVariationUrl = await getSignedUrl('character-photos', match[1], 3600)
+        } else {
+          signedVariationUrl = originalPhotoUrl
+        }
+        console.log(`[PREVIEW] Using child's original photo for scene ${firstScene.scene_number}`)
       }
-      const avatarBuffer = Buffer.from(await avatarBlob.arrayBuffer())
-      signedAvatarUrl = `data:image/jpeg;base64,${avatarBuffer.toString('base64')}`
-      console.log(`[AVATAR] Downloaded avatar as base64 data URI (${Math.round(avatarBuffer.length / 1024)}KB)`)
     } else {
-      signedAvatarUrl = avatarUrl
+      // Use the character variation (front/left/right)
+      const characterVariationUrl = variations.front_variation_url
+
+      if (!characterVariationUrl) {
+        throw new Error(`Character variation URL not found`)
+      }
+
+      // Extract bucket and path from the URL (supports character-photos and character-variations buckets)
+      const extractBucketAndPath = (url: string): { bucket: string; path: string } | null => {
+        for (const bucket of ['character-photos', 'character-variations']) {
+          const publicUrlMatch = url.match(new RegExp(`/${bucket}/(.+)$`))
+          if (publicUrlMatch) return { bucket, path: publicUrlMatch[1] }
+          const relativeMatch = url.match(new RegExp(`^${bucket}/(.+)$`))
+          if (relativeMatch) return { bucket, path: relativeMatch[1] }
+        }
+        if (!url.includes('http')) return { bucket: 'character-variations', path: url }
+        return null
+      }
+
+      const extracted = extractBucketAndPath(characterVariationUrl)
+      if (!extracted) {
+        console.error(`[PREVIEW] Could not extract storage path from variation URL: ${characterVariationUrl}`)
+        throw new Error(`Could not extract storage path from variation URL: ${characterVariationUrl}`)
+      }
+
+      console.log(`[PREVIEW] Extracted bucket: ${extracted.bucket}, path: ${extracted.path} from URL: ${characterVariationUrl}`)
+
+      try {
+        signedVariationUrl = await getSignedUrl(extracted.bucket, extracted.path, 3600)
+        console.log(`[PREVIEW] Created signed URL for variation: ${signedVariationUrl.substring(0, 50)}...`)
+      } catch (error: any) {
+        console.warn(`[PREVIEW] Failed to create signed URL for path "${extracted.path}", error: ${error.message}`)
+        if (characterVariationUrl.startsWith('http')) {
+          console.log(`[PREVIEW] Using public URL directly: ${characterVariationUrl}`)
+          signedVariationUrl = characterVariationUrl
+        } else {
+          throw new Error(`Failed to create signed URL for character variation. Bucket: ${extracted.bucket}, Path: ${extracted.path}, Error: ${error.message}`)
+        }
+      }
     }
 
     // Construct base photo path - extract folder from template thumbnail_url
@@ -166,35 +247,34 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       selectedLook = look as any
     }
 
-    // Build insertion prompt using natural language referencing for FLUX.2 Pro on Replicate
+    // Build Gemini-safe insertion prompt (no age/gender references)
     // For 'original' scenes (e.g. PJ/bedroom scenes), skip attire — let the base scene dictate clothing
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
     const useAttire = selectedLook && !selectedLook.is_original && firstScene.child_photo !== 'original'
-    let insertionPrompt: string
+    let safeInsertionPrompt: string
     if (useAttire) {
-      insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing character in the scene. The character in the final image must have the face, hair, skin tone, and all physical features from the character in the white background photo. Dress the child in the complete outfit shown in the third image, including shoes, footwear and any accessories or none if there are none in the attire photo. Keep the background, lighting, art style, and all other elements of the scene completely unchanged. It is very important that the character in the final generated image have the physical features (eyes, hair and skintone in particular) as the character in the white background photo and be dressed in the attire shown in the third photo.'
+      safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
     } else {
-      insertionPrompt = 'Replace the character in the scene with the character from the photo with the white background. Match the pose, position, and body orientation of the existing character in the scene. The character in the final image must have the face, hair, skin tone, and all physical features from the character in the white background photo. Dress the child in the complete outfit shown in white background photo, including shoes and footwear. Keep the background, lighting, art style, and all other elements of the scene completely unchanged. It is very important that the character in the final generated image have the physical features (eyes, hair and skintone in particular) as the character in the white background photo.'
+      safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
     }
     const styledPrompt = styleModifier
-      ? `${insertionPrompt} ${styleModifier}`
-      : insertionPrompt
+      ? `${safeInsertionPrompt} ${styleModifier}`
+      : safeInsertionPrompt
 
-    console.log(`[PREVIEW] Using FLUX.2 prompt with ${storybookStyle} modifier${useAttire ? ' (custom look)' : firstScene.child_photo === 'original' ? ' (original/no attire)' : ''}`)
+    console.log(`[PREVIEW] Using Gemini-safe prompt with ${storybookStyle} modifier${useAttire ? ' (custom look)' : firstScene.child_photo === 'original' ? ' (original/no attire)' : ''}`)
 
     // Generate first scene image
     const sceneFileName = `${storybookId}/scene-${firstScene.scene_number}.jpg`
     let uploadedSceneUrl: string
 
-    {
-      // Generate scene via Replicate (FLUX.2 Pro)
+    if (isGeminiAvailable()) {
+      // Use Google Gemini API — no polling needed
       const { getStorageUrl } = await import('@/lib/supabase/storage')
       const basePhotoStoragePath = basePhotoPath.startsWith('/') ? basePhotoPath.slice(1) : basePhotoPath
       const basePhotoUrl = getStorageUrl('story-template-assets', basePhotoStoragePath)
 
-      // Build reference images: image1=character avatar (white bg), image2=scene, image3=attire (optional)
-      // Order matters for FLUX.2 Pro — avatar must be first for reliable character likeness
-      const referenceImages = [signedAvatarUrl, basePhotoUrl]
+      // Build reference images: base scene + character + optional attire
+      const referenceImages = [basePhotoUrl, signedVariationUrl]
       if (useAttire && selectedLook.attire_image_url) {
         let attireUrl = selectedLook.attire_image_url
         if (!attireUrl.startsWith('http')) {
@@ -204,14 +284,29 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
         referenceImages.push(attireUrl)
       }
 
-      console.log(`[FLUX] Generating preview scene with ${referenceImages.length} reference images`)
-      const modelIdentifier = process.env.IMAGE_MODEL_VERSION || 'black-forest-labs/flux-2-pro'
-      const predictionId = await createProviderPrediction(
-        modelIdentifier,
-        buildModelInput(modelIdentifier, styledPrompt, referenceImages, firstScene.aspect_ratio || '9:16')
+      console.log(`[PREVIEW] Using Gemini for scene generation with ${referenceImages.length} reference images`)
+      const imageBuffer = await generateImageWithGemini(
+        styledPrompt,
+        referenceImages,
+        firstScene.aspect_ratio || '9:16'
       )
 
-      const sceneImageUrl = await pollProviderPrediction(predictionId)
+      uploadedSceneUrl = await uploadToStorage(
+        'storybook-scenes',
+        sceneFileName,
+        imageBuffer,
+        'image/jpeg'
+      )
+    } else {
+      // Fallback: use Replicate
+      console.warn('[FALLBACK] Using Replicate for preview scene generation')
+      const sceneImageUrl = await generateImageWithBasePhotoAndCharacter(
+        basePhotoPath,
+        signedVariationUrl,
+        styledPrompt,
+        firstScene.aspect_ratio || '9:16',
+        template.id,
+      )
 
       const sceneImageResponse = await fetch(sceneImageUrl)
       const sceneImageBuffer = Buffer.from(await sceneImageResponse.arrayBuffer())
