@@ -160,21 +160,27 @@ export async function generatePreview(storybookId: string): Promise<PreviewResul
       selectedLook = look as any
     }
 
-    // Build Gemini-safe insertion prompt (no age/gender references)
+    // Build insertion prompt from per-scene template prompt
     // For 'original' scenes (e.g. PJ/bedroom scenes), skip attire — let the base scene dictate clothing
     const styleModifier = STYLE_MODIFIERS[storybookStyle] || ''
     const useAttire = selectedLook && !selectedLook.is_original && firstScene.child_photo !== 'original'
-    let safeInsertionPrompt: string
-    if (useAttire) {
-      safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
-    } else {
-      safeInsertionPrompt = 'place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character\'s facial features, hair, and skin tone. the result should look like the character was always part of this scene.'
-    }
-    const styledPrompt = styleModifier
-      ? `${safeInsertionPrompt} ${styleModifier}`
-      : safeInsertionPrompt
 
-    console.log(`[PREVIEW] Using Gemini-safe prompt with ${storybookStyle} modifier${useAttire ? ' (custom look)' : firstScene.child_photo === 'original' ? ' (original/no attire)' : ''}`)
+    // Use the scene-specific insertion_prompt from the database
+    let insertionPrompt = firstScene.insertion_prompt
+
+    // Append attire instruction if custom look is selected
+    if (useAttire) {
+      insertionPrompt += ' dress the character in the complete outfit shown in the third image, including shoes and footwear.'
+    }
+
+    // Always append core instructions
+    insertionPrompt += ' maintain the character\'s facial features, hair, and skin tone.'
+
+    const styledPrompt = styleModifier
+      ? `${insertionPrompt} ${styleModifier}`
+      : insertionPrompt
+
+    console.log(`[PREVIEW] Using per-scene prompt with ${storybookStyle} modifier${useAttire ? ' (custom look)' : firstScene.child_photo === 'original' ? ' (original/no attire)' : ''}`)
 
     // Generate first scene image
     const sceneFileName = `${storybookId}/scene-${firstScene.scene_number}.jpg`

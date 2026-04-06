@@ -26,23 +26,32 @@ create a full-length hyper-realistic digital portrait of this person standing up
 
 The avatar from step 1 is used directly as the character reference — there is no separate variation step.
 
-#### 2a. With Custom Attire
+**Prompt structure:** `{per-scene insertion_prompt} + {optional attire instruction} + {core instructions} + {optional style modifier}`
+
+#### Per-scene insertion_prompt (from database)
+
+Each scene has its own `insertion_prompt` stored in `story_templates.script_data.scenes[].insertion_prompt`. These are scene-specific instructions like:
+- "put the character in the photo, clutching an open paper map with an expression of amazement..."
+- "replace the character in the bedroom photo with the character in the white background..."
+
+Source spreadsheet: `Replicate_Nano_Banana_Scene_prompts_-_UPDATED.xlsx` (column D).
+DB migration: `db_scripts/062_update_scene_insertion_prompts.sql`
+
+#### Appended: Attire instruction (if custom look selected)
 
 **Input images:** 3 (base scene, character avatar, attire image)
 
 ```
-place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the complete outfit shown in the third image, including shoes and footwear. maintain the character's facial features, hair, and skin tone. the result should look like the character was always part of this scene.
+dress the character in the complete outfit shown in the third image, including shoes and footwear.
 ```
 
-#### 2b. Without Custom Attire (original look or "original" scene)
+*Attire is skipped when `is_original` is true on the selected look OR when the scene's `child_photo` is `'original'` (e.g. PJ/bedroom scenes where the base scene dictates clothing).*
 
-**Input images:** 2 (base scene, character avatar)
+#### Appended: Core instructions (always)
 
 ```
-place the character from the second image into the scene from the first image, matching the pose and position of the existing character in the scene. dress the character in the same clothing as the character already in the scene. maintain the character's facial features, hair, and skin tone. the result should look like the character was always part of this scene.
+maintain the character's facial features, hair, and skin tone.
 ```
-
-*Note: Attire is skipped when `is_original` is true on the selected look OR when the scene's `child_photo` is `'original'` (e.g. PJ/bedroom scenes where the base scene dictates clothing).*
 
 ---
 
