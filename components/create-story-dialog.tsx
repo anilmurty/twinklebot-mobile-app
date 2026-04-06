@@ -12,7 +12,8 @@ import { storybooksApi, templatesApi, subscriptionPlansApi, paymentsApi, profile
 import { navigateToUrl } from "@/lib/utils/navigation"
 import { isNativeApp } from "@/lib/utils/platform"
 import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
-import { useStorybookStatus } from "@/lib/queries/use-storybooks"
+import { useStorybookStatus, storybookKeys } from "@/lib/queries/use-storybooks"
+import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
@@ -108,6 +109,7 @@ export function CreateStoryDialog({
   characterPhotoUrl,
 }: CreateStoryDialogProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -451,12 +453,13 @@ export function CreateStoryDialog({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
-        // Navigate to storybooks tab with the generating storybook highlighted
+        // Invalidate storybooks cache so the list is fresh when storybooks tab mounts
+        queryClient.invalidateQueries({ queryKey: storybookKeys.all })
+        // Close dialog first, then navigate to storybooks tab
+        onOpenChange(false)
         const params = new URLSearchParams({ tab: 'storybooks' })
         if (storybookId) params.set('highlight', storybookId)
         router.push(`/app?${params.toString()}`)
-        // Delay closing so router.push executes before parent unmounts the dialog
-        setTimeout(() => onOpenChange(false), 50)
         return
       }
       onOpenChange(isOpen)

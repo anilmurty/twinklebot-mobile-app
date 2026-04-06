@@ -14,7 +14,8 @@ import { isNativeApp } from "@/lib/utils/platform"
 import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
 import { useCharacters } from "@/lib/queries/use-characters"
 import { trackEvent } from "@/lib/utils/analytics"
-import { useStorybookStatus } from "@/lib/queries/use-storybooks"
+import { useStorybookStatus, storybookKeys } from "@/lib/queries/use-storybooks"
+import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
@@ -113,6 +114,7 @@ function getStyleImageUrl(thumbnailUrl: string | undefined, basePhoto: string | 
 
 export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { data: charactersData, isLoading: loadingCharacters } = useCharacters()
   const characters = charactersData?.characters || []
   const [selectedCharacter, setSelectedCharacter] = useState<string>("")
@@ -453,12 +455,13 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
-        // Navigate to storybooks tab with the generating storybook highlighted
+        // Invalidate storybooks cache so the list is fresh when storybooks tab mounts
+        queryClient.invalidateQueries({ queryKey: storybookKeys.all })
+        // Close dialog first, then navigate to storybooks tab
+        onOpenChange(false)
         const params = new URLSearchParams({ tab: 'storybooks' })
         if (storybookId) params.set('highlight', storybookId)
         router.push(`/app?${params.toString()}`)
-        // Delay closing so router.push executes before parent unmounts the dialog
-        setTimeout(() => onOpenChange(false), 50)
         return
       }
       onOpenChange(isOpen)
