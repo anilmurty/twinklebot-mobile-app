@@ -43,7 +43,7 @@ No test framework is configured — there are no test commands.
 | `lib/queries/` | React Query hooks (`useStorybooks`, `useCharacters`, `useTemplates`, `useProfile`) |
 | `lib/supabase/` | Supabase client initializers (server, browser, auth, storage) |
 | `lib/utils/` | Utility functions (navigation, platform detection, deep links, push notifications) |
-| `db_scripts/` | Numbered SQL migration files (`001_*.sql` → `061_*.sql`) applied manually in Supabase |
+| `db_scripts/` | Numbered SQL migration files applied manually in Supabase |
 
 ### Storybook Generation Flow
 
@@ -99,7 +99,7 @@ Supabase buckets:
 
 ### Database Migrations
 
-Migrations live in `db_scripts/` as numbered SQL files. They are applied manually via the Supabase SQL editor — there is no ORM or automated migration runner. Name new files `NNN_description.sql` incrementing from the last number.
+Migrations live in `db_scripts/` as numbered SQL files. They are applied manually via the Supabase SQL editor — there is no ORM or automated migration runner. **Always run `ls db_scripts/*.sql | tail -5` to find the current highest number before creating a new migration.** Name new files `NNN_description.sql` incrementing from the last number.
 
 ### Progress Field Convention
 
