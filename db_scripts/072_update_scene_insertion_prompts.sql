@@ -28,6 +28,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -76,6 +81,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -126,6 +136,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -173,6 +188,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -222,6 +242,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -268,6 +293,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -318,6 +348,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -366,6 +401,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -416,6 +456,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -464,6 +509,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -514,6 +564,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -562,6 +617,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -612,6 +672,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -660,6 +725,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -710,6 +780,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -758,6 +833,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
@@ -808,6 +888,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -857,6 +942,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -905,6 +995,11 @@ BEGIN
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
 
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
+
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
     v_scene := v_scenes->v_idx;
@@ -952,6 +1047,11 @@ BEGIN
 
   -- Get current scenes
   SELECT script_data->'scenes' INTO v_scenes FROM story_templates WHERE id = v_template_id;
+
+  IF v_scenes IS NULL OR jsonb_array_length(v_scenes) = 0 THEN
+    RAISE NOTICE 'No scenes found for template id %', v_template_id;
+    RETURN;
+  END IF;
 
   -- Update each scene's insertion_prompt
   FOR v_idx IN 0..jsonb_array_length(v_scenes) - 1 LOOP
