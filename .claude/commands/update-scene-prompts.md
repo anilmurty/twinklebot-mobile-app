@@ -1,6 +1,6 @@
-Update scene insertion prompts from an Excel spreadsheet. Takes an optional spreadsheet file path as input (defaults to `docs/Replicate_Nano_Banana_Scene_prompts.xlsx`).
+Update scene insertion prompts from an Excel spreadsheet. Takes an optional spreadsheet file path as input (defaults to `docs/Replicate_Nano_Banana_Scene_prompts_-_apr-5-2026.xlsx`).
 
-Arguments: $ARGUMENTS (format: `/path/to/spreadsheet.xlsx`, optional — defaults to `docs/Replicate_Nano_Banana_Scene_prompts.xlsx`)
+Arguments: $ARGUMENTS (format: `/path/to/spreadsheet.xlsx`, optional — defaults to `docs/Replicate_Nano_Banana_Scene_prompts_-_apr-5-2026.xlsx`)
 
 ## Spreadsheet Format
 
