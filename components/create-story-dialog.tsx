@@ -455,11 +455,13 @@ export function CreateStoryDialog({
       if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
         // Invalidate storybooks cache so the list is fresh when storybooks tab mounts
         queryClient.invalidateQueries({ queryKey: storybookKeys.all })
-        // Close dialog first, then navigate to storybooks tab
-        onOpenChange(false)
+        // Navigate to storybooks tab first, then close dialog
+        // router.push must fire before onOpenChange triggers parent unmount
         const params = new URLSearchParams({ tab: 'storybooks' })
         if (storybookId) params.set('highlight', storybookId)
         router.push(`/app?${params.toString()}`)
+        // Delay close so navigation commits before parent unmounts this component
+        setTimeout(() => onOpenChange(false), 100)
         return
       }
       onOpenChange(isOpen)
