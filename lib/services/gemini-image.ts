@@ -79,7 +79,16 @@ export async function generateImageWithGemini(
     setTimeout(() => reject(new Error(`Gemini generation timed out after ${GEMINI_TIMEOUT_MS / 1000}s`)), GEMINI_TIMEOUT_MS)
   )
 
-  const response = await Promise.race([generatePromise, timeoutPromise])
+  let response
+  try {
+    response = await Promise.race([generatePromise, timeoutPromise])
+  } catch (error: any) {
+    // Send urgent email alert for billing/quota exhaustion (429 RESOURCE_EXHAUSTED)
+    if (error?.message?.includes('RESOURCE_EXHAUSTED') || error?.message?.includes('429') || error?.code === 429) {
+      sendBillingAlert(error.message).catch(() => {}) // fire-and-forget
+    }
+    throw error
+  }
   console.log(`[GEMINI] Generation completed: ${Date.now() - genStart}ms`)
 
   // Extract image from response
@@ -112,4 +121,48 @@ export async function generateImageWithGemini(
  */
 export function isGeminiAvailable(): boolean {
   return !!process.env.GOOGLE_AI_API_KEY
+}
+
+/**
+ * Send an urgent email alert when Google AI billing credits are exhausted.
+ * Uses Resend API directly to avoid circular dependency with admin-alerts.
+ */
+let lastBillingAlertSent = 0
+async function sendBillingAlert(errorMessage: string): Promise<void> {
+  // Throttle: max one alert per 10 minutes to avoid spam during retries
+  const now = Date.now()
+  if (now - lastBillingAlertSent < 10 * 60 * 1000) {
+    console.log('[GEMINI] Billing alert already sent recently, skipping')
+    return
+  }
+  lastBillingAlertSent = now
+
+  const resendKey = process.env.RESEND_API_KEY
+  const adminEmail = process.env.ADMIN_ALERT_EMAIL
+  if (!resendKey || !adminEmail) {
+    console.log('[GEMINI] Resend not configured, cannot send billing alert')
+    return
+  }
+
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'TwinkleBot Alerts <alerts@twinklebot.app>',
+        to: [adminEmail],
+        subject: 'Add funds to Google AI Account for Twinklebot ASAP',
+        html: `<p>Add funds to Google AI account or image generation will stop.</p>
+<p><a href="https://aistudio.google.com/billing">https://aistudio.google.com/billing</a></p>
+<p style="margin-top:16px;color:#888;font-size:12px;">Error: ${errorMessage}</p>
+<p style="color:#888;font-size:12px;">Timestamp: ${new Date().toISOString()}</p>`,
+      }),
+    })
+    console.log('[GEMINI] Billing alert email sent')
+  } catch (err) {
+    console.error('[GEMINI] Failed to send billing alert:', err)
+  }
 }
