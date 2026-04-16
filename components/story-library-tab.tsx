@@ -416,6 +416,23 @@ export function StoryLibraryTab() {
           </Card>
         ) : (
           <>
+            {/* Category sections */}
+            {categorizedTemplates.map((cat) => (
+              <CategorySection
+                key={cat.id}
+                label={cat.label}
+                templates={cat.templates}
+                failedThumbnails={failedThumbnails}
+                onThumbnailError={handleThumbnailError}
+                onPreview={handlePreview}
+                onGenerate={handleGenerate}
+                onNotify={handleNotify}
+                notifyingId={notifyingId}
+              />
+            ))}
+
+            <hr className="mx-4 md:mx-8 border-t border-border/40" />
+
             {/* All Stories section */}
             <section className="space-y-3">
               <h2
@@ -439,23 +456,6 @@ export function StoryLibraryTab() {
                 ))}
               </div>
             </section>
-
-            <hr className="mx-4 md:mx-8 border-t border-border/40" />
-
-            {/* Category sections */}
-            {categorizedTemplates.map((cat) => (
-              <CategorySection
-                key={cat.id}
-                label={cat.label}
-                templates={cat.templates}
-                failedThumbnails={failedThumbnails}
-                onThumbnailError={handleThumbnailError}
-                onPreview={handlePreview}
-                onGenerate={handleGenerate}
-                onNotify={handleNotify}
-                notifyingId={notifyingId}
-              />
-            ))}
           </>
         )}
 
