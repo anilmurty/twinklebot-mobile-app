@@ -13,7 +13,6 @@ import { navigateToUrl } from "@/lib/utils/navigation"
 import { isNativeApp } from "@/lib/utils/platform"
 import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services/iap-service"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
-import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
 
@@ -107,7 +106,6 @@ export function CreateStoryDialog({
   characterName,
   characterPhotoUrl,
 }: CreateStoryDialogProps) {
-  const router = useRouter()
   const [templates, setTemplates] = useState<Template[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -427,10 +425,19 @@ export function CreateStoryDialog({
     }
   }
 
-  const handleMaybeLater = () => {
-    // Storybook is already saved as preview_pending, just close the dialog
-    // onOpenChange handler will navigate to storybooks tab
+  // Close the dialog — navigates to storybooks tab if generation is in progress
+  const handleClose = () => {
+    if (currentStep === "generating-preview" || currentStep === "payment" || storybookId) {
+      const params = new URLSearchParams({ tab: 'storybooks' })
+      if (storybookId) params.set('highlight', storybookId)
+      window.location.href = `/app?${params.toString()}`
+      return
+    }
     onOpenChange(false)
+  }
+
+  const handleMaybeLater = () => {
+    handleClose()
   }
 
   const selectedTemplateData = templates.find((t) => t.id === selectedTemplate)
@@ -450,13 +457,8 @@ export function CreateStoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
-        // Navigate to storybooks tab showing the in-progress story.
-        // Use window.location so navigation survives component unmount
-        // and forces fresh data fetch on the storybooks tab.
-        const params = new URLSearchParams({ tab: 'storybooks' })
-        if (storybookId) params.set('highlight', storybookId)
-        window.location.href = `/app?${params.toString()}`
+      if (!isOpen) {
+        handleClose()
         return
       }
       onOpenChange(isOpen)
@@ -829,7 +831,7 @@ export function CreateStoryDialog({
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => onOpenChange(false)}
+                    onClick={handleClose}
                   >
                     Close
                   </Button>

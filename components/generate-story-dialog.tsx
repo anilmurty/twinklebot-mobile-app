@@ -15,7 +15,6 @@ import { getIAPPackages, purchasePackage, type IAPPackage } from "@/lib/services
 import { useCharacters } from "@/lib/queries/use-characters"
 import { trackEvent } from "@/lib/utils/analytics"
 import { useStorybookStatus } from "@/lib/queries/use-storybooks"
-import { useRouter } from "next/navigation"
 import { Progress } from "@/components/ui/progress"
 import { CompactPricing } from "@/components/compact-pricing"
 
@@ -112,7 +111,6 @@ function getStyleImageUrl(thumbnailUrl: string | undefined, basePhoto: string | 
 }
 
 export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStoryDialogProps) {
-  const router = useRouter()
   const { data: charactersData, isLoading: loadingCharacters } = useCharacters()
   const characters = charactersData?.characters || []
   const [selectedCharacter, setSelectedCharacter] = useState<string>("")
@@ -442,23 +440,27 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
     }
   }
 
-  const handleMaybeLater = () => {
-    // Storybook is already saved as preview_pending, just close the dialog
-    // onOpenChange handler will navigate to storybooks tab
+  // Close the dialog — navigates to storybooks tab if generation is in progress
+  const handleClose = () => {
+    if (currentStep === "generating-preview" || currentStep === "payment" || storybookId) {
+      const params = new URLSearchParams({ tab: 'storybooks' })
+      if (storybookId) params.set('highlight', storybookId)
+      window.location.href = `/app?${params.toString()}`
+      return
+    }
     onOpenChange(false)
+  }
+
+  const handleMaybeLater = () => {
+    handleClose()
   }
 
   const selectedCharacterData = characters.find((c) => c.id === selectedCharacter)
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen && (currentStep === "generating-preview" || currentStep === "payment" || storybookId)) {
-        // Navigate to storybooks tab showing the in-progress story.
-        // Use window.location so navigation survives component unmount
-        // and forces fresh data fetch on the storybooks tab.
-        const params = new URLSearchParams({ tab: 'storybooks' })
-        if (storybookId) params.set('highlight', storybookId)
-        window.location.href = `/app?${params.toString()}`
+      if (!isOpen) {
+        handleClose()
         return
       }
       onOpenChange(isOpen)
@@ -829,7 +831,7 @@ export function GenerateStoryDialog({ open, onOpenChange, story }: GenerateStory
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={() => onOpenChange(false)}
+                    onClick={handleClose}
                   >
                     Close
                   </Button>
