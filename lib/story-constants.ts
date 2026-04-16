@@ -4,11 +4,11 @@
  */
 
 export const STORY_CATEGORIES = [
-  { id: "language", label: "Language Learning" },
-  { id: "math", label: "Math Learning" },
-  { id: "world", label: "World Knowledge" },
-  { id: "science", label: "Pure Science" },
   { id: "scifi", label: "Sci-Fi & Fantasy" },
+  { id: "world", label: "World Knowledge" },
+  { id: "math", label: "Math Learning" },
+  { id: "science", label: "Pure Science" },
+  { id: "language", label: "Language Learning" },
 ] as const
 
 export type StoryCategoryId = (typeof STORY_CATEGORIES)[number]["id"]
