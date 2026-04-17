@@ -254,23 +254,6 @@ export function WebLandingPage() {
                   <p className="text-sm text-white/60">First personalized story free &mdash; no credit card needed</p>
                 </div>
 
-                {/* App store buttons */}
-                <div className="mt-6 flex gap-3">
-                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 cursor-default opacity-70">
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    <div className="text-left">
-                      <div className="text-[10px] text-white/60 leading-none">Download on the</div>
-                      <div className="text-sm font-semibold text-white leading-tight">App Store</div>
-                    </div>
-                  </div>
-                  <div className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/10 border border-white/20 cursor-default opacity-70">
-                    <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.79c.7.41 1.59.35 2.22-.14L21.3 13.3c.63-.5.84-1.32.54-2.06-.3-.74-1.02-1.24-1.81-1.24H3c-.97 0-1.81.64-2.04 1.56-.24.92.2 1.87 1.03 2.34l.19.1zM3 2.21c-.83.47-1.27 1.42-1.03 2.34C2.2 5.47 3.03 6.1 4 6.1h16.03c.79 0 1.51-.5 1.81-1.24.3-.74.09-1.56-.54-2.06L5.4.35C4.77-.14 3.88-.2 3.18.21z"/></svg>
-                    <div className="text-left">
-                      <div className="text-[10px] text-white/60 leading-none">Get it on</div>
-                      <div className="text-sm font-semibold text-white leading-tight">Google Play</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -292,23 +275,6 @@ export function WebLandingPage() {
                 {...(i === 0 ? { fetchPriority: "high" as const } : {})}
               />
             ))}
-            {/* App store buttons on the dark left side */}
-            <div className="absolute inset-y-0 left-4 flex flex-col gap-2 z-10 justify-center">
-              <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/50 border border-white/20 backdrop-blur-sm cursor-default opacity-70">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                <div className="text-left">
-                  <div className="text-[8px] text-white/60 leading-none">Download on the</div>
-                  <div className="text-xs font-semibold text-white leading-tight">App Store</div>
-                </div>
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-black/50 border border-white/20 backdrop-blur-sm cursor-default opacity-70">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.79c.7.41 1.59.35 2.22-.14L21.3 13.3c.63-.5.84-1.32.54-2.06-.3-.74-1.02-1.24-1.81-1.24H3c-.97 0-1.81.64-2.04 1.56-.24.92.2 1.87 1.03 2.34l.19.1zM3 2.21c-.83.47-1.27 1.42-1.03 2.34C2.2 5.47 3.03 6.1 4 6.1h16.03c.79 0 1.51-.5 1.81-1.24.3-.74.09-1.56-.54-2.06L5.4.35C4.77-.14 3.88-.2 3.18.21z"/></svg>
-                <div className="text-left">
-                  <div className="text-[8px] text-white/60 leading-none">Get it on</div>
-                  <div className="text-xs font-semibold text-white leading-tight">Google Play</div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="pt-8 pb-8 px-4 sm:px-6 text-center">
