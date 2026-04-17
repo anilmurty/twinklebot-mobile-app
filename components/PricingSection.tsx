@@ -1,7 +1,7 @@
 "use client"
 
 import { Check } from "lucide-react"
-import { IS_EARLY_ACCESS, LANDING_PAGE_PLANS } from "@/lib/config"
+import { LANDING_PAGE_PLANS } from "@/lib/config"
 import { trackEvent } from "@/lib/utils/analytics"
 
 interface PricingSectionProps {
@@ -72,26 +72,22 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
               ))}
             </ul>
 
-            <button
-              onClick={() => {
-                trackEvent("cta_click", { location: "pricing_free", label: "Get Early Access" })
-                onEarlyAccess()
-              }}
+            <a
+              href="/app"
+              onClick={() => trackEvent("cta_click", { location: "pricing_free", label: "Get Started" })}
               className="text-primary font-semibold text-sm hover:underline text-left"
             >
-              Get Early Access →
-            </button>
+              Get Started →
+            </a>
           </div>
 
           {/* Card 2 — Personalized Stories */}
           <div className="bg-card rounded-3xl border-2 border-primary/30 p-8 flex flex-col relative">
-            {IS_EARLY_ACCESS && (
-              <div className="absolute -top-3 right-6">
-                <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md">
-                  FREE during Early Access
-                </span>
-              </div>
-            )}
+            <div className="absolute -top-3 right-6">
+              <span className="px-3 py-1 bg-primary text-primary-foreground text-xs font-bold rounded-full shadow-md">
+                FREE story for limited time
+              </span>
+            </div>
 
             <h3 className="text-xl font-bold text-foreground mb-1 mt-1">Personalized Stories</h3>
             <p className="text-muted-foreground text-sm mb-6">
@@ -102,6 +98,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
               {plans.map((plan) => {
                 const savings = getSavings(plan.stories, plan.price_cents)
                 const isBestValue = plan.stories === 4
+                const isFree = plan.stories === 1
                 const label = plan.stories === 1 ? "1 Story" : `${plan.stories} Stories`
                 const descriptor = bundleDescriptors[plan.stories]
 
@@ -109,7 +106,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
                   <div
                     key={plan.stories}
                     className={`flex items-center justify-between p-3 rounded-xl border ${
-                      isBestValue ? "border-primary/30 bg-primary/5" : "border-border"
+                      isFree ? "border-primary/30 bg-primary/5" : isBestValue ? "border-primary/30 bg-primary/5" : "border-border"
                     }`}
                   >
                     <div className="flex flex-col gap-0.5">
@@ -131,7 +128,7 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {IS_EARLY_ACCESS ? (
+                      {isFree ? (
                         <>
                           <span className="text-sm text-muted-foreground/50 line-through">
                             {formatPrice(plan.price_cents)}
@@ -153,15 +150,13 @@ export function PricingSection({ onEarlyAccess }: PricingSectionProps) {
               One-time purchase. No subscription required. Your storybooks are yours to keep forever.
             </p>
 
-            <button
-              onClick={() => {
-                trackEvent("cta_click", { location: "pricing_personalized", label: "Get Early Access" })
-                onEarlyAccess()
-              }}
+            <a
+              href="/app"
+              onClick={() => trackEvent("cta_click", { location: "pricing_personalized", label: "Get Started" })}
               className="text-primary font-semibold text-sm hover:underline text-left"
             >
-              Get Early Access →
-            </button>
+              Get Started →
+            </a>
           </div>
         </div>
       </div>

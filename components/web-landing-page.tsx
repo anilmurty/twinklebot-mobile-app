@@ -11,7 +11,7 @@ import {
   Wand2,
   ChevronRight,
   Menu,
-  X
+  X,
 } from "lucide-react"
 import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-constants"
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase"
@@ -21,11 +21,6 @@ import { trackEvent } from "@/lib/utils/analytics"
 export function WebLandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
-  const [showWaitlist, setShowWaitlist] = useState(false)
-  const [waitlistName, setWaitlistName] = useState("")
-  const [waitlistEmail, setWaitlistEmail] = useState("")
-  const [waitlistStatus, setWaitlistStatus] = useState<"idle" | "sending" | "success" | "error">("idle")
-  const [waitlistError, setWaitlistError] = useState("")
   const [heroIndex, setHeroIndex] = useState(0)
   const heroImages = ["/hero-1.jpg", "/hero-2.jpg", "/hero-3.jpg"]
 
@@ -36,37 +31,9 @@ export function WebLandingPage() {
     return () => clearInterval(timer)
   }, [heroImages.length])
 
-
-  const openWaitlist = () => {
-    trackEvent("cta_click", { location: "waitlist", label: "open_waitlist" })
-    setShowWaitlist(true)
-    setWaitlistStatus("idle")
-    setWaitlistError("")
-    setWaitlistEmail("")
-    setWaitlistName("")
-  }
-
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!waitlistEmail.trim()) return
-    setWaitlistStatus("sending")
-    setWaitlistError("")
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: waitlistEmail.trim(), name: waitlistName.trim() }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || "Something went wrong. Please try again.")
-      }
-      trackEvent("waitlist_signup", { email: waitlistEmail.trim() })
-      setWaitlistStatus("success")
-    } catch (err: any) {
-      setWaitlistError(err.message)
-      setWaitlistStatus("error")
-    }
+  const handleCta = (location: string) => {
+    trackEvent("cta_click", { location, label: "Get Started" })
+    window.location.href = "/app"
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -184,10 +151,10 @@ export function WebLandingPage() {
             {/* CTA button */}
             <div className="hidden md:flex items-center gap-3">
               <Button
-                onClick={openWaitlist}
+                onClick={() => handleCta("header")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6"
               >
-                Get Early Access
+                Get Started Free
               </Button>
             </div>
 
@@ -220,10 +187,10 @@ export function WebLandingPage() {
               </a>
               <div className="pt-3 border-t border-border space-y-2">
                 <Button
-                  onClick={() => { setMobileMenuOpen(false); openWaitlist() }}
+                  onClick={() => { setMobileMenuOpen(false); handleCta("mobile_menu") }}
                   className="w-full bg-primary text-primary-foreground font-semibold"
                 >
-                  Get Early Access
+                  Get Started Free
                 </Button>
               </div>
             </div>
@@ -265,10 +232,10 @@ export function WebLandingPage() {
                 <div className="flex gap-4">
                   <Button
                     size="lg"
-                    onClick={openWaitlist}
+                    onClick={() => handleCta("hero_desktop")}
                     className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
                   >
-                    Get Early Access
+                    Get Started Free
                     <ChevronRight className="w-5 h-5 ml-1" />
                   </Button>
                   <a href="#how-it-works" onClick={() => trackEvent("cta_click", { location: "hero_desktop", label: "See How It Works" })}>
@@ -284,7 +251,7 @@ export function WebLandingPage() {
 
                 <div className="mt-10 flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-primary" />
-                  <p className="text-sm text-white/60">Early access &mdash; limited spots</p>
+                  <p className="text-sm text-white/60">First personalized story free &mdash; no credit card needed</p>
                 </div>
 
                 {/* App store buttons */}
@@ -358,10 +325,10 @@ export function WebLandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 size="lg"
-                onClick={openWaitlist}
+                onClick={() => handleCta("hero_mobile")}
                 className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
               >
-                Get Early Access
+                Get Started Free
                 <ChevronRight className="w-5 h-5 ml-1" />
               </Button>
               <a href="#how-it-works" onClick={() => trackEvent("cta_click", { location: "hero_mobile", label: "See How It Works" })}>
@@ -377,7 +344,7 @@ export function WebLandingPage() {
 
             <div className="mt-8 flex items-center gap-2 justify-center">
               <Sparkles className="w-5 h-5 text-primary" />
-              <p className="text-sm text-muted-foreground">Early access &mdash; limited spots</p>
+              <p className="text-sm text-muted-foreground">First personalized story free &mdash; no credit card needed</p>
             </div>
           </div>
         </div>
@@ -471,10 +438,10 @@ export function WebLandingPage() {
           <div className="text-center mt-12">
             <Button
               size="lg"
-              onClick={openWaitlist}
+              onClick={() => handleCta("stories_section")}
               className="bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-8"
             >
-              Get Early Access
+              Get Started Free
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
           </div>
@@ -544,19 +511,20 @@ export function WebLandingPage() {
                 information required — just create a free account and start reading
                 with your child today.
               </p>
-              <button
-                onClick={openWaitlist}
+              <a
+                href="/app"
+                onClick={() => trackEvent("cta_click", { location: "how_it_works_callout", label: "Get Started" })}
                 className="mt-3 inline-block text-primary font-semibold text-sm hover:underline"
               >
-                Get Early Access →
-              </button>
+                Get Started Free →
+              </a>
             </div>
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <PricingSection onEarlyAccess={openWaitlist} />
+      <PricingSection onEarlyAccess={() => handleCta("pricing")} />
 
       {/* Final CTA */}
       <section className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
@@ -565,14 +533,14 @@ export function WebLandingPage() {
             Ready to Make Your Child the Star?
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Be among the first families to bring your child into their own story.
+            Create a personalized storybook where your child is the hero — it only takes a few minutes.
           </p>
           <Button
             size="lg"
-            onClick={openWaitlist}
+            onClick={() => handleCta("final_cta")}
             className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-10 h-14 text-lg"
           >
-            Get Early Access
+            Get Started Free
             <Sparkles className="w-5 h-5 ml-2" />
           </Button>
         </div>
@@ -605,82 +573,6 @@ export function WebLandingPage() {
           </div>
         </div>
       </footer>
-
-      {/* Waitlist Modal */}
-      {showWaitlist && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowWaitlist(false)}>
-          <div className="bg-card rounded-3xl p-8 w-full max-w-md shadow-2xl border border-border" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Get Early Access</h2>
-              <button
-                onClick={() => setShowWaitlist(false)}
-                className="p-2 rounded-full hover:bg-muted transition-colors"
-              >
-                <X className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-
-            {waitlistStatus === "success" ? (
-              <div className="text-center py-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">You&apos;re on the list!</h3>
-                <p className="text-muted-foreground text-sm">
-                  We&apos;ll send you one email when TwinkleBot is ready. No spam, ever.
-                </p>
-                <Button
-                  onClick={() => setShowWaitlist(false)}
-                  className="mt-6 w-full h-12 bg-primary text-primary-foreground font-semibold"
-                >
-                  Got it!
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleWaitlistSubmit} className="space-y-4">
-                <p className="text-muted-foreground text-sm">
-                  Be the first to create magical, personalized storybooks where your child is the hero.
-                </p>
-
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  value={waitlistName}
-                  onChange={(e) => setWaitlistName(e.target.value)}
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
-                />
-
-                <input
-                  type="email"
-                  placeholder="Your email"
-                  value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
-                  required
-                  className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-muted text-foreground placeholder:text-muted-foreground"
-                />
-
-                {waitlistStatus === "error" && waitlistError && (
-                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl">
-                    <p className="text-sm text-destructive">{waitlistError}</p>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  disabled={waitlistStatus === "sending"}
-                  className="w-full h-12 bg-primary text-primary-foreground font-semibold"
-                >
-                  {waitlistStatus === "sending" ? "Joining..." : "Join the Waitlist"}
-                </Button>
-
-                <p className="text-center text-xs text-muted-foreground">
-                  One email when we launch. No spam, ever.
-                </p>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
 
       <Dialog open={showContact} onOpenChange={setShowContact}>
         <DialogContent className="max-w-[min(28rem,calc(100vw-2rem))] max-h-[90vh] overflow-y-auto">
