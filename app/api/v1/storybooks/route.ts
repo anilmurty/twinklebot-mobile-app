@@ -227,9 +227,9 @@ export async function POST(request: NextRequest) {
 
     if (!existingProfile) {
       // Create profile for this user
-      // Early access: grants 4 free stories to all new signups. Remove when IS_EARLY_ACCESS = false.
+      // Early access: grants 1 free story to all new signups. Remove when IS_EARLY_ACCESS = false.
       const { IS_EARLY_ACCESS } = await import('@/lib/config')
-      const earlyAccessCredits = IS_EARLY_ACCESS ? 4 : 0
+      const earlyAccessCredits = IS_EARLY_ACCESS ? 1 : 0
 
       await supabaseAdmin
         .from('profiles')
@@ -237,6 +237,7 @@ export async function POST(request: NextRequest) {
           id: userId,
           email: userEmail,
           premium_credits: earlyAccessCredits,
+          premium_credits_granted: earlyAccessCredits,
         })
     }
 

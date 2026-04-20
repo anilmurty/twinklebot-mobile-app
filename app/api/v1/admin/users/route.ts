@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { data: profiles, error } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, premium_credits, basic_credits, story_credits, payment_override, created_at')
+    .select('id, email, premium_credits, premium_credits_granted, basic_credits, story_credits, payment_override, created_at')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   // Get storybook and character counts per user
   const { data: storybooks } = await supabaseAdmin
     .from('storybooks')
-    .select('user_id, status')
+    .select('user_id, status, payment_status')
 
   const { data: characters } = await supabaseAdmin
     .from('characters')
@@ -32,11 +32,18 @@ export async function GET(request: NextRequest) {
 
   const storybookCounts: Record<string, number> = {}
   const completedCounts: Record<string, number> = {}
+  const consumedCounts: Record<string, number> = {}
+  const statusBreakdown: Record<string, Record<string, number>> = {}
   for (const sb of storybooks || []) {
     storybookCounts[sb.user_id] = (storybookCounts[sb.user_id] || 0) + 1
     if (sb.status === 'completed') {
       completedCounts[sb.user_id] = (completedCounts[sb.user_id] || 0) + 1
     }
+    if (sb.payment_status === 'completed') {
+      consumedCounts[sb.user_id] = (consumedCounts[sb.user_id] || 0) + 1
+    }
+    if (!statusBreakdown[sb.user_id]) statusBreakdown[sb.user_id] = {}
+    statusBreakdown[sb.user_id][sb.status] = (statusBreakdown[sb.user_id][sb.status] || 0) + 1
   }
 
   const characterCounts: Record<string, number> = {}
@@ -49,6 +56,8 @@ export async function GET(request: NextRequest) {
     total_credits: (p.premium_credits || 0) + (p.basic_credits || 0) + (p.story_credits || 0),
     storybook_count: storybookCounts[p.id] || 0,
     completed_count: completedCounts[p.id] || 0,
+    consumed_credits: consumedCounts[p.id] || 0,
+    status_breakdown: statusBreakdown[p.id] || {},
     character_count: characterCounts[p.id] || 0,
   }))
 

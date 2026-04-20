@@ -1,6 +1,6 @@
 /**
  * When true, pricing shows "FREE during Early Access" with strikethrough prices,
- * and new signups get 4 free premium credits (app code path).
+ * and new signups get 1 free premium credit (app code path).
  *
  * When setting this to false, also re-run db_scripts/005_create_profile_on_auth_trigger.sql
  * in the Supabase SQL editor to revert the handle_new_user trigger (removes automatic

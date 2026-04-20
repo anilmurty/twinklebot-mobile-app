@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // The handle_new_user trigger should create the profile with credits,
     // but create it explicitly as a fallback
     const { IS_EARLY_ACCESS } = await import('@/lib/config')
-    const credits = IS_EARLY_ACCESS ? 4 : 0
+    const credits = IS_EARLY_ACCESS ? 1 : 0
 
     await supabaseAdmin
       .from('profiles')
@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         id: authData.user.id,
         email,
         premium_credits: credits,
+        premium_credits_granted: credits,
       }, { onConflict: 'id' })
 
     return NextResponse.json({
