@@ -39,14 +39,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // The proxy fetches from private Supabase storage and serves the image directly.
     // This avoids signed URL issues (too long, expiry) and public URL issues (bucket is private).
     const ogImageUrl = `https://www.twinklebot.app/api/og-image/${token}`
+    const shareUrl = `https://www.twinklebot.app/share/${token}`
 
     return {
       title,
       description,
+      alternates: {
+        canonical: shareUrl,
+      },
       openGraph: {
         title,
         description,
         type: "article",
+        url: shareUrl,
+        siteName: "Twinklebot",
         ...(ogImageUrl && {
           images: [
             {
