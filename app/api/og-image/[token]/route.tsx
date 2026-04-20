@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/og-image/:token
@@ -28,7 +29,7 @@ export async function GET(
       .single()
 
     if (error || !storybook?.scenes?.length) {
-      return new Response(null, { status: 404 })
+      return new Response('Not found', { status: 404 })
     }
 
     const sortedScenes = [...storybook.scenes].sort(
@@ -36,23 +37,34 @@ export async function GET(
     )
     const firstScene = sortedScenes[0] as any
     if (!firstScene?.image_url) {
-      return new Response(null, { status: 404 })
+      return new Response('No scene image', { status: 404 })
     }
 
     const urlStr = firstScene.image_url.split('?')[0]
     const urlMatch = urlStr.match(/storybook-scenes\/(.+)$/)
     if (!urlMatch) {
-      return new Response(null, { status: 404 })
+      return new Response('Bad image url', { status: 404 })
     }
 
     const { data: signedData, error: signError } = await supabaseAdmin.storage
       .from('storybook-scenes')
-      .createSignedUrl(urlMatch[1], 60)
+      .createSignedUrl(urlMatch[1], 120)
 
     if (signError || !signedData?.signedUrl) {
       console.error('[OG-IMAGE] Failed to create signed URL:', signError)
-      return new Response(null, { status: 500 })
+      return new Response('Sign failed', { status: 500 })
     }
+
+    // Pre-fetch the image as base64 — ImageResponse's <img> fetcher is strict
+    // about response content-types, and a data URL avoids that dependency.
+    const imgRes = await fetch(signedData.signedUrl)
+    if (!imgRes.ok) {
+      console.error('[OG-IMAGE] Failed to fetch scene image:', imgRes.status)
+      return new Response('Image fetch failed', { status: 502 })
+    }
+    const imgBuf = Buffer.from(await imgRes.arrayBuffer())
+    const imgContentType = imgRes.headers.get('content-type') || 'image/jpeg'
+    const imgDataUrl = `data:${imgContentType};base64,${imgBuf.toString('base64')}`
 
     const title = storybook.title || 'Personalized Storybook'
     const characterName = (storybook.character as any)?.name || ''
@@ -68,8 +80,9 @@ export async function GET(
             backgroundColor: '#0b0b14',
           }}
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={signedData.signedUrl}
+            src={imgDataUrl}
             width={1200}
             height={630}
             style={{
@@ -99,11 +112,9 @@ export async function GET(
             <div style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.1, marginBottom: 8 }}>
               {title}
             </div>
-            {characterName && (
-              <div style={{ fontSize: 32, opacity: 0.85 }}>
-                starring {characterName}
-              </div>
-            )}
+            {characterName ? (
+              <div style={{ fontSize: 32, opacity: 0.85 }}>starring {characterName}</div>
+            ) : null}
             <div style={{ fontSize: 24, opacity: 0.7, marginTop: 14 }}>Twinklebot</div>
           </div>
         </div>
@@ -116,8 +127,8 @@ export async function GET(
         },
       }
     )
-  } catch (err) {
-    console.error('[OG-IMAGE] Error:', err)
-    return new Response(null, { status: 500 })
+  } catch (err: any) {
+    console.error('[OG-IMAGE] Error:', err?.message || err, err?.stack)
+    return new Response('Error', { status: 500 })
   }
 }
