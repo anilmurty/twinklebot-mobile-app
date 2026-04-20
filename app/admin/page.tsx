@@ -202,6 +202,18 @@ export default function AdminPage() {
     }
   }
 
+  const handleTogglePaymentOverride = async (userId: string, next: boolean) => {
+    try {
+      await adminFetch(`/users/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ payment_override: next }),
+      })
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, payment_override: next } : u))
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
   const handleBulkGrant = async () => {
     if (!grantUser) return
     const delta = parseInt(grantAmount, 10)
@@ -436,9 +448,15 @@ export default function AdminPage() {
                           {expandedUserId === u.id ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
                           {u.email}
                         </button>
-                        {u.payment_override && (
-                          <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded ml-4">override</span>
-                        )}
+                        <label className="flex items-center gap-1 mt-1 ml-4 cursor-pointer text-[10px] text-muted-foreground">
+                          <input
+                            type="checkbox"
+                            className="accent-primary"
+                            checked={!!u.payment_override}
+                            onChange={(e) => handleTogglePaymentOverride(u.id, e.target.checked)}
+                          />
+                          payment override (free access)
+                        </label>
                       </td>
                       <td className="p-3">
                         <div className="flex items-center justify-center gap-1">

@@ -3,6 +3,43 @@ import { requireAdmin } from '@/lib/admin'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 /**
+ * PATCH /api/v1/admin/users/:id
+ * Update flags on a user profile. Body: { payment_override?: boolean }
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
+  const admin = await requireAdmin(request)
+  if (!admin) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { id } = 'then' in params ? await params : params
+  const body = await request.json().catch(() => ({}))
+
+  const update: Record<string, any> = {}
+  if (typeof body.payment_override === 'boolean') {
+    update.payment_override = body.payment_override
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
+  const { error } = await supabaseAdmin
+    .from('profiles')
+    .update(update)
+    .eq('id', id)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true, ...update })
+}
+
+/**
  * DELETE /api/v1/admin/users/:id
  * Delete a user and all their data
  */
