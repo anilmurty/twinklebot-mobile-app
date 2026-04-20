@@ -24,6 +24,7 @@ interface AdminUser {
   character_count: number
   payment_override: boolean
   created_at: string
+  last_sign_in_at: string | null
 }
 
 interface StorybookDetail {
@@ -406,19 +407,20 @@ export default function AdminPage() {
                   <th className="text-center p-3 font-medium">Stories</th>
                   <th className="text-center p-3 font-medium">Characters</th>
                   <th className="text-left p-3 font-medium">Joined</th>
+                  <th className="text-left p-3 font-medium">Last Login</th>
                   <th className="text-right p-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center">
+                    <td colSpan={8} className="p-8 text-center">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                     </td>
                   </tr>
                 ) : users.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={8} className="p-8 text-center text-muted-foreground">
                       No users found
                     </td>
                   </tr>
@@ -495,6 +497,9 @@ export default function AdminPage() {
                       </td>
                       <td className="p-3 text-center font-mono">{u.character_count}</td>
                       <td className="p-3 text-muted-foreground">{formatDate(u.created_at)}</td>
+                      <td className="p-3 text-muted-foreground">
+                        {u.last_sign_in_at ? formatDate(u.last_sign_in_at) : <span className="text-[10px]">never</span>}
+                      </td>
                       <td className="p-3 text-right">
                         <Button
                           variant="ghost"
@@ -508,7 +513,7 @@ export default function AdminPage() {
                     </tr>
                     {expandedUserId === u.id && (
                       <tr className="border-b border-border bg-muted/5">
-                        <td colSpan={7} className="p-4">
+                        <td colSpan={8} className="p-4">
                           {detailsLoading === u.id ? (
                             <div className="flex justify-center py-4">
                               <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />

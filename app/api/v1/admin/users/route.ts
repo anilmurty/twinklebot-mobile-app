@@ -51,6 +51,20 @@ export async function GET(request: NextRequest) {
     characterCounts[ch.user_id] = (characterCounts[ch.user_id] || 0) + 1
   }
 
+  // Fetch last_sign_in_at from auth.users (paginated admin API).
+  const lastSignInById: Record<string, string | null> = {}
+  let page = 1
+  const perPage = 1000
+  while (true) {
+    const { data: authPage, error: authErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage })
+    if (authErr) break
+    for (const u of authPage?.users || []) {
+      lastSignInById[u.id] = u.last_sign_in_at || null
+    }
+    if (!authPage?.users || authPage.users.length < perPage) break
+    page++
+  }
+
   const users = (profiles || []).map(p => ({
     ...p,
     total_credits: (p.premium_credits || 0) + (p.basic_credits || 0) + (p.story_credits || 0),
@@ -59,6 +73,7 @@ export async function GET(request: NextRequest) {
     consumed_credits: consumedCounts[p.id] || 0,
     status_breakdown: statusBreakdown[p.id] || {},
     character_count: characterCounts[p.id] || 0,
+    last_sign_in_at: lastSignInById[p.id] || null,
   }))
 
   return NextResponse.json({ users })
