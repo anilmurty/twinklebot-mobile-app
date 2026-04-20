@@ -1,3 +1,4 @@
+import React from 'react'
 import { NextRequest } from 'next/server'
 import { ImageResponse } from 'next/og'
 import { supabaseAdmin } from '@/lib/supabase/server'
@@ -8,11 +9,8 @@ export const dynamic = 'force-dynamic'
 /**
  * GET /api/og-image/:token
  * Returns a 1200x630 OG card composed from the storybook's first scene image.
- * We render via ImageResponse so crawlers (Facebook in particular) get a
- * landscape 1.91:1 PNG in the exact aspect ratio they expect — proxying the
- * raw scene image (often portrait) triggered "invalid format" rejections.
- *
- * Public endpoint — no auth required. The token is the share_token.
+ * Using React.createElement instead of JSX so this remains a .ts route handler
+ * (App Router only matches route.ts / route.js — not route.tsx).
  */
 export async function GET(
   _request: NextRequest,
@@ -55,8 +53,6 @@ export async function GET(
       return new Response('Sign failed', { status: 500 })
     }
 
-    // Pre-fetch the image as base64 — ImageResponse's <img> fetcher is strict
-    // about response content-types, and a data URL avoids that dependency.
     const imgRes = await fetch(signedData.signedUrl)
     if (!imgRes.ok) {
       console.error('[OG-IMAGE] Failed to fetch scene image:', imgRes.status)
@@ -69,64 +65,68 @@ export async function GET(
     const title = storybook.title || 'Personalized Storybook'
     const characterName = (storybook.character as any)?.name || ''
 
-    return new ImageResponse(
-      (
-        <div
-          style={{
-            width: '1200px',
-            height: '630px',
-            display: 'flex',
-            position: 'relative',
-            backgroundColor: '#0b0b14',
-          }}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imgDataUrl}
-            width={1200}
-            height={630}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '1200px',
-              height: '630px',
-              objectFit: 'cover',
-            }}
-          />
-          <div
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: '260px',
-              background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 80%)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-              padding: '40px 56px',
-              color: '#fff',
-            }}
-          >
-            <div style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.1, marginBottom: 8 }}>
-              {title}
-            </div>
-            {characterName ? (
-              <div style={{ fontSize: 32, opacity: 0.85 }}>starring {characterName}</div>
-            ) : null}
-            <div style={{ fontSize: 24, opacity: 0.7, marginTop: 14 }}>Twinklebot</div>
-          </div>
-        </div>
-      ),
+    const h = React.createElement
+
+    const element = h(
+      'div',
       {
+        style: {
+          width: '1200px',
+          height: '630px',
+          display: 'flex',
+          position: 'relative',
+          backgroundColor: '#0b0b14',
+        },
+      },
+      h('img', {
+        src: imgDataUrl,
         width: 1200,
         height: 630,
-        headers: {
-          'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        style: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '1200px',
+          height: '630px',
+          objectFit: 'cover',
         },
-      }
+      }),
+      h(
+        'div',
+        {
+          style: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: '260px',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 80%)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            padding: '40px 56px',
+            color: '#fff',
+          },
+        },
+        h(
+          'div',
+          { style: { fontSize: 52, fontWeight: 700, lineHeight: 1.1, marginBottom: 8 } },
+          title
+        ),
+        characterName
+          ? h('div', { style: { fontSize: 32, opacity: 0.85 } }, `starring ${characterName}`)
+          : null,
+        h('div', { style: { fontSize: 24, opacity: 0.7, marginTop: 14 } }, 'Twinklebot')
+      )
     )
+
+    return new ImageResponse(element, {
+      width: 1200,
+      height: 630,
+      headers: {
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+      },
+    })
   } catch (err: any) {
     console.error('[OG-IMAGE] Error:', err?.message || err, err?.stack)
     return new Response('Error', { status: 500 })
