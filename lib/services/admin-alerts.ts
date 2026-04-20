@@ -98,6 +98,34 @@ export async function sendStoryCompletionAlert(opts: {
 }
 
 /**
+ * Send an alert email when a new user signs up.
+ */
+export async function sendNewUserAlert(opts: {
+  userId: string
+  email: string
+  createdAt: string
+}): Promise<void> {
+  const { userId, email, createdAt } = opts
+
+  const html = `
+    <div style="font-family:sans-serif;max-width:600px;">
+      <h2 style="color:#333;">New Signup</h2>
+      <table cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-size:14px;">
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Email:</strong></td><td>${email}</td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>User ID:</strong></td><td><code>${userId}</code></td></tr>
+        <tr><td style="color:#666;white-space:nowrap;"><strong>Joined:</strong></td><td>${new Date(createdAt).toLocaleString('en-US', { timeZone: 'UTC' })} UTC</td></tr>
+      </table>
+
+      <p style="margin-top:24px;">
+        <a href="https://www.twinklebot.app/admin" style="display:inline-block;background:#333;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:13px;">Open Admin Dashboard</a>
+      </p>
+    </div>
+  `
+
+  await sendEmail(`[New Signup] ${email}`, html)
+}
+
+/**
  * Send an alert email when storybook or preview generation fails.
  * Includes error message, stack trace, and context for debugging.
  */
