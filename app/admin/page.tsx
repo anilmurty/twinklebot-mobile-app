@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { ConfirmDialog } from "@/components/confirm-dialog"
-import { Loader2, Plus, Minus, Trash2, UserPlus, RefreshCw, LogOut, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react"
+import { Loader2, Plus, Minus, Trash2, UserPlus, RefreshCw, LogOut, ChevronDown, ChevronRight, AlertTriangle, ExternalLink } from "lucide-react"
 
 interface AdminUser {
   id: string
@@ -84,6 +84,12 @@ async function adminFetch(path: string, options: RequestInit = {}) {
   }
 
   return res.json()
+}
+
+const SUPABASE_STORAGE_BASE = "https://supabase.com/dashboard/project/cxwiutrjgftozbfpnpvv/storage/buckets"
+
+function storageUrl(bucket: string, path: string) {
+  return `${SUPABASE_STORAGE_BASE}/${bucket}?path=${encodeURIComponent(path)}`
 }
 
 export default function AdminPage() {
@@ -559,6 +565,7 @@ export default function AdminPage() {
                                         <th className="text-left p-2 font-medium">Payment</th>
                                         <th className="text-left p-2 font-medium">Tier/Style</th>
                                         <th className="text-left p-2 font-medium">Error</th>
+                                        <th className="text-left p-2 font-medium">Storage</th>
                                         <th className="text-left p-2 font-medium">Created</th>
                                       </tr>
                                     </thead>
@@ -576,11 +583,21 @@ export default function AdminPage() {
                                             <td className="p-2 text-destructive max-w-md truncate" title={s.error_message || ''}>
                                               {s.error_message || '—'}
                                             </td>
+                                            <td className="p-2">
+                                              <a
+                                                href={storageUrl("storybook-scenes", s.id)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                              >
+                                                Scenes <ExternalLink className="w-2.5 h-2.5" />
+                                              </a>
+                                            </td>
                                             <td className="p-2 text-muted-foreground whitespace-nowrap">{formatDateTime(s.created_at)}</td>
                                           </tr>
                                         ))}
                                       {detailsCache[u.id].storybooks.filter(s => !statusFilter || s.status === statusFilter).length === 0 && (
-                                        <tr><td colSpan={6} className="p-3 text-center text-muted-foreground">No storybooks.</td></tr>
+                                        <tr><td colSpan={7} className="p-3 text-center text-muted-foreground">No storybooks.</td></tr>
                                       )}
                                     </tbody>
                                   </table>
@@ -590,11 +607,20 @@ export default function AdminPage() {
                                 <h3 className="text-sm font-semibold mb-2">Characters ({detailsCache[u.id].characters.length})</h3>
                                 <div className="flex flex-wrap gap-2">
                                   {detailsCache[u.id].characters.map(c => (
-                                    <span key={c.id} className="text-xs bg-muted px-2 py-1 rounded">
+                                    <span key={c.id} className="text-xs bg-muted px-2 py-1 rounded inline-flex items-center gap-1">
                                       {c.name}{' '}
                                       <span className={`text-[10px] px-1 rounded ${statusPillClass(c.avatar_status === 'ready' ? 'completed' : c.avatar_status)}`}>
                                         {c.avatar_status}
                                       </span>
+                                      <a
+                                        href={storageUrl("character-photos", `${u.id}/${c.id}`)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:text-primary/80"
+                                        title="View photos in storage"
+                                      >
+                                        <ExternalLink className="w-2.5 h-2.5" />
+                                      </a>
                                     </span>
                                   ))}
                                   {detailsCache[u.id].characters.length === 0 && (
