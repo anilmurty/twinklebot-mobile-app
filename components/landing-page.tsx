@@ -1,9 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
-import { Users, BookOpen, Sparkles } from "lucide-react"
+import { Lock } from "lucide-react"
+import { trackEvent, trackAuthEvent } from "@/lib/utils/analytics"
+
+const FB_AUTH_ENABLED = process.env.NEXT_PUBLIC_FB_AUTH_ENABLED === "true"
+
+function markAuthStart(method: "google" | "email" | "facebook") {
+  try {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("auth_method_in_progress", method)
+      window.sessionStorage.setItem("auth_started_at", String(Date.now()))
+    }
+  } catch {}
+}
 
 export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
@@ -14,12 +26,52 @@ export function LandingPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [intentBanner, setIntentBanner] = useState<string | null>(null)
+  const methodAttemptedRef = useRef<string | null>(null)
+  const completedRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    trackEvent("auth_page_viewed", {
+      referrer: document.referrer || undefined,
+      utm_source: params.get("utm_source") ?? undefined,
+      utm_medium: params.get("utm_medium") ?? undefined,
+      utm_campaign: params.get("utm_campaign") ?? undefined,
+    })
+
+    // Stash intent params for post-auth handling
+    const intent = params.get("intent")
+    const story = params.get("story")
+    if (intent && story) {
+      window.sessionStorage.setItem("auth_intent", intent)
+      window.sessionStorage.setItem("auth_intent_story", story)
+      const storyName = story.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())
+      if (intent === "notify") {
+        setIntentBanner(`Sign up to be notified when "${storyName}" is ready`)
+      } else if (intent === "personalize") {
+        setIntentBanner(`Sign up to personalize "${storyName}" with your child`)
+      }
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden" && methodAttemptedRef.current && !completedRef.current) {
+        trackEvent("auth_abandoned", { method_attempted: methodAttemptedRef.current })
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+    return () => document.removeEventListener("visibilitychange", onVisibility)
+  }, [])
 
   const handleSignInWithGoogle = async () => {
     try {
+      methodAttemptedRef.current = "google"
+      trackEvent("auth_method_selected", { method: "google" })
+      markAuthStart("google")
       setIsLoading(true)
       setError(null)
       await signInWithGoogle()
+      completedRef.current = true
     } catch (error: any) {
       console.error("Sign in error:", error)
       if (error.message?.includes("provider is not enabled")) {
@@ -32,8 +84,34 @@ export function LandingPage() {
     }
   }
 
+  const handleSignInWithFacebook = async () => {
+    try {
+      methodAttemptedRef.current = "facebook"
+      trackEvent("auth_method_selected", { method: "facebook" })
+      markAuthStart("facebook")
+      setIsLoading(true)
+      setError(null)
+      const { createClient } = await import("@/lib/supabase/client-browser")
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "facebook",
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+      if (error) throw error
+      completedRef.current = true
+    } catch (error: any) {
+      console.error("Facebook sign in error:", error)
+      setError(`Sign in failed: ${error.message}`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleEmailAuth = async () => {
     try {
+      methodAttemptedRef.current = "email"
+      trackAuthEvent("auth_email_submitted", { email })
+      markAuthStart("email")
       setIsLoading(true)
       setError(null)
       if (isSignUp) {
@@ -46,6 +124,7 @@ export function LandingPage() {
       } else {
         await signInWithEmail(email, password)
       }
+      completedRef.current = true
     } catch (error: any) {
       console.error("Email auth error:", error)
       setError(error.message || "Authentication failed")
@@ -56,15 +135,7 @@ export function LandingPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Full-screen background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: "url(/zoo-entrance-background.jpeg)",
-        }}
-      />
-
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a1520] via-[#2a1f30] to-[#1a1520]" />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
@@ -72,6 +143,12 @@ export function LandingPage() {
         {/* Login Card - Centered */}
         <div className="w-full max-w-md">
           <div className="p-6 w-full">
+
+            {intentBanner && (
+              <div className="mb-4 p-3 bg-primary/20 border border-primary/30 rounded-2xl">
+                <p className="text-sm text-white text-center">{intentBanner}</p>
+              </div>
+            )}
 
             {error && (
               <div className="mb-4 p-3 bg-red-500/90 rounded-2xl">
@@ -81,8 +158,23 @@ export function LandingPage() {
 
             {!showEmailForm ? (
               <>
+                <p className="text-sm text-white/70 text-center mb-4">
+                  Create your free account in 10 seconds — no password needed.
+                </p>
+
                 {/* Login buttons */}
                 <div className="space-y-3">
+                  {FB_AUTH_ENABLED && (
+                    <Button
+                      onClick={handleSignInWithFacebook}
+                      disabled={isLoading}
+                      size="lg"
+                      className="w-full rounded-full h-12 text-base font-medium bg-[#1877F2] hover:bg-[#1877F2]/90 text-white"
+                    >
+                      {isLoading ? "Signing in..." : "Continue with Facebook"}
+                    </Button>
+                  )}
+
                   <Button
                     onClick={handleSignInWithGoogle}
                     disabled={isLoading}
@@ -93,7 +185,11 @@ export function LandingPage() {
                   </Button>
 
                   <Button
-                    onClick={() => setShowEmailForm(true)}
+                    onClick={() => {
+                      methodAttemptedRef.current = "email"
+                      trackEvent("auth_method_selected", { method: "email" })
+                      setShowEmailForm(true)
+                    }}
                     variant="outline"
                     size="lg"
                     disabled={isLoading}
@@ -103,35 +199,31 @@ export function LandingPage() {
                   </Button>
                 </div>
 
-                <p className="text-center text-xs text-white/60 mt-4">
+                <p className="text-center text-sm text-white/50 mt-4">
                   By using TwinkleBot you agree to the{" "}
-                  <a href="https://www.twinklebot.app/terms" className="underline text-white/80">Terms of Service</a>
+                  <a href="https://www.twinklebot.app/terms" className="underline text-white/70">Terms of Service</a>
                   {" "}and the{" "}
-                  <a href="https://www.twinklebot.app/privacy" className="underline text-white/80">Privacy Policy</a>
+                  <a href="https://www.twinklebot.app/privacy" className="underline text-white/70">Privacy Policy</a>
                 </p>
 
-                {/* How It Works - compact version */}
-                <div className="mt-6 bg-white/20 backdrop-blur-sm rounded-3xl p-5 shadow-2xl">
-                  <p className="text-xs text-white/70 text-center mb-3 uppercase tracking-wide font-medium">How it works</p>
-                  <div className="flex justify-between gap-2">
-                    <div className="flex-1 text-center">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
-                        <Users className="w-5 h-5 text-[#F5C563]" />
-                      </div>
-                      <p className="text-xs font-medium text-white">Upload Photo</p>
-                    </div>
-                    <div className="flex-1 text-center">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
-                        <BookOpen className="w-5 h-5 text-emerald-400" />
-                      </div>
-                      <p className="text-xs font-medium text-white">Choose Story</p>
-                    </div>
-                    <div className="flex-1 text-center">
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-1.5">
-                        <Sparkles className="w-5 h-5 text-amber-400" />
-                      </div>
-                      <p className="text-xs font-medium text-white">Generate</p>
-                    </div>
+                <div className="mt-6 space-y-3 text-left">
+                  <div className="flex items-start gap-2">
+                    <span className="text-white/60">✓</span>
+                    <span className="text-sm text-white">First story free</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-white/60">✓</span>
+                    <span className="text-sm text-white">No credit card needed</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="text-white/60">✓</span>
+                    <span className="text-sm text-white">Browse 50+ stories without uploading anything</span>
+                  </div>
+                  <div className="flex items-start gap-3 mt-4 pt-3 border-t border-white/10">
+                    <Lock className="w-5 h-5 text-white/80 mt-0.5 shrink-0" />
+                    <span className="text-sm text-white font-medium">
+                      We never train AI on your data. Your child&apos;s photo is yours — delete anytime.
+                    </span>
                   </div>
                 </div>
               </>

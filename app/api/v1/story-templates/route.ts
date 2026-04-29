@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data, error } = await supabaseAdmin
       .from('story_templates')
-      .select('id, title, description, category, age_range, scene_count, cover_label, thumbnail_url, script_data, mock_story_data')
+      .select('id, slug, title, description, category, age_range, scene_count, cover_label, thumbnail_url, script_data, mock_story_data')
       .eq('is_active', true)
       .order('id')
 

@@ -8,6 +8,7 @@ import { del } from 'idb-keyval'
 import { Capacitor } from '@capacitor/core'
 import { setupDeepLinkHandler } from '@/lib/utils/deep-link-handler'
 import { identifyUser as identifyRevenueCatUser, logoutUser as logoutRevenueCatUser } from '@/lib/services/iap-service'
+import { trackEvent } from '@/lib/utils/analytics'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -21,6 +22,61 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+/**
+ * After successful auth, check for intent=personalize or intent=notify in the URL
+ * and handle accordingly (record interest or redirect to personalization).
+ */
+async function handlePostAuthIntent(userId: string, accessToken: string) {
+  if (typeof window === 'undefined') return
+
+  // Read intent from sessionStorage (stashed before OAuth redirect)
+  const intent = window.sessionStorage.getItem('auth_intent')
+  const storySlug = window.sessionStorage.getItem('auth_intent_story')
+  if (!intent || !storySlug) return
+
+  // Clear immediately to prevent re-processing
+  window.sessionStorage.removeItem('auth_intent')
+  window.sessionStorage.removeItem('auth_intent_story')
+
+  if (intent === 'notify') {
+    // Look up template ID from slug, then record interest
+    try {
+      const res = await fetch(`/api/v1/story-templates/by-slug/${encodeURIComponent(storySlug)}`)
+      if (res.ok) {
+        const template = await res.json()
+        if (template.id && !template.user_interested) {
+          await fetch('/api/v1/story-interest', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ template_id: template.id }),
+          })
+        }
+      }
+    } catch (err) {
+      console.error('[Intent] Failed to record story interest:', err)
+    }
+  } else if (intent === 'personalize') {
+    // Redirect to the story library tab — the user can pick a character and start
+    // The story slug is passed so the app can pre-select the template
+    try {
+      const res = await fetch(`/api/v1/story-templates/by-slug/${encodeURIComponent(storySlug)}`)
+      if (res.ok) {
+        const template = await res.json()
+        if (template.id) {
+          // Navigate to the app with the template pre-selected
+          window.location.href = `/app?tab=storybooks&template=${template.id}`
+          return
+        }
+      }
+    } catch (err) {
+      console.error('[Intent] Failed to look up template for personalization:', err)
+    }
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -106,6 +162,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null)
         if (session?.user?.id) {
           identifyRevenueCatUser(session.user.id)
+        }
+        try {
+          if (typeof window !== 'undefined') {
+            const method = window.sessionStorage.getItem('auth_method_in_progress') ?? undefined
+            const startedAtRaw = window.sessionStorage.getItem('auth_started_at')
+            const startedAt = startedAtRaw ? Number(startedAtRaw) : NaN
+            const time_to_complete_seconds = Number.isFinite(startedAt)
+              ? Math.round((Date.now() - startedAt) / 1000)
+              : undefined
+            trackEvent('auth_completed', { method, time_to_complete_seconds })
+            window.sessionStorage.removeItem('auth_method_in_progress')
+            window.sessionStorage.removeItem('auth_started_at')
+          }
+        } catch {}
+        // Handle post-auth intent (personalize / notify)
+        if (session?.user?.id) {
+          handlePostAuthIntent(session.user.id, session.access_token)
         }
       } else {
         setUser(session?.user ?? null)
