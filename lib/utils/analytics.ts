@@ -23,3 +23,15 @@ export function trackEvent(
   }
   window.gtag("event", eventName, clean)
 }
+
+export function trackAuthEvent(
+  event: string,
+  params?: Record<string, string | number | boolean | undefined> & { email?: string }
+) {
+  const { email, ...rest } = params ?? {}
+  const enriched: Record<string, string | number | boolean | undefined> = { ...rest }
+  if (email && typeof email === "string" && email.includes("@")) {
+    enriched.email_domain = email.split("@")[1]
+  }
+  trackEvent(event, enriched)
+}
