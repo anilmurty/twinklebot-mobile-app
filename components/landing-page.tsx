@@ -138,35 +138,31 @@ export function LandingPage() {
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/hero-1.jpg)" }}
+        style={{ backgroundImage: "url(/zoo-entrance-background.jpeg)" }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen justify-end sm:justify-center items-center px-4 pb-12 sm:py-8">
+      <div className="relative z-10 flex flex-col min-h-screen justify-end sm:justify-center items-center px-4 pb-10 sm:py-8">
 
-        {/* Login Card - Centered */}
+        {/* Login Card */}
         <div className="w-full max-w-md">
-          <div className="p-6 w-full bg-black/40 backdrop-blur-md rounded-3xl border border-white/10">
+          <div className="p-5 w-full">
 
             {intentBanner && (
-              <div className="mb-4 p-3 bg-primary/20 border border-primary/30 rounded-2xl">
+              <div className="mb-3 p-2.5 bg-primary/20 border border-primary/30 rounded-2xl">
                 <p className="text-sm text-white text-center">{intentBanner}</p>
               </div>
             )}
 
             {error && (
-              <div className="mb-4 p-3 bg-red-500/90 rounded-2xl">
+              <div className="mb-3 p-2.5 bg-red-500/90 rounded-2xl">
                 <p className="text-sm text-white text-center">{error}</p>
               </div>
             )}
 
             {!showEmailForm ? (
               <>
-                <p className="text-sm text-white/70 text-center mb-4">
-                  Create your free account in 10 seconds — no password needed.
-                </p>
-
                 {/* Login buttons */}
                 <div className="space-y-3">
                   {FB_AUTH_ENABLED && (
@@ -204,32 +200,20 @@ export function LandingPage() {
                   </Button>
                 </div>
 
-                <p className="text-center text-sm text-white/50 mt-4">
+                <p className="text-center text-xs text-white/50 mt-3">
                   By using TwinkleBot you agree to the{" "}
                   <a href="https://www.twinklebot.app/terms" className="underline text-white/70">Terms of Service</a>
                   {" "}and the{" "}
                   <a href="https://www.twinklebot.app/privacy" className="underline text-white/70">Privacy Policy</a>
                 </p>
 
-                <div className="mt-6 space-y-3 text-left">
-                  <div className="flex items-start gap-2">
-                    <span className="text-white/60">✓</span>
-                    <span className="text-sm text-white">First story free</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white/60">✓</span>
-                    <span className="text-sm text-white">No credit card needed</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <span className="text-white/60">✓</span>
-                    <span className="text-sm text-white">Browse 50+ stories without uploading anything</span>
-                  </div>
-                  <div className="flex items-start gap-3 mt-4 pt-3 border-t border-white/10">
-                    <Lock className="w-5 h-5 text-white/80 mt-0.5 shrink-0" />
-                    <span className="text-sm text-white font-medium">
-                      We never train AI on your data. Your child&apos;s photo is yours — delete anytime.
-                    </span>
-                  </div>
+                <div className="mt-4 flex items-center gap-3 text-xs text-white/70">
+                  <span>✓ No credit card needed</span>
+                  <span className="text-white/30">·</span>
+                  <span>✓ 50+ free stories</span>
+                  <span className="text-white/30">·</span>
+                  <Lock className="w-3 h-3 text-white/60 shrink-0" />
+                  <span>Your data stays yours</span>
                 </div>
               </>
             ) : (
