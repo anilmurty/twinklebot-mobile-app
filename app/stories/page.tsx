@@ -195,18 +195,26 @@ export default async function StoriesPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        <div className="max-w-7xl mx-auto px-4">
-          <p>
-            &copy; {new Date().getFullYear()} Twinklebot. All rights reserved.
-          </p>
-          <div className="mt-2 flex justify-center gap-4">
-            <Link href="/terms" className="hover:text-foreground">
-              Terms
+      <footer className="border-t border-border bg-card/70 backdrop-blur-md py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <Link href="/">
+              <Image
+                src="/logo-horizontal.svg"
+                alt="Twinklebot"
+                width={180}
+                height={96}
+                className="h-10 w-auto"
+                style={{ filter: "brightness(1.6) saturate(1.2)" }}
+              />
             </Link>
-            <Link href="/privacy" className="hover:text-foreground">
-              Privacy
-            </Link>
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              &copy; {new Date().getFullYear()} Twinklebot. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
