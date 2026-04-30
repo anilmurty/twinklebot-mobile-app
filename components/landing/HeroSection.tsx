@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useRef, useState } from "react"
+import { useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Sparkles, ChevronRight } from "lucide-react"
@@ -26,130 +26,71 @@ function handleSecondary(location: string) {
 }
 
 /**
- * Before/after slider — left side is the generic scene, right side reveals
- * the personalized scene. Drag the handle (or use arrow keys) to compare.
+ * Side-by-side display: child photo on the left, storybook scene on the right,
+ * connected by an animated magical arrow showing the child being placed into the scene.
  */
-function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
-  const [position, setPosition] = useState(50)
-  const [interacted, setInteracted] = useState(false)
+function BeforeAfterSlider({ idSuffix: _idSuffix }: { idSuffix: string }) {
   const [pairIndex, setPairIndex] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const draggingRef = useRef(false)
 
   const pair = SAMPLE_PAIRS[pairIndex]
 
   const nextPair = () => {
     setPairIndex((i) => (i + 1) % SAMPLE_PAIRS.length)
-    setPosition(50)
-  }
-
-  const updateFromClientX = useCallback((clientX: number) => {
-    const el = containerRef.current
-    if (!el) return
-    const rect = el.getBoundingClientRect()
-    const pct = ((clientX - rect.left) / rect.width) * 100
-    setPosition(Math.min(100, Math.max(0, pct)))
-  }, [])
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    draggingRef.current = true
-    setInteracted(true)
-    ;(e.target as Element).setPointerCapture?.(e.pointerId)
-    updateFromClientX(e.clientX)
-  }
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!draggingRef.current) return
-    updateFromClientX(e.clientX)
-  }
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    draggingRef.current = false
-    ;(e.target as Element).releasePointerCapture?.(e.pointerId)
-  }
-
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowLeft") {
-      setPosition((p) => Math.max(0, p - 5))
-      setInteracted(true)
-      e.preventDefault()
-    } else if (e.key === "ArrowRight") {
-      setPosition((p) => Math.min(100, p + 5))
-      setInteracted(true)
-      e.preventDefault()
-    }
   }
 
   return (
     <div className="w-full">
-      <div
-        ref={containerRef}
-        className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-3xl border border-border/50 shadow-2xl shadow-primary/20 bg-card select-none touch-none"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-      >
-        {/* Storybook scene (right side, base layer) */}
-        <Image
-          src={pair.scene}
-          alt={`Storybook scene featuring ${pair.name}`}
-          fill
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-contain bg-card"
-          priority={pairIndex === 0}
-          {...(pairIndex === 0 ? { fetchPriority: "high" as const } : {})}
-        />
-        {/* Photo — clipped to reveal from the left edge up to the slider position */}
-        <div
-          className="absolute inset-0"
-          style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
-          aria-hidden="true"
-        >
-          <Image
-            src={pair.photo}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-contain bg-card"
-            loading={interacted || pairIndex > 0 ? "eager" : "lazy"}
-          />
+      <div className="relative w-full rounded-3xl border border-border/50 shadow-2xl shadow-primary/20 bg-card overflow-hidden">
+        <div className="grid grid-cols-2 gap-0">
+          {/* Photo (left) */}
+          <div className="relative aspect-[3/4] bg-card">
+            <Image
+              src={pair.photo}
+              alt={`Photo of ${pair.name}`}
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-contain bg-card"
+              priority={pairIndex === 0}
+              {...(pairIndex === 0 ? { fetchPriority: "high" as const } : {})}
+            />
+            <span className="pointer-events-none absolute top-3 left-3 text-xs font-semibold uppercase tracking-wider text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
+              Photo
+            </span>
+          </div>
+
+          {/* Storybook scene (right) */}
+          <div className="relative aspect-[3/4] bg-card">
+            <Image
+              src={pair.scene}
+              alt={`Storybook scene featuring ${pair.name}`}
+              fill
+              sizes="(min-width: 1024px) 25vw, 50vw"
+              className="object-contain bg-card"
+              priority={pairIndex === 0}
+            />
+            <span className="pointer-events-none absolute top-3 right-3 text-xs font-semibold uppercase tracking-wider text-white bg-primary/80 backdrop-blur-sm px-2 py-1 rounded-md">
+              Storybook Scene
+            </span>
+          </div>
         </div>
 
-        {/* Labels — hidden when their side is fully covered */}
-        {position > 2 && (
-          <span className="pointer-events-none absolute top-3 left-3 text-xs font-semibold uppercase tracking-wider text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
-            Photo
-          </span>
-        )}
-        {position < 98 && (
-          <span className="pointer-events-none absolute top-3 right-3 text-xs font-semibold uppercase tracking-wider text-white bg-primary/80 backdrop-blur-sm px-2 py-1 rounded-md">
-            Storybook Scene
-          </span>
-        )}
-
-        {/* Divider line */}
+        {/* Magical arrow connecting photo → scene */}
         <div
-          className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-white/90 shadow-[0_0_12px_rgba(0,0,0,0.5)]"
-          style={{ left: `${position}%`, transform: "translateX(-50%)" }}
-        />
-
-        {/* Drag handle */}
-        <button
-          type="button"
-          aria-label="Drag to compare photo and storybook scene"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(position)}
-          role="slider"
-          id={`before-after-handle-${idSuffix}`}
-          onKeyDown={onKeyDown}
-          className="absolute top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-xl border-2 border-primary flex items-center justify-center cursor-ew-resize focus:outline-none focus:ring-4 focus:ring-primary/40"
-          style={{ left: `${position}%` }}
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
         >
-          <ChevronRight className="w-4 h-4 text-primary -mr-1 rotate-180" />
-          <ChevronRight className="w-4 h-4 text-primary -ml-1" />
-        </button>
+          <div className="relative flex items-center justify-center h-14 w-28 sm:h-16 sm:w-32">
+            {/* Glow */}
+            <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl animate-pulse" />
+            {/* Arrow body */}
+            <div className="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-xl shadow-primary/50 border-2 border-white">
+              <ChevronRight className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={3} />
+            </div>
+            {/* Sparkles */}
+            <Sparkles className="absolute -top-1 -left-1 w-4 h-4 text-yellow-300 animate-pulse" />
+            <Sparkles className="absolute -bottom-1 -right-1 w-4 h-4 text-yellow-300 animate-pulse [animation-delay:300ms]" />
+          </div>
+        </div>
       </div>
 
       {/* Caption + cycle CTA */}
@@ -170,7 +111,7 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
         {SAMPLE_PAIRS.map((_, i) => (
           <button
             key={i}
-            onClick={() => { setPairIndex(i); setPosition(50) }}
+            onClick={() => setPairIndex(i)}
             className={`w-1.5 h-1.5 rounded-full transition-colors ${i === pairIndex ? "bg-primary" : "bg-muted-foreground/30"}`}
             aria-label={`Sample ${i + 1}`}
           />
