@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import {
@@ -15,21 +16,31 @@ import {
 } from "lucide-react"
 import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-constants"
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase"
+import { HeroSection } from "@/components/landing/HeroSection"
+import { TwoPathsSection } from "@/components/landing/TwoPathsSection"
 import { PricingSection } from "@/components/PricingSection"
 import { trackEvent } from "@/lib/utils/analytics"
+
+// Mirrors db_scripts/077_add_slug_to_story_templates.sql. Overrides cover cases where
+// the carousel display title diverges from the DB title (which the slug is derived from).
+const SLUG_OVERRIDES: Record<string, string> = {
+  "Counting Adventures": "counting-1-to-10", // DB title: "Numbers Around the House (1 to 10)"
+  "A Day at the Zoo": "day-at-the-zoo",      // DB title: "Day at the Zoo"
+}
+
+function titleToSlug(title: string): string {
+  if (SLUG_OVERRIDES[title]) return SLUG_OVERRIDES[title]
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
 
 export function WebLandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showContact, setShowContact] = useState(false)
-  const [heroIndex, setHeroIndex] = useState(0)
-  const heroImages = ["/hero-1.jpg", "/hero-2.jpg", "/hero-3.jpg"]
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroImages.length)
-    }, 5000)
-    return () => clearInterval(timer)
-  }, [heroImages.length])
 
   const handleCta = (location: string) => {
     trackEvent("cta_click", { location, label: "Get Started" })
@@ -199,122 +210,10 @@ export function WebLandingPage() {
       </header>
 
       <main>
-      {/* Hero Section — Desktop: full-bleed image with text on dark left; Mobile: stacked */}
-      <section className="relative">
-        {/* Desktop: full-bleed background image with crossfade */}
-        <div className="hidden lg:block relative min-h-[600px] xl:min-h-[680px]">
-          {heroImages.map((src, i) => (
-            <Image
-              key={src}
-              src={src}
-              alt="Parent and child experiencing TwinkleBot storybooks"
-              fill
-              sizes="100vw"
-              className={`object-cover object-center transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
-              priority={i === 0}
-              {...(i === 0 ? { fetchPriority: "high" as const } : {})}
-            />
-          ))}
-          {/* Text overlay on the dark left side */}
-          <div className="absolute inset-0 flex items-center">
-            <div className="max-w-7xl mx-auto w-full px-8 lg:px-12">
-              <div className="max-w-lg">
-                <h1 className="text-5xl xl:text-6xl font-bold leading-tight mb-8" style={{ fontFamily: "var(--font-display)" }}>
-                  <span className="text-primary">
-                    Storybooks Where
-                  </span>
-                  <br />
-                  <span className="text-white">
-                    Your Child Is The Hero
-                  </span>
-                </h1>
+      <HeroSection />
 
-                <div className="flex gap-4">
-                  <Button
-                    size="lg"
-                    onClick={() => handleCta("hero_desktop")}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
-                  >
-                    Get Started Free
-                    <ChevronRight className="w-5 h-5 ml-1" />
-                  </Button>
-                  <a href="#how-it-works" onClick={() => trackEvent("cta_click", { location: "hero_desktop", label: "See How It Works" })}>
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      className="border-white/30 text-white hover:bg-white/10 h-14 px-8 text-lg"
-                    >
-                      See How It Works
-                    </Button>
-                  </a>
-                </div>
-
-                <div className="mt-10 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <p className="text-sm text-white/60">First personalized story free &mdash; no credit card needed</p>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile: stacked layout — image on top, text below */}
-        <div className="lg:hidden">
-          {/* Hero image on top — crossfade carousel with store buttons */}
-          <div className="relative w-full aspect-[16/9]">
-            {heroImages.map((src, i) => (
-              <Image
-                key={src}
-                src={src}
-                alt="Parent and child experiencing TwinkleBot storybooks"
-                fill
-                sizes="100vw"
-                className={`object-cover object-right transition-opacity duration-1000 ${i === heroIndex ? "opacity-100" : "opacity-0"}`}
-                priority={i === 0}
-                {...(i === 0 ? { fetchPriority: "high" as const } : {})}
-              />
-            ))}
-          </div>
-
-          <div className="pt-8 pb-8 px-4 sm:px-6 text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-6" style={{ fontFamily: "var(--font-display)" }}>
-              <span className="text-primary">
-                Storybooks Where
-              </span>
-              <br />
-              <span className="text-white">
-                Your Child Is The Hero
-              </span>
-            </h1>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={() => handleCta("hero_mobile")}
-                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
-              >
-                Get Started Free
-                <ChevronRight className="w-5 h-5 ml-1" />
-              </Button>
-              <a href="#how-it-works" onClick={() => trackEvent("cta_click", { location: "hero_mobile", label: "See How It Works" })}>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full sm:w-auto border-border text-foreground hover:bg-muted h-14 px-8 text-lg"
-                >
-                  See How It Works
-                </Button>
-              </a>
-            </div>
-
-            <div className="mt-8 flex items-center gap-2 justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
-              <p className="text-sm text-muted-foreground">First personalized story free &mdash; no credit card needed</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Two Paths */}
+      <TwoPathsSection />
 
       {/* Story Templates Showcase */}
       <section id="stories" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8 bg-card/50">
@@ -363,10 +262,18 @@ export function WebLandingPage() {
                     >
                       {[...stories, ...stories].map((story, i) => {
                         const tagline = getTagline(story.title)
+                        const slug = titleToSlug(story.title)
                         return (
-                          <div
+                          <Link
                             key={i}
-                            className="group/card relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] cursor-pointer"
+                            href={`/stories/${slug}`}
+                            onClick={() =>
+                              trackEvent("cta_click", {
+                                location: "stories_carousel",
+                                label: story.title,
+                              })
+                            }
+                            className="group/card relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] block transition-transform hover:scale-[1.02]"
                           >
                             <div className="aspect-[4/3] relative">
                               <Image
@@ -391,7 +298,7 @@ export function WebLandingPage() {
                               <p className="text-white/80 text-sm mb-2">{story.description}</p>
                               <p className="text-white/60 text-xs">Ages {story.age} · {story.scenes} pages</p>
                             </div>
-                          </div>
+                          </Link>
                         )
                       })}
                     </div>
@@ -413,9 +320,6 @@ export function WebLandingPage() {
           </div>
         </div>
       </section>
-
-      {/* Feature Showcase */}
-      <FeatureShowcase />
 
       {/* How It Works */}
       <section id="how-it-works" className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
@@ -464,30 +368,11 @@ export function WebLandingPage() {
               </div>
             ))}
           </div>
-
-          {/* Read-only mode callout */}
-          <div className="mt-8 lg:mt-12 flex items-center gap-4 rounded-3xl border border-border/50 bg-card px-8 py-6">
-            <span className="text-2xl flex-shrink-0">🔒</span>
-            <div>
-              <p className="text-foreground font-semibold text-lg leading-snug">
-                Don&apos;t want to upload a photo? No problem!
-              </p>
-              <p className="text-muted-foreground text-sm mt-1">
-                Browse <span className="text-primary font-semibold text-base">50+ free stories</span> with no upload, no payment, and no personal
-                information required — just create a free account and start reading
-                with your child today.
-              </p>
-              <a
-                href="/app"
-                onClick={() => trackEvent("cta_click", { location: "how_it_works_callout", label: "Get Started" })}
-                className="mt-3 inline-block text-primary font-semibold text-sm hover:underline"
-              >
-                Get Started Free →
-              </a>
-            </div>
-          </div>
         </div>
       </section>
+
+      {/* Feature Showcase */}
+      <FeatureShowcase />
 
       {/* Pricing Section */}
       <PricingSection onEarlyAccess={() => handleCta("pricing")} />
