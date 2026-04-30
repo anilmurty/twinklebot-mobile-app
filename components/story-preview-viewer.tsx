@@ -52,10 +52,9 @@ export function StoryPreviewViewer({
     if (currentPage > 0) setCurrentPage(currentPage - 1)
   }
 
-  // Reset text state on page change
+  // Reset expanded state on page change (but preserve hide preference)
   useEffect(() => {
     setTextExpanded(false)
-    setTextHidden(false)
   }, [currentPage])
 
   // Check overflow
