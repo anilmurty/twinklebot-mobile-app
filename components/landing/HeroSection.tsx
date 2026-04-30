@@ -90,24 +90,24 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        {/* Photo (left side) */}
+        {/* Storybook scene (right side, base layer) */}
         <Image
-          src={pair.photo}
-          alt={`Photo of ${pair.name}`}
+          src={pair.scene}
+          alt={`Storybook scene featuring ${pair.name}`}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
           className="object-cover"
           priority={pairIndex === 0}
           {...(pairIndex === 0 ? { fetchPriority: "high" as const } : {})}
         />
-        {/* Storybook scene — clipped to reveal from the left edge up to the slider position */}
+        {/* Photo — clipped to reveal from the left edge up to the slider position */}
         <div
           className="absolute inset-0"
           style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
           aria-hidden="true"
         >
           <Image
-            src={pair.scene}
+            src={pair.photo}
             alt=""
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
