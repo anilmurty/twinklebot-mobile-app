@@ -75,36 +75,40 @@ function BeforeAfterSlider({ idSuffix: _idSuffix }: { idSuffix: string }) {
           </div>
         </div>
 
-        {/* Magical arrow connecting photo → scene */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+        {/* Magical arrow connecting photo → scene — clickable to cycle samples */}
+        <button
+          type="button"
+          onClick={nextPair}
+          aria-label="View another sample"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 group focus:outline-none"
         >
           <div className="relative flex items-center justify-center h-14 w-28 sm:h-16 sm:w-32">
             {/* Glow */}
             <div className="absolute inset-0 rounded-full bg-primary/40 blur-2xl animate-pulse" />
             {/* Arrow body */}
-            <div className="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-xl shadow-primary/50 border-2 border-white">
+            <div className="relative flex items-center justify-center h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-xl shadow-primary/50 border-2 border-white transition-transform group-hover:scale-110 group-active:scale-95">
               <ChevronRight className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={3} />
             </div>
             {/* Sparkles */}
             <Sparkles className="absolute -top-1 -left-1 w-4 h-4 text-yellow-300 animate-pulse" />
             <Sparkles className="absolute -bottom-1 -right-1 w-4 h-4 text-yellow-300 animate-pulse [animation-delay:300ms]" />
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Caption + cycle CTA */}
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-3 flex items-center justify-between gap-4">
         <p className="text-xs sm:text-sm text-muted-foreground">
           Sample shown with {pair.name}. Your story features your child.
         </p>
-        <button
+        <Button
           onClick={nextPair}
-          className="text-xs sm:text-sm text-primary hover:text-primary/80 font-medium whitespace-nowrap ml-4 transition-colors"
+          size="sm"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md shadow-primary/30 whitespace-nowrap"
         >
-          View another sample →
-        </button>
+          View another sample
+          <ChevronRight className="w-4 h-4 ml-1" />
+        </Button>
       </div>
 
       {/* Pair dots */}
