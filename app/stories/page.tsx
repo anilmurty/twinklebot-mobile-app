@@ -56,7 +56,7 @@ export default async function StoriesPage() {
 
   if (!templates) return null
 
-  // Group by display category
+  // Group by display category, complete stories first
   const grouped: Record<string, Template[]> = {}
   for (const cat of STORY_CATEGORIES) {
     grouped[cat.id] = []
@@ -67,28 +67,51 @@ export default async function StoriesPage() {
       grouped[catId].push(t)
     }
   }
+  for (const cat of STORY_CATEGORIES) {
+    grouped[cat.id].sort((a, b) => {
+      const aComplete = isComplete(a) ? 0 : 1
+      const bComplete = isComplete(b) ? 0 : 1
+      return aComplete - bComplete
+    })
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <Image
-              src="/logo-horizontal.svg"
-              alt="Twinklebot"
-              width={240}
-              height={128}
-              className="h-8 w-auto"
-              style={{ filter: "brightness(1.6) saturate(1.2)" }}
-            />
-          </Link>
-          <Link
-            href="/app"
-            className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            Get Started Free
-          </Link>
+      <header className="sticky top-0 z-50 bg-card/70 backdrop-blur-md border-b border-border">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo-horizontal.svg"
+                alt="Twinklebot"
+                width={240}
+                height={128}
+                className="h-10 sm:h-12 w-auto"
+                style={{ filter: "brightness(1.6) saturate(1.2)" }}
+              />
+            </Link>
+            <nav className="hidden md:flex items-center gap-8">
+              <Link href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+                How It Works
+              </Link>
+              <Link href="/#features" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+                Features
+              </Link>
+              <Link href="/stories" className="text-foreground font-medium">
+                Stories
+              </Link>
+              <Link href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+                Pricing
+              </Link>
+            </nav>
+            <Link
+              href="/app"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
+            >
+              Get Started Free
+            </Link>
+          </div>
         </div>
       </header>
 

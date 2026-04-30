@@ -151,7 +151,7 @@ export function WebLandingPage() {
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Features
               </a>
-              <a href="#stories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              <a href="/stories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Stories
               </a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
