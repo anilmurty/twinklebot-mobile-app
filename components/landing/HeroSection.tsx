@@ -10,7 +10,11 @@ const HEADLINE_TOP = "Storybooks Where"
 const HEADLINE_BOTTOM = "Your Child Is The Hero"
 const SUBHEAD = "Free stories ready to read now. Personalize your favorites with your child as the hero."
 const MICROCOPY = "50+ free stories with no signup at all."
-const SAMPLE_CAPTION = "Sample shown with Maya. Your story features your child."
+const SAMPLE_PAIRS = [
+  { photo: "/sample-photo-1.png", scene: "/sample-scene-1.jpeg", name: "Maya" },
+  { photo: "/sample-photo-2.png", scene: "/sample-scene-2.jpeg", name: "Leo" },
+  { photo: "/sample-photo-3.png", scene: "/sample-scene-3.jpeg", name: "Mia" },
+]
 
 function handlePrimary(location: string) {
   trackEvent("cta_click", { location, label: "Get Started Free" })
@@ -28,8 +32,16 @@ function handleSecondary(location: string) {
 function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
   const [position, setPosition] = useState(50)
   const [interacted, setInteracted] = useState(false)
+  const [pairIndex, setPairIndex] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
+
+  const pair = SAMPLE_PAIRS[pairIndex]
+
+  const nextPair = () => {
+    setPairIndex((i) => (i + 1) % SAMPLE_PAIRS.length)
+    setPosition(50)
+  }
 
   const updateFromClientX = useCallback((clientX: number) => {
     const el = containerRef.current
@@ -70,7 +82,6 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
 
   return (
     <div className="w-full">
-      {/* TODO: Replace public/hero-before.jpg and public/hero-after.jpg with real before/after personalization images */}
       <div
         ref={containerRef}
         className="relative w-full aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-3xl border border-border/50 shadow-2xl shadow-primary/20 bg-card select-none touch-none"
@@ -79,38 +90,38 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        {/* Before image (LCP) */}
+        {/* Photo (left side) */}
         <Image
-          src="/hero-before.jpg"
-          alt="Story scene before personalization"
+          src={pair.photo}
+          alt={`Photo of ${pair.name}`}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
           className="object-cover"
-          priority
-          fetchPriority="high"
+          priority={pairIndex === 0}
+          {...(pairIndex === 0 ? { fetchPriority: "high" as const } : {})}
         />
-        {/* After image — clipped to reveal from the left edge up to the slider position */}
+        {/* Storybook scene — clipped to reveal from the left edge up to the slider position */}
         <div
           className="absolute inset-0"
           style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
           aria-hidden="true"
         >
           <Image
-            src="/hero-after.jpg"
+            src={pair.scene}
             alt=""
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
             className="object-cover"
-            loading={interacted ? "eager" : "lazy"}
+            loading={interacted || pairIndex > 0 ? "eager" : "lazy"}
           />
         </div>
 
         {/* Labels */}
         <span className="pointer-events-none absolute top-3 left-3 text-xs font-semibold uppercase tracking-wider text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
-          Before
+          Photo
         </span>
         <span className="pointer-events-none absolute top-3 right-3 text-xs font-semibold uppercase tracking-wider text-white bg-primary/80 backdrop-blur-sm px-2 py-1 rounded-md">
-          Personalized
+          Storybook Scene
         </span>
 
         {/* Divider line */}
@@ -122,7 +133,7 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
         {/* Drag handle */}
         <button
           type="button"
-          aria-label="Drag to compare before and after"
+          aria-label="Drag to compare photo and storybook scene"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(position)}
@@ -136,7 +147,31 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
           <ChevronRight className="w-4 h-4 text-primary -ml-1" />
         </button>
       </div>
-      <p className="mt-3 text-xs sm:text-sm text-muted-foreground text-center">{SAMPLE_CAPTION}</p>
+
+      {/* Caption + cycle CTA */}
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Sample shown with {pair.name}. Your story features your child.
+        </p>
+        <button
+          onClick={nextPair}
+          className="text-xs sm:text-sm text-primary hover:text-primary/80 font-medium whitespace-nowrap ml-4 transition-colors"
+        >
+          View another sample →
+        </button>
+      </div>
+
+      {/* Pair dots */}
+      <div className="flex justify-center gap-1.5 mt-2">
+        {SAMPLE_PAIRS.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => { setPairIndex(i); setPosition(50) }}
+            className={`w-1.5 h-1.5 rounded-full transition-colors ${i === pairIndex ? "bg-primary" : "bg-muted-foreground/30"}`}
+            aria-label={`Sample ${i + 1}`}
+          />
+        ))}
+      </div>
     </div>
   )
 }
