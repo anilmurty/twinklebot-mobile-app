@@ -98,8 +98,8 @@ export function StoryPreviewViewer({
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden bg-black select-none"
-      style={{ aspectRatio: "4/3" }}
+      className="relative w-full rounded-2xl overflow-hidden bg-black select-none border border-border"
+      style={{ aspectRatio: "3/4" }}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -108,7 +108,7 @@ export function StoryPreviewViewer({
       {isCover && (
         <div className="absolute inset-0 flex items-center justify-center">
           {coverImg && (
-            <img src={coverImg} alt="Cover" className="absolute inset-0 w-full h-full object-contain opacity-40" />
+            <img src={coverImg} alt="Cover" className="absolute inset-0 w-full h-full object-cover opacity-40" />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
           <div className="relative z-10 text-center px-6 max-w-lg">
@@ -134,7 +134,7 @@ export function StoryPreviewViewer({
             <img
               src={scene.image_url}
               alt={scene.headline || `Scene ${sceneIndex + 1}`}
-              className="absolute inset-0 w-full h-full object-contain"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           )}
 

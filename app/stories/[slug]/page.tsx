@@ -223,11 +223,14 @@ export default async function StoryPage({ params }: Props) {
         {previewScenes && previewScenes.length > 0 && (
           <section className="mb-12">
             <h2
-              className="text-xl font-bold mb-4"
+              className="text-xl font-bold mb-2"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Story Preview
             </h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              The personalized storybook will feature your child in place of the model and your child&apos;s name in the text, in a full-screen viewer with audio narration.
+            </p>
             <StoryPreviewViewer
               title={template.title}
               characterName={previewCharacterName}
