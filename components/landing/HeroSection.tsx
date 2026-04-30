@@ -96,7 +96,7 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
           alt={`Storybook scene featuring ${pair.name}`}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
+          className="object-contain bg-card"
           priority={pairIndex === 0}
           {...(pairIndex === 0 ? { fetchPriority: "high" as const } : {})}
         />
@@ -111,18 +111,22 @@ function BeforeAfterSlider({ idSuffix }: { idSuffix: string }) {
             alt=""
             fill
             sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
+            className="object-contain bg-card"
             loading={interacted || pairIndex > 0 ? "eager" : "lazy"}
           />
         </div>
 
-        {/* Labels */}
-        <span className="pointer-events-none absolute top-3 left-3 text-xs font-semibold uppercase tracking-wider text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
-          Photo
-        </span>
-        <span className="pointer-events-none absolute top-3 right-3 text-xs font-semibold uppercase tracking-wider text-white bg-primary/80 backdrop-blur-sm px-2 py-1 rounded-md">
-          Storybook Scene
-        </span>
+        {/* Labels — hidden when their side is fully covered */}
+        {position > 2 && (
+          <span className="pointer-events-none absolute top-3 left-3 text-xs font-semibold uppercase tracking-wider text-white bg-black/50 backdrop-blur-sm px-2 py-1 rounded-md">
+            Photo
+          </span>
+        )}
+        {position < 98 && (
+          <span className="pointer-events-none absolute top-3 right-3 text-xs font-semibold uppercase tracking-wider text-white bg-primary/80 backdrop-blur-sm px-2 py-1 rounded-md">
+            Storybook Scene
+          </span>
+        )}
 
         {/* Divider line */}
         <div
