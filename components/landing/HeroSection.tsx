@@ -9,7 +9,7 @@ import { trackEvent } from "@/lib/utils/analytics"
 const HEADLINE_TOP = "Storybooks Where"
 const HEADLINE_BOTTOM = "Your Child Is The Hero"
 const SUBHEAD = "Free stories ready to read now. Personalize your favorites with your child as the hero."
-const MICROCOPY = "First personalized story free — no credit card needed. 50+ free stories with no signup at all."
+const MICROCOPY = "50+ free stories with no signup at all."
 const SAMPLE_CAPTION = "Sample shown with Maya. Your story features your child."
 
 function handlePrimary(location: string) {
@@ -168,7 +168,7 @@ export function HeroSection() {
                   onClick={() => handlePrimary("hero_desktop")}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
                 >
-                  Get Started Free
+                  Make your child a hero
                   <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
                 <a href="/stories" onClick={() => handleSecondary("hero_desktop")}>

@@ -138,7 +138,7 @@ export default async function StoryPage({ params }: Props) {
               href="/app"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
             >
-              Get Started Free
+              Login
             </Link>
           </div>
         </div>

@@ -165,7 +165,7 @@ export function WebLandingPage() {
                 onClick={() => handleCta("header")}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6"
               >
-                Get Started Free
+                Login
               </Button>
             </div>
 
@@ -201,7 +201,7 @@ export function WebLandingPage() {
                   onClick={() => { setMobileMenuOpen(false); handleCta("mobile_menu") }}
                   className="w-full bg-primary text-primary-foreground font-semibold"
                 >
-                  Get Started Free
+                  Login
                 </Button>
               </div>
             </div>

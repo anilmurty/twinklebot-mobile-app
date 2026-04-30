@@ -101,15 +101,12 @@ export default async function StoriesPage() {
               <Link href="/stories" className="text-foreground font-medium">
                 Stories
               </Link>
-              <Link href="/#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
-                Pricing
-              </Link>
             </nav>
             <Link
               href="/app"
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
             >
-              Get Started Free
+              Login
             </Link>
           </div>
         </div>
@@ -168,19 +165,25 @@ export default async function StoriesPage() {
                             </span>
                           </div>
                         )}
-                        {!complete && (
-                          <span className="absolute top-2 right-2 text-[10px] font-semibold uppercase tracking-wide bg-yellow-500/90 text-yellow-950 px-2 py-0.5 rounded-full">
-                            Coming soon
-                          </span>
-                        )}
                       </div>
                       <div className="p-3">
                         <h3 className="text-sm font-semibold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                           {t.title}
                         </h3>
-                        <p className="text-[11px] text-muted-foreground mt-1">
-                          {t.age_range}
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-[11px] text-muted-foreground">
+                            {t.age_range}
+                          </span>
+                          {complete ? (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                              View
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full">
+                              Coming soon
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </Link>
                   )
