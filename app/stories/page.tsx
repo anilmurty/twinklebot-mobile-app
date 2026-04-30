@@ -175,11 +175,11 @@ export default async function StoriesPage() {
                             {t.age_range}
                           </span>
                           {complete ? (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
                               View
                             </span>
                           ) : (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full">
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground px-2 py-0.5 rounded-full border border-border">
                               Coming soon
                             </span>
                           )}
