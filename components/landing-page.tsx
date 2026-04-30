@@ -150,7 +150,7 @@ export function LandingPage() {
           <div className="p-5 w-full">
 
             {intentBanner && (
-              <div className="mb-3 p-2.5 bg-primary/20 border border-primary/30 rounded-2xl">
+              <div className="mb-3 p-2.5 bg-black/60 backdrop-blur-sm border border-primary/40 rounded-2xl">
                 <p className="text-sm text-white text-center">{intentBanner}</p>
               </div>
             )}
@@ -194,7 +194,7 @@ export function LandingPage() {
                     variant="outline"
                     size="lg"
                     disabled={isLoading}
-                    className="w-full rounded-full h-12 text-base font-medium border-white/50 bg-white/10 text-white hover:bg-white/20"
+                    className="w-full rounded-full h-12 text-base font-medium border-white/60 bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm"
                   >
                     Continue with Email
                   </Button>
@@ -207,13 +207,10 @@ export function LandingPage() {
                   <a href="https://www.twinklebot.app/privacy" className="underline text-white/70">Privacy Policy</a>
                 </p>
 
-                <div className="mt-4 flex items-center gap-3 text-xs text-white/70">
-                  <span>✓ No credit card needed</span>
-                  <span className="text-white/30">·</span>
-                  <span>✓ 50+ free stories</span>
-                  <span className="text-white/30">·</span>
-                  <Lock className="w-3 h-3 text-white/60 shrink-0" />
-                  <span>Your data stays yours</span>
+                <div className="mt-4 flex justify-center gap-4 text-[11px] text-white/70">
+                  <span className="flex items-center gap-1"><span className="text-white/50">✓</span> No credit card</span>
+                  <span className="flex items-center gap-1"><span className="text-white/50">✓</span> 50+ free stories</span>
+                  <span className="flex items-center gap-1"><Lock className="w-3 h-3 text-white/50" /> Data stays yours</span>
                 </div>
               </>
             ) : (
