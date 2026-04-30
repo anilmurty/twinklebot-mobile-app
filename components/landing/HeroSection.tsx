@@ -182,10 +182,6 @@ export function HeroSection() {
                 </a>
               </div>
 
-              <div className="mt-8 flex items-start gap-2">
-                <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-muted-foreground">{MICROCOPY}</p>
-              </div>
             </div>
 
             <div>
@@ -215,16 +211,16 @@ export function HeroSection() {
             <Button
               size="lg"
               onClick={() => handlePrimary("hero_mobile")}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-14 text-lg"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-12 text-base"
             >
-              Get Started Free
+              Make your child a hero
               <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
             <a href="/stories" onClick={() => handleSecondary("hero_mobile")} className="block">
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full border-border text-foreground hover:bg-muted h-14 text-lg"
+                className="w-full border-border text-foreground hover:bg-muted h-12 text-base"
               >
                 Browse 50+ Free Stories
               </Button>
@@ -233,10 +229,6 @@ export function HeroSection() {
 
           <BeforeAfterSlider idSuffix="mobile" />
 
-          <div className="mt-6 flex items-start gap-2 text-left">
-            <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-muted-foreground">{MICROCOPY}</p>
-          </div>
         </div>
       </div>
     </section>
