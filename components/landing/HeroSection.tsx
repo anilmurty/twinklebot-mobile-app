@@ -11,9 +11,10 @@ const HEADLINE_BOTTOM = "Your Child Is The Hero"
 const SUBHEAD = "Free stories ready to read now. Personalize your favorites with your child as the hero."
 const MICROCOPY = "50+ free stories with no signup at all."
 const SAMPLE_PAIRS = [
-  { photo: "/sample-photo-1.png", scene: "/sample-scene-1.jpeg", name: "Maya" },
+  { photo: "/sample-photo-4.png", scene: "/sample-scene-4.jpeg", name: "Aanya" },
   { photo: "/sample-photo-2.png", scene: "/sample-scene-2.jpeg", name: "Leo" },
   { photo: "/sample-photo-3.png", scene: "/sample-scene-3.jpeg", name: "Mia" },
+  { photo: "/sample-photo-1.png", scene: "/sample-scene-1.jpeg", name: "Maya" },
 ]
 
 function handlePrimary(location: string) {
