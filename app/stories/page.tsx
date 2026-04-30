@@ -174,15 +174,9 @@ export default async function StoriesPage() {
                           <span className="text-[11px] text-muted-foreground">
                             {t.age_range}
                           </span>
-                          {complete ? (
-                            <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                              View
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground px-2 py-0.5 rounded-full border border-border">
-                              Coming soon
-                            </span>
-                          )}
+                          <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                            View
+                          </span>
                         </div>
                       </div>
                     </Link>
