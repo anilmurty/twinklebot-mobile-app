@@ -73,20 +73,15 @@ export default async function StoriesPage() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center">
             <Image
-              src="/twinklebot-logo.png"
+              src="/logo-horizontal.svg"
               alt="Twinklebot"
-              width={32}
-              height={32}
-              className="rounded-lg"
+              width={240}
+              height={128}
+              className="h-8 w-auto"
+              style={{ filter: "brightness(1.6) saturate(1.2)" }}
             />
-            <span
-              className="text-lg font-bold text-primary"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Twinklebot
-            </span>
           </Link>
           <Link
             href="/app"

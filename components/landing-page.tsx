@@ -135,14 +135,19 @@ export function LandingPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1a1520] via-[#2a1f30] to-[#1a1520]" />
+      {/* Background image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url(/hero-1.jpg)" }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/70" />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col min-h-screen justify-center items-center px-4 py-8">
+      <div className="relative z-10 flex flex-col min-h-screen justify-end sm:justify-center items-center px-4 pb-12 sm:py-8">
 
         {/* Login Card - Centered */}
         <div className="w-full max-w-md">
-          <div className="p-6 w-full">
+          <div className="p-6 w-full bg-black/40 backdrop-blur-md rounded-3xl border border-white/10">
 
             {intentBanner && (
               <div className="mb-4 p-3 bg-primary/20 border border-primary/30 rounded-2xl">
