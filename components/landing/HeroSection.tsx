@@ -143,28 +143,23 @@ export function HeroSection() {
                 <span className="text-foreground">{HEADLINE_BOTTOM}</span>
               </h1>
 
-              <p className="text-lg xl:text-xl text-muted-foreground mb-8 leading-relaxed">
-                {SUBHEAD}
-              </p>
-
               <div className="flex flex-wrap gap-4">
+                <a href="/stories" onClick={() => handleSecondary("hero_desktop")}>
+                  <Button
+                    size="lg"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+                  >
+                    Browse 50+ Free Stories
+                    <ChevronRight className="w-5 h-5 ml-1" />
+                  </Button>
+                </a>
                 <Button
                   size="lg"
                   onClick={() => handlePrimary("hero_desktop")}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 px-8 h-14 text-lg"
+                  className="bg-white hover:bg-white/90 text-black font-semibold shadow-xl px-8 h-14 text-lg"
                 >
                   Make your child a hero
-                  <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
-                <a href="/stories" onClick={() => handleSecondary("hero_desktop")}>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-border text-foreground hover:bg-muted h-14 px-8 text-lg"
-                  >
-                    Browse 50+ Free Stories
-                  </Button>
-                </a>
               </div>
 
             </div>
@@ -188,28 +183,23 @@ export function HeroSection() {
             <span className="text-foreground">{HEADLINE_BOTTOM}</span>
           </h1>
 
-          <p className="text-base sm:text-lg text-muted-foreground mb-6 leading-relaxed">
-            {SUBHEAD}
-          </p>
-
           <div className="flex flex-col gap-3 mb-6">
+            <a href="/stories" onClick={() => handleSecondary("hero_mobile")} className="block">
+              <Button
+                size="lg"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-12 text-base"
+              >
+                Browse 50+ Free Stories
+                <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
+            </a>
             <Button
               size="lg"
               onClick={() => handlePrimary("hero_mobile")}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/30 h-12 text-base"
+              className="w-full bg-white hover:bg-white/90 text-black font-semibold shadow-xl h-12 text-base"
             >
               Make your child a hero
-              <ChevronRight className="w-5 h-5 ml-1" />
             </Button>
-            <a href="/stories" onClick={() => handleSecondary("hero_mobile")} className="block">
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full border-border text-foreground hover:bg-muted h-12 text-base"
-              >
-                Browse 50+ Free Stories
-              </Button>
-            </a>
           </div>
 
           <BeforeAfterSlider idSuffix="mobile" />
