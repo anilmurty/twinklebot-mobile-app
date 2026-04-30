@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase/server"
 import { getStorageUrl } from "@/lib/supabase/storage"
 import { getDisplayCategory, STORY_CATEGORIES, getTagline } from "@/lib/story-constants"
 import { ChevronRight, Sparkles, ArrowLeft } from "lucide-react"
+import { StoryPreviewViewer } from "@/components/story-preview-viewer"
 
 export const dynamic = "force-dynamic"
 
@@ -100,6 +101,7 @@ export default async function StoryPage({ params }: Props) {
   const scenes = template.script_data?.scenes
   const isComingSoon = !scenes || !Array.isArray(scenes) || scenes.length === 0
   const previewScenes = isComingSoon ? null : deriveScenes(template)
+  const previewCharacterName = template.mock_story_data?.character_name || "Alex"
   const catId = getDisplayCategory(template.title, template.category)
   const catLabel =
     STORY_CATEGORIES.find((c) => c.id === catId)?.label || template.category
@@ -198,7 +200,7 @@ export default async function StoryPage({ params }: Props) {
           </div>
         </div>
 
-        {/* Preview scenes for complete stories */}
+        {/* Story Preview Viewer for complete stories */}
         {previewScenes && previewScenes.length > 0 && (
           <section className="mb-12">
             <h2
@@ -207,44 +209,21 @@ export default async function StoryPage({ params }: Props) {
             >
               Story Preview
             </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {previewScenes.map((scene: any) => {
-                const sceneImg = scene.image_url
-                  ? getSceneImageUrl(scene.image_url)
-                  : null
-                return (
-                  <div
-                    key={scene.scene_number}
-                    className="rounded-xl overflow-hidden bg-card border border-border"
-                  >
-                    <div className="relative aspect-square">
-                      {sceneImg ? (
-                        <Image
-                          src={sceneImg}
-                          alt={scene.headline || `Scene ${scene.scene_number}`}
-                          fill
-                          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-xs">
-                          Scene {scene.scene_number}
-                        </div>
-                      )}
-                    </div>
-                    {scene.headline && (
-                      <div className="p-2.5">
-                        <p className="text-xs font-medium text-foreground line-clamp-2">
-                          {scene.headline}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+            <StoryPreviewViewer
+              title={template.title}
+              characterName={previewCharacterName}
+              description={template.description}
+              scenes={previewScenes.map((s: any) => ({
+                scene_number: s.scene_number,
+                headline: s.headline,
+                script_text: s.script_text,
+                image_url: s.image_url ? getSceneImageUrl(s.image_url) : undefined,
+              }))}
+              coverImageUrl={coverUrl}
+              personalizeUrl={`/app?intent=personalize&story=${template.slug}`}
+            />
 
-            {/* Repeated CTA after preview */}
+            {/* CTA after viewer */}
             <div className="mt-8 text-center">
               <Link
                 href={`/app?intent=personalize&story=${template.slug}`}
