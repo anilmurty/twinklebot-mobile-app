@@ -18,17 +18,21 @@ export function GAPageTracker() {
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    // Ensure dataLayer + gtag exist even if gtag.js hasn't loaded yet —
-    // events pushed before load are queued and replayed once it does.
+    // Initialize dataLayer + gtag shim if not yet set up. The shim matches
+    // the official Google snippet pattern (pushes the `arguments` object,
+    // not a real array) so gtag.js processes queued entries correctly.
     window.dataLayer = window.dataLayer || []
     if (!window.gtag) {
-      window.gtag = function gtag(...args: unknown[]) {
-        window.dataLayer!.push(args)
-      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      window.gtag = function () {
+        // eslint-disable-next-line prefer-rest-params
+        window.dataLayer!.push(arguments)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any
     }
     const query = searchParams?.toString()
     const path = query ? `${pathname}?${query}` : pathname
-    window.gtag("event", "page_view", {
+    window.gtag!("event", "page_view", {
       page_path: path,
       page_location: window.location.href,
       page_title: document.title,

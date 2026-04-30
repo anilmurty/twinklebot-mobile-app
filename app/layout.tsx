@@ -100,11 +100,11 @@ export default function RootLayout({
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
+            window.gtag = window.gtag || function(){window.dataLayer.push(arguments);};
+            window.gtag('js', new Date());
             var isCapacitor = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
             var appPlatform = isCapacitor ? (window.Capacitor.getPlatform && window.Capacitor.getPlatform() || 'native') : 'web';
-            gtag('config', 'G-J60V4T7WKW', {
+            window.gtag('config', 'G-J60V4T7WKW', {
               app_platform: appPlatform,
               send_page_view: false
             });
