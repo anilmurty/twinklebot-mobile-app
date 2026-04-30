@@ -28,7 +28,7 @@ export function TwoPathsSection() {
               className="text-2xl font-bold text-foreground mb-3"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Browse free
+              Browse without logging in
             </h3>
             <p className="text-muted-foreground mb-8 flex-grow">
               50+ educational stories ready to read instantly. No account, no photo, just stories.
@@ -60,10 +60,10 @@ export function TwoPathsSection() {
               className="text-2xl font-bold text-foreground mb-3"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Personalize
+              Login and Personalize
             </h3>
             <p className="text-muted-foreground mb-8 flex-grow">
-              Upload a photo and watch your child become the hero. First story free.
+              Upload a photo and watch your child become the hero.
             </p>
             <a
               href="/app"
