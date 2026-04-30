@@ -141,14 +141,14 @@ export function StoryPreviewViewer({
           {/* Headline */}
           {scene.headline && (
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/50 to-transparent px-4 pt-3 pb-6 z-10">
-              <div className="flex items-start justify-between gap-2">
+              <div className="relative">
                 <h3
-                  className="text-yellow-300 text-lg md:text-xl font-bold font-serif text-center flex-1"
+                  className="text-yellow-300 text-lg md:text-xl font-bold font-serif text-center px-12"
                   style={{ textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}
                 >
                   {scene.headline}
                 </h3>
-                <span className="text-white text-xs bg-amber-800/70 px-2 py-0.5 rounded-full shrink-0">
+                <span className="absolute top-0 right-0 text-white text-xs bg-amber-800/70 px-2 py-0.5 rounded-full">
                   {sceneIndex + 1}/{scenes.length}
                 </span>
               </div>
