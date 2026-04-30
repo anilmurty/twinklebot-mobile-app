@@ -1,6 +1,8 @@
 import type React from "react"
+import { Suspense } from "react"
 import type { Metadata } from "next"
 import Script from "next/script"
+import { GAPageTracker } from "@/components/GAPageTracker"
 import { Geist, Geist_Mono, Lora } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProvider } from "@/lib/auth-context"
@@ -103,7 +105,8 @@ export default function RootLayout({
             var isCapacitor = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
             var appPlatform = isCapacitor ? (window.Capacitor.getPlatform && window.Capacitor.getPlatform() || 'native') : 'web';
             gtag('config', 'G-J60V4T7WKW', {
-              app_platform: appPlatform
+              app_platform: appPlatform,
+              send_page_view: false
             });
           `}
         </Script>
@@ -145,6 +148,9 @@ export default function RootLayout({
           }}
         />
         <CapacitorInitializer />
+        <Suspense fallback={null}>
+          <GAPageTracker />
+        </Suspense>
         <QueryProvider>
           <AuthProvider>
             {children}
