@@ -154,9 +154,9 @@ export function WebLandingPage() {
               <a href="/stories" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Stories
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              {/* <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
                 Pricing
-              </a>
+              </a> */}
             </nav>
 
             {/* CTA button */}
@@ -193,9 +193,9 @@ export function WebLandingPage() {
               <a href="#stories" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
                 Stories
               </a>
-              <a href="#pricing" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
+              {/* <a href="#pricing" className="block py-2 text-muted-foreground hover:text-foreground font-medium">
                 Pricing
-              </a>
+              </a> */}
               <div className="pt-3 border-t border-border space-y-2">
                 <Button
                   onClick={() => { setMobileMenuOpen(false); handleCta("mobile_menu") }}
@@ -374,8 +374,8 @@ export function WebLandingPage() {
       {/* Feature Showcase */}
       <FeatureShowcase />
 
-      {/* Pricing Section */}
-      <PricingSection onEarlyAccess={() => handleCta("pricing")} />
+      {/* Pricing Section — hidden for now */}
+      {/* <PricingSection onEarlyAccess={() => handleCta("pricing")} /> */}
 
       {/* Final CTA */}
       <section className="relative py-16 sm:py-24 px-4 sm:px-6 lg:px-8">
