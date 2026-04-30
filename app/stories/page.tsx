@@ -127,8 +127,11 @@ export default async function StoriesPage() {
           </p>
         </div>
 
-        {/* Genre sections */}
-        {STORY_CATEGORIES.map((cat) => {
+        {/* Genre sections — Pure Science pinned to top, rest in default order */}
+        {[
+          ...STORY_CATEGORIES.filter((c) => c.id === "science"),
+          ...STORY_CATEGORIES.filter((c) => c.id !== "science"),
+        ].map((cat) => {
           const stories = grouped[cat.id]
           if (!stories || stories.length === 0) return null
           return (
