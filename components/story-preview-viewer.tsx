@@ -157,10 +157,11 @@ export function StoryPreviewViewer({
             />
           )}
 
-          {/* Headline */}
-          {scene.headline && (
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/50 to-transparent px-4 pt-3 pb-6 z-10">
-              <div className="relative">
+          {/* Top block: scene headline (when present) with the per-scene CTA pill anchored
+              directly below it. Both share one gradient region. */}
+          <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/50 to-transparent px-4 pt-3 pb-5 z-10">
+            {scene.headline && (
+              <div className="relative mb-2">
                 <h3
                   className="text-yellow-300 text-lg md:text-xl font-bold font-serif text-center px-12"
                   style={{ textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}
@@ -171,8 +172,18 @@ export function StoryPreviewViewer({
                   {sceneIndex + 1}/{scenes.length}
                 </span>
               </div>
+            )}
+            <div className="flex justify-center">
+              <Link
+                href={personalizeUrl}
+                onClick={() => trackCtaClick("story_detail_scene_pill", { scene_number: scene.scene_number })}
+                className="inline-flex items-center gap-1 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full pl-3 pr-2 py-1.5 text-[11px] font-semibold shadow-md backdrop-blur-sm"
+              >
+                Make your child as hero of this story
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-          )}
+          </div>
 
           {/* Text overlay */}
           {scene.script_text && !textHidden && (
@@ -208,17 +219,6 @@ export function StoryPreviewViewer({
               </div>
             </div>
           )}
-
-          {/* Per-scene CTA pill — sits above the bottom nav row + show/hide toolbar so it
-              doesn't collide with navigation arrows or the script text. */}
-          <Link
-            href={personalizeUrl}
-            onClick={() => trackCtaClick("story_detail_scene_pill", { scene_number: scene.scene_number })}
-            className="absolute bottom-20 right-2 z-20 inline-flex items-center gap-1 bg-primary/85 hover:bg-primary text-primary-foreground rounded-full pl-3 pr-2 py-1.5 text-[11px] font-semibold shadow-md backdrop-blur-sm"
-          >
-            Make your Child the Hero
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
 
           {/* Show/hide text toggle */}
           {scene.script_text && (
