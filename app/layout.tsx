@@ -102,9 +102,15 @@ export default function RootLayout({
             gtag('js', new Date());
             var isCapacitor = typeof window !== 'undefined' && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
             var appPlatform = isCapacitor ? (window.Capacitor.getPlatform && window.Capacitor.getPlatform() || 'native') : 'web';
-            gtag('config', 'G-J60V4T7WKW', {
-              app_platform: appPlatform
-            });
+            try {
+              var p = new URLSearchParams(window.location.search);
+              if (p.get('debug_mode') === '1') sessionStorage.setItem('ga_debug', '1');
+            } catch (e) {}
+            var gaDebug = false;
+            try { gaDebug = sessionStorage.getItem('ga_debug') === '1'; } catch (e) {}
+            var configParams = { app_platform: appPlatform };
+            if (gaDebug) configParams.debug_mode = true;
+            gtag('config', 'G-J60V4T7WKW', configParams);
           `}
         </Script>
       </head>
