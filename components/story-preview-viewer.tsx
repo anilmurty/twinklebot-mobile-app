@@ -179,7 +179,7 @@ export function StoryPreviewViewer({
                 onClick={() => trackCtaClick("story_detail_scene_pill", { scene_number: scene.scene_number })}
                 className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
               >
-                Make this YOUR child&apos;s story
+                Put YOUR child in this story
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -285,7 +285,7 @@ export function StoryPreviewViewer({
               className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
               aria-label="Next"
             >
-              <ChevronRight className="w-5 h-5 text-white" />
+              <ChevronRight className="w-5 h-5 text-primary" />
             </button>
           )}
         </div>
@@ -299,7 +299,7 @@ export function StoryPreviewViewer({
               className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
               aria-label="Previous"
             >
-              <ChevronLeft className="w-5 h-5 text-white" />
+              <ChevronLeft className="w-5 h-5 text-primary" />
             </button>
           ) : (
             <span className="w-9 h-9" aria-hidden="true" />
@@ -310,7 +310,7 @@ export function StoryPreviewViewer({
               className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
               aria-label="Next"
             >
-              <ChevronRight className="w-5 h-5 text-white" />
+              <ChevronRight className="w-5 h-5 text-primary" />
             </button>
           ) : (
             <span className="w-9 h-9" aria-hidden="true" />
