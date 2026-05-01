@@ -177,10 +177,10 @@ export function StoryPreviewViewer({
               <Link
                 href={personalizeUrl}
                 onClick={() => trackCtaClick("story_detail_scene_pill", { scene_number: scene.scene_number })}
-                className="inline-flex items-center gap-1 bg-primary/90 hover:bg-primary text-primary-foreground rounded-full pl-3 pr-2 py-1.5 text-[11px] font-semibold shadow-md backdrop-blur-sm"
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
               >
-                Make your child as hero of this story
-                <ChevronRight className="w-3.5 h-3.5" />
+                Make this YOUR child&apos;s story
+                <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -275,8 +275,9 @@ export function StoryPreviewViewer({
 
       {/* ── Bottom navigation row ── */}
       {isCover ? (
-        // Cover: arrows hug the swipe-helper text in the center.
-        <div className="absolute bottom-10 left-0 right-0 z-20 flex items-center justify-center gap-3">
+        // Cover: arrows hug the swipe-helper text in the center, positioned
+        // midway between the CTA button and the bottom of the viewer.
+        <div className="absolute bottom-[28%] left-0 right-0 z-20 flex items-center justify-center gap-3">
           <p className="text-white/60 text-xs">Swipe or click to read</p>
           {currentPage < totalPages - 1 && (
             <button
