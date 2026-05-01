@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { Lock } from "lucide-react"
-import { trackEvent, trackAuthEvent } from "@/lib/utils/analytics"
+import { trackEvent, trackAuthEvent, trackAuthError } from "@/lib/utils/analytics"
 
 const FB_AUTH_ENABLED = process.env.NEXT_PUBLIC_FB_AUTH_ENABLED === "true"
 
@@ -29,6 +29,31 @@ export function LandingPage() {
   const [intentBanner, setIntentBanner] = useState<string | null>(null)
   const methodAttemptedRef = useRef<string | null>(null)
   const completedRef = useRef(false)
+  const idleFiredRef = useRef(false)
+  const lastInteractionRef = useRef<number>(typeof window !== "undefined" ? Date.now() : 0)
+  const fieldErrorsFiredRef = useRef<Set<string>>(new Set())
+
+  const reportFieldError = (field: "email" | "password" | "confirm_password", reason: string) => {
+    const key = `${field}:${reason}`
+    if (fieldErrorsFiredRef.current.has(key)) return
+    fieldErrorsFiredRef.current.add(key)
+    trackEvent("auth_form_field_error", { field, reason })
+  }
+
+  const handleEmailBlur = () => {
+    if (!email) return
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      reportFieldError("email", "invalid_format")
+    }
+  }
+  const handlePasswordBlur = () => {
+    if (!password) return
+    if (password.length < 6) reportFieldError("password", "too_short")
+  }
+  const handleConfirmPasswordBlur = () => {
+    if (!confirmPassword) return
+    if (password && confirmPassword !== password) reportFieldError("confirm_password", "mismatch")
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -58,9 +83,36 @@ export function LandingPage() {
       if (document.visibilityState === "hidden" && methodAttemptedRef.current && !completedRef.current) {
         trackEvent("auth_abandoned", { method_attempted: methodAttemptedRef.current })
       }
+      // While hidden, freeze the idle clock (don't count tab-switch time).
+      if (document.visibilityState === "visible") {
+        lastInteractionRef.current = Date.now()
+      }
     }
     document.addEventListener("visibilitychange", onVisibility)
-    return () => document.removeEventListener("visibilitychange", onVisibility)
+
+    // auth_form_idle: fire once if the user sits on the auth screen for 60s
+    // of foreground time without any interaction and without picking a method.
+    const resetIdle = () => { lastInteractionRef.current = Date.now() }
+    const interactionEvents: (keyof DocumentEventMap)[] = [
+      "click", "keydown", "input", "touchstart", "scroll",
+    ]
+    interactionEvents.forEach((ev) => document.addEventListener(ev, resetIdle, { passive: true }))
+
+    const idleInterval = window.setInterval(() => {
+      if (idleFiredRef.current) return
+      if (document.visibilityState !== "visible") return
+      if (methodAttemptedRef.current) return
+      if (Date.now() - lastInteractionRef.current >= 60_000) {
+        idleFiredRef.current = true
+        trackEvent("auth_form_idle", { idle_seconds: 60 })
+      }
+    }, 5_000)
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility)
+      interactionEvents.forEach((ev) => document.removeEventListener(ev, resetIdle))
+      window.clearInterval(idleInterval)
+    }
   }, [])
 
   const handleSignInWithGoogle = async () => {
@@ -74,6 +126,12 @@ export function LandingPage() {
       completedRef.current = true
     } catch (error: any) {
       console.error("Sign in error:", error)
+      trackAuthError({
+        step: "oauth_launch",
+        method: "google",
+        error_code: error?.code,
+        error_message: error?.message,
+      })
       if (error.message?.includes("provider is not enabled")) {
         setError("Google sign-in is not enabled. Please use email/password or enable Google OAuth in Supabase.")
       } else {
@@ -101,6 +159,12 @@ export function LandingPage() {
       completedRef.current = true
     } catch (error: any) {
       console.error("Facebook sign in error:", error)
+      trackAuthError({
+        step: "oauth_launch",
+        method: "facebook",
+        error_code: error?.code,
+        error_message: error?.message,
+      })
       setError(`Sign in failed: ${error.message}`)
     } finally {
       setIsLoading(false)
@@ -116,6 +180,7 @@ export function LandingPage() {
       setError(null)
       if (isSignUp) {
         if (password !== confirmPassword) {
+          trackAuthError({ step: "email_signup", method: "email", error_code: "password_mismatch" })
           setError("Passwords do not match")
           return
         }
@@ -127,6 +192,12 @@ export function LandingPage() {
       completedRef.current = true
     } catch (error: any) {
       console.error("Email auth error:", error)
+      trackAuthError({
+        step: isSignUp ? "email_signup" : "email_signin",
+        method: "email",
+        error_code: error?.code,
+        error_message: error?.message,
+      })
       setError(error.message || "Authentication failed")
     } finally {
       setIsLoading(false)
@@ -222,6 +293,7 @@ export function LandingPage() {
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={handleEmailBlur}
                     className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 text-gray-900 placeholder:text-gray-500"
                   />
 
@@ -230,6 +302,7 @@ export function LandingPage() {
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onBlur={handlePasswordBlur}
                     className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 text-gray-900 placeholder:text-gray-500"
                   />
 
@@ -239,6 +312,7 @@ export function LandingPage() {
                       placeholder="Confirm Password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
+                      onBlur={handleConfirmPasswordBlur}
                       className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 text-gray-900 placeholder:text-gray-500"
                     />
                   )}

@@ -35,3 +35,38 @@ export function trackAuthEvent(
   }
   trackEvent(event, enriched)
 }
+
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g
+
+/**
+ * Sanitize an error message before sending it to GA4.
+ * - Replaces anything that looks like an email with "[email]"
+ *   (defense in depth — Supabase occasionally echoes user input).
+ * - Truncates to 80 characters so we never accidentally ship a payload.
+ */
+function sanitizeErrorMessage(raw: string | undefined): string | undefined {
+  if (!raw) return undefined
+  return raw.replace(EMAIL_PATTERN, "[email]").slice(0, 80)
+}
+
+export type AuthErrorStep =
+  | "oauth_launch"
+  | "oauth_callback"
+  | "email_signin"
+  | "email_signup"
+  | "session_refresh"
+  | "post_auth_intent"
+
+export function trackAuthError(params: {
+  step: AuthErrorStep
+  method?: string
+  error_code?: string
+  error_message?: string
+}) {
+  trackEvent("auth_error", {
+    step: params.step,
+    method: params.method,
+    error_code: params.error_code,
+    error_message: sanitizeErrorMessage(params.error_message),
+  })
+}

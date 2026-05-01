@@ -8,7 +8,7 @@ import { del } from 'idb-keyval'
 import { Capacitor } from '@capacitor/core'
 import { setupDeepLinkHandler } from '@/lib/utils/deep-link-handler'
 import { identifyUser as identifyRevenueCatUser, logoutUser as logoutRevenueCatUser } from '@/lib/services/iap-service'
-import { trackEvent } from '@/lib/utils/analytics'
+import { trackEvent, trackAuthError } from '@/lib/utils/analytics'
 import type { User } from '@supabase/supabase-js'
 
 interface AuthContextType {
@@ -56,8 +56,9 @@ async function handlePostAuthIntent(userId: string, accessToken: string) {
           })
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Intent] Failed to record story interest:', err)
+      trackAuthError({ step: 'post_auth_intent', error_code: 'notify_intent_failed', error_message: err?.message })
     }
   } else if (intent === 'personalize') {
     // Redirect to the story library tab — the user can pick a character and start
@@ -72,8 +73,9 @@ async function handlePostAuthIntent(userId: string, accessToken: string) {
           return
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('[Intent] Failed to look up template for personalization:', err)
+      trackAuthError({ step: 'post_auth_intent', error_code: 'personalize_intent_failed', error_message: err?.message })
     }
   }
 }
@@ -131,10 +133,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // If refresh token is invalid, clear session
         if (error.message?.includes('Refresh Token')) {
           console.warn('Invalid refresh token, clearing session:', error.message)
+          trackAuthError({ step: 'session_refresh', error_code: 'invalid_refresh_token', error_message: error.message })
           supabase?.auth.signOut().catch(() => {})
           setUser(null)
         } else {
           console.error('Session error:', error)
+          trackAuthError({ step: 'session_refresh', error_code: error.code, error_message: error.message })
         }
       } else {
         setUser(session?.user ?? null)
