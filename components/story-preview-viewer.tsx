@@ -111,8 +111,7 @@ export function StoryPreviewViewer({
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden bg-black select-none border border-border"
-      style={{ aspectRatio: "3/4" }}
+      className="relative w-full rounded-2xl overflow-hidden bg-black select-none border border-border h-[calc(100svh-5rem)] sm:h-auto sm:aspect-[3/4]"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -128,22 +127,21 @@ export function StoryPreviewViewer({
             <h2 className="text-2xl md:text-3xl font-bold text-white font-serif mb-3 drop-shadow-lg">
               {title}
             </h2>
+            <p className="text-white/70 text-sm font-serif italic mb-4">{description}</p>
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-white/80 text-sm">Starring</span>
               <span className="text-amber-500 font-bold">{characterName}</span>
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <p className="text-white/70 text-sm font-serif italic">{description}</p>
             <Link
               href={personalizeUrl}
               onClick={() => trackCtaClick("story_detail_cover_overlay")}
-              className="mt-5 inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
             >
-              <Sparkles className="w-4 h-4" />
               Make this YOUR child&apos;s story
+              <ChevronRight className="w-4 h-4" />
             </Link>
-            <p className="text-white/50 text-xs mt-4">Swipe or click → to read</p>
           </div>
         </div>
       )}
@@ -211,16 +209,15 @@ export function StoryPreviewViewer({
             </div>
           )}
 
-          {/* Per-scene Personalize pill — small, semi-transparent, bottom-right above the
-              show/hide toolbar. Doesn't conflict with the headline's scene counter (top-right). */}
+          {/* Per-scene CTA pill — sits above the bottom nav row + show/hide toolbar so it
+              doesn't collide with navigation arrows or the script text. */}
           <Link
             href={personalizeUrl}
             onClick={() => trackCtaClick("story_detail_scene_pill", { scene_number: scene.scene_number })}
-            className="absolute bottom-12 right-2 z-20 inline-flex items-center gap-1 bg-primary/80 hover:bg-primary text-primary-foreground rounded-full pl-3 pr-2 py-1 text-[11px] font-semibold shadow-md backdrop-blur-sm"
+            className="absolute bottom-20 right-2 z-20 inline-flex items-center gap-1 bg-primary/85 hover:bg-primary text-primary-foreground rounded-full pl-3 pr-2 py-1.5 text-[11px] font-semibold shadow-md backdrop-blur-sm"
           >
-            <Sparkles className="w-3 h-3" />
-            Personalize
-            <ChevronRight className="w-3 h-3" />
+            Make your Child the Hero
+            <ChevronRight className="w-3.5 h-3.5" />
           </Link>
 
           {/* Show/hide text toggle */}
@@ -276,25 +273,35 @@ export function StoryPreviewViewer({
         </div>
       )}
 
-      {/* ── Navigation Arrows ── */}
-      {currentPage > 0 && (
-        <button
-          onClick={goPrev}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
-          aria-label="Previous"
-        >
-          <ChevronLeft className="w-5 h-5 text-white" />
-        </button>
-      )}
-      {currentPage < totalPages - 1 && (
-        <button
-          onClick={goNext}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
-          aria-label="Next"
-        >
-          <ChevronRight className="w-5 h-5 text-white" />
-        </button>
-      )}
+      {/* ── Bottom navigation row: arrows flank the swipe-helper text on the cover.
+            Positioned near the bottom of the viewer so they don't overlap centered text. ── */}
+      <div className="absolute bottom-6 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
+        {currentPage > 0 ? (
+          <button
+            onClick={goPrev}
+            className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+            aria-label="Previous"
+          >
+            <ChevronLeft className="w-5 h-5 text-white" />
+          </button>
+        ) : (
+          <span className="w-9 h-9" aria-hidden="true" />
+        )}
+        {isCover && (
+          <p className="pointer-events-none text-white/60 text-xs">Swipe or click → to read</p>
+        )}
+        {currentPage < totalPages - 1 ? (
+          <button
+            onClick={goNext}
+            className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+            aria-label="Next"
+          >
+            <ChevronRight className="w-5 h-5 text-white" />
+          </button>
+        ) : (
+          <span className="w-9 h-9" aria-hidden="true" />
+        )}
+      </div>
 
       {/* ── Page Dots ── */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30 flex gap-1 py-1">

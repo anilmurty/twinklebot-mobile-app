@@ -4,8 +4,7 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { getStorageUrl } from "@/lib/supabase/storage"
-import { getDisplayCategory, STORY_CATEGORIES, getTagline } from "@/lib/story-constants"
-import { ChevronRight, Sparkles, ArrowLeft } from "lucide-react"
+import { ChevronRight, Sparkles } from "lucide-react"
 import { StoryPreviewViewer } from "@/components/story-preview-viewer"
 import { TrackedLink } from "@/components/TrackedLink"
 
@@ -103,10 +102,6 @@ export default async function StoryPage({ params }: Props) {
   const isComingSoon = !scenes || !Array.isArray(scenes) || scenes.length === 0
   const previewScenes = isComingSoon ? null : deriveScenes(template)
   const previewCharacterName = template.mock_story_data?.character_name || "Alex"
-  const catId = getDisplayCategory(template.title, template.category)
-  const catLabel =
-    STORY_CATEGORIES.find((c) => c.id === catId)?.label || template.category
-  const tagline = getTagline(template.title)
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -146,26 +141,9 @@ export default async function StoryPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 pb-24">
-        {/* Compact heading: tags + title (no big cover image) */}
-        <div className="mb-3 sm:mb-4">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <span className="text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-              {catLabel}
-            </span>
-            <span className="text-[11px] text-muted-foreground">Ages {template.age_range}</span>
-            <span className="text-[11px] text-muted-foreground">{template.scene_count} pages</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-              {tagline.verb} {tagline.subject}
-            </span>
-          </div>
-          <h1
-            className="text-2xl sm:text-3xl font-bold leading-tight"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {template.title}
-          </h1>
-        </div>
+      <main className="max-w-3xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6">
+        {/* SEO: keep H1 in DOM but visually hidden — title is shown inside the viewer's cover slide. */}
+        <h1 className="sr-only">{template.title}</h1>
 
         {isComingSoon ? (
           // Coming soon: no viewer — show cover image and signup CTA
@@ -223,23 +201,6 @@ export default async function StoryPage({ params }: Props) {
           </section>
         )}
       </main>
-
-      {/* Sticky bottom CTA — only for ready stories. Always visible at viewport bottom. */}
-      {!isComingSoon && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-3 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.25)]">
-          <div className="max-w-3xl mx-auto">
-            <TrackedLink
-              href={`/app?intent=personalize&story=${template.slug}`}
-              trackParams={{ location: "story_detail_sticky_bar", label: "Personalize with your child", story_slug: template.slug, intent: "personalize" }}
-              className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 h-12 text-base shadow-lg shadow-primary/30 transition-colors"
-            >
-              <Sparkles className="w-5 h-5" />
-              Personalize with your child
-              <ChevronRight className="w-5 h-5" />
-            </TrackedLink>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
