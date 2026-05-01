@@ -4,6 +4,7 @@ import Link from "next/link"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { getStorageUrl } from "@/lib/supabase/storage"
 import { STORY_CATEGORIES, getDisplayCategory } from "@/lib/story-constants"
+import { TrackedLink } from "@/components/TrackedLink"
 
 // This page fetches from DB at request time — cannot be statically rendered
 export const dynamic = "force-dynamic"
@@ -102,12 +103,13 @@ export default async function StoriesPage() {
                 Stories
               </Link>
             </nav>
-            <Link
+            <TrackedLink
               href="/app"
+              trackParams={{ location: "stories_list_header", label: "Login" }}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
             >
               Login
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </header>
@@ -147,9 +149,10 @@ export default async function StoriesPage() {
                   const imgUrl = getThumbnailUrl(t.thumbnail_url)
                   const complete = isComplete(t)
                   return (
-                    <Link
+                    <TrackedLink
                       key={t.id}
                       href={`/stories/${t.slug}`}
+                      trackParams={{ location: "stories_list_tile", label: t.title, story_slug: t.slug }}
                       className="group block rounded-xl overflow-hidden bg-card border border-border hover:border-primary/40 transition-all hover:scale-[1.02]"
                     >
                       <div className="relative aspect-square">
@@ -182,7 +185,7 @@ export default async function StoriesPage() {
                           </span>
                         </div>
                       </div>
-                    </Link>
+                    </TrackedLink>
                   )
                 })}
               </div>

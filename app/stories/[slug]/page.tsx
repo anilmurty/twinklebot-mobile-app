@@ -7,6 +7,7 @@ import { getStorageUrl } from "@/lib/supabase/storage"
 import { getDisplayCategory, STORY_CATEGORIES, getTagline } from "@/lib/story-constants"
 import { ChevronRight, Sparkles, ArrowLeft } from "lucide-react"
 import { StoryPreviewViewer } from "@/components/story-preview-viewer"
+import { TrackedLink } from "@/components/TrackedLink"
 
 export const dynamic = "force-dynamic"
 
@@ -134,12 +135,13 @@ export default async function StoryPage({ params }: Props) {
                 Stories
               </Link>
             </nav>
-            <Link
+            <TrackedLink
               href="/app"
+              trackParams={{ location: "story_detail_header", label: "Login", story_slug: slug }}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
             >
               Login
-            </Link>
+            </TrackedLink>
           </div>
         </div>
       </header>
@@ -208,13 +210,14 @@ export default async function StoryPage({ params }: Props) {
             {isComingSoon ? (
               <ComingSoonCTA title={template.title} slug={template.slug} />
             ) : (
-              <Link
+              <TrackedLink
                 href={`/app?intent=personalize&story=${template.slug}`}
+                trackParams={{ location: "story_detail_hero", label: "Personalize with your child", story_slug: template.slug, intent: "personalize" }}
                 className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-8 h-12 text-base shadow-lg shadow-primary/30 transition-colors w-full sm:w-auto"
               >
                 Personalize with your child
                 <ChevronRight className="w-5 h-5" />
-              </Link>
+              </TrackedLink>
             )}
           </div>
         </div>
@@ -247,19 +250,21 @@ export default async function StoryPage({ params }: Props) {
 
             {/* CTAs after viewer */}
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
+              <TrackedLink
                 href={`/app?intent=personalize&story=${template.slug}`}
+                trackParams={{ location: "story_detail_footer", label: "Personalize with your child", story_slug: template.slug, intent: "personalize" }}
                 className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-8 h-12 text-base shadow-lg shadow-primary/30 transition-colors"
               >
                 Personalize with your child
                 <ChevronRight className="w-5 h-5" />
-              </Link>
-              <Link
+              </TrackedLink>
+              <TrackedLink
                 href="/stories"
+                trackParams={{ location: "story_detail_footer", label: "Browse all stories", story_slug: template.slug }}
                 className="inline-flex items-center justify-center gap-2 border border-border hover:bg-muted text-foreground font-medium rounded-full px-8 h-12 text-base transition-colors"
               >
                 Browse all stories
-              </Link>
+              </TrackedLink>
             </div>
           </section>
         )}
@@ -289,13 +294,14 @@ function ComingSoonCTA({
         While you wait, you can personalize any of our 16 ready stories with
         your child as the hero — your free first story is waiting.
       </p>
-      <Link
+      <TrackedLink
         href={`/app?intent=notify&story=${slug}`}
+        trackParams={{ location: "story_detail_coming_soon", label: "Sign up free", story_slug: slug, intent: "notify" }}
         className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-8 h-12 text-base shadow-lg shadow-primary/30 transition-colors w-full sm:w-auto"
       >
         Sign up free
         <ChevronRight className="w-5 h-5" />
-      </Link>
+      </TrackedLink>
       <div className="mt-4 space-y-1.5 text-sm text-muted-foreground">
         <p>✓ First personalized story free</p>
         <p>✓ No credit card</p>
