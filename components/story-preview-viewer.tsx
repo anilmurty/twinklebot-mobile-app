@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Sparkles, BookOpen } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { trackEvent } from "@/lib/utils/analytics"
 
@@ -258,10 +258,10 @@ export function StoryPreviewViewer({
             <Link
               href={personalizeUrl}
               onClick={() => trackCtaClick("story_detail_end_card")}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
             >
-              <BookOpen className="w-4 h-4" />
-              Personalize with your child
+              Send YOUR child on this adventure
+              <ChevronRight className="w-4 h-4" />
             </Link>
             <button
               onClick={() => setCurrentPage(0)}
@@ -290,8 +290,9 @@ export function StoryPreviewViewer({
           )}
         </div>
       ) : (
-        // Scenes / end: arrows pinned at the left/right edges.
-        <div className="absolute bottom-10 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
+        // Scenes / end: arrows pinned at the left/right edges, vertically centered
+        // so they sit above the bottom text overlay instead of on top of the script.
+        <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
           {currentPage > 0 ? (
             <button
               onClick={goPrev}
