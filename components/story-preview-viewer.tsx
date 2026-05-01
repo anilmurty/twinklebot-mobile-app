@@ -273,35 +273,48 @@ export function StoryPreviewViewer({
         </div>
       )}
 
-      {/* ── Bottom navigation row: arrows flank the swipe-helper text on the cover.
-            Positioned near the bottom of the viewer so they don't overlap centered text. ── */}
-      <div className="absolute bottom-6 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
-        {currentPage > 0 ? (
-          <button
-            onClick={goPrev}
-            className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
-            aria-label="Previous"
-          >
-            <ChevronLeft className="w-5 h-5 text-white" />
-          </button>
-        ) : (
-          <span className="w-9 h-9" aria-hidden="true" />
-        )}
-        {isCover && (
-          <p className="pointer-events-none text-white/60 text-xs">Swipe or click → to read</p>
-        )}
-        {currentPage < totalPages - 1 ? (
-          <button
-            onClick={goNext}
-            className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
-            aria-label="Next"
-          >
-            <ChevronRight className="w-5 h-5 text-white" />
-          </button>
-        ) : (
-          <span className="w-9 h-9" aria-hidden="true" />
-        )}
-      </div>
+      {/* ── Bottom navigation row ── */}
+      {isCover ? (
+        // Cover: arrows hug the swipe-helper text in the center.
+        <div className="absolute bottom-10 left-0 right-0 z-20 flex items-center justify-center gap-3">
+          <p className="text-white/60 text-xs">Swipe or click to read</p>
+          {currentPage < totalPages - 1 && (
+            <button
+              onClick={goNext}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-5 h-5 text-white" />
+            </button>
+          )}
+        </div>
+      ) : (
+        // Scenes / end: arrows pinned at the left/right edges.
+        <div className="absolute bottom-10 left-0 right-0 z-20 flex items-center justify-between px-3 pointer-events-none">
+          {currentPage > 0 ? (
+            <button
+              onClick={goPrev}
+              className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+              aria-label="Previous"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+          ) : (
+            <span className="w-9 h-9" aria-hidden="true" />
+          )}
+          {currentPage < totalPages - 1 ? (
+            <button
+              onClick={goNext}
+              className="pointer-events-auto w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+              aria-label="Next"
+            >
+              <ChevronRight className="w-5 h-5 text-white" />
+            </button>
+          ) : (
+            <span className="w-9 h-9" aria-hidden="true" />
+          )}
+        </div>
+      )}
 
       {/* ── Page Dots ── */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30 flex gap-1 py-1">
