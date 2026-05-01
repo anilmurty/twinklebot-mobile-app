@@ -146,18 +146,37 @@ export default async function StoryPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Hero section */}
-        <div className="flex flex-col md:flex-row gap-8 mb-10">
-          {/* Cover image */}
-          <div className="w-full md:w-80 shrink-0">
-            <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
+      <main className="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 pb-24">
+        {/* Compact heading: tags + title (no big cover image) */}
+        <div className="mb-3 sm:mb-4">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+              {catLabel}
+            </span>
+            <span className="text-[11px] text-muted-foreground">Ages {template.age_range}</span>
+            <span className="text-[11px] text-muted-foreground">{template.scene_count} pages</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+              {tagline.verb} {tagline.subject}
+            </span>
+          </div>
+          <h1
+            className="text-2xl sm:text-3xl font-bold leading-tight"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {template.title}
+          </h1>
+        </div>
+
+        {isComingSoon ? (
+          // Coming soon: no viewer — show cover image and signup CTA
+          <div className="flex flex-col gap-6">
+            <div className="relative aspect-square w-full max-w-sm mx-auto rounded-2xl overflow-hidden bg-muted">
               {coverUrl ? (
                 <Image
                   src={coverUrl}
                   alt={template.title}
                   fill
-                  sizes="(max-width: 768px) 100vw, 320px"
+                  sizes="(max-width: 768px) 100vw, 384px"
                   className="object-cover"
                   priority
                 />
@@ -166,74 +185,17 @@ export default async function StoryPage({ params }: Props) {
                   No image
                 </div>
               )}
-              {isComingSoon && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-10">
-                  <span className="text-sm font-semibold text-yellow-400 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" />
-                    Coming soon
-                  </span>
-                </div>
-              )}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-10">
+                <span className="text-sm font-semibold text-yellow-400 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4" />
+                  Coming soon
+                </span>
+              </div>
             </div>
+            <ComingSoonCTA title={template.title} slug={template.slug} />
           </div>
-
-          {/* Info */}
-          <div className="flex-1 flex flex-col justify-center">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className="text-xs font-medium bg-primary/10 text-primary px-2.5 py-1 rounded-full">
-                {catLabel}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                Ages {template.age_range}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {template.scene_count} pages
-              </span>
-            </div>
-
-            <h1
-              className="text-3xl sm:text-4xl font-bold mb-3"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              {template.title}
-            </h1>
-
-            <p className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-4">
-              {tagline.verb} {tagline.subject}
-            </p>
-
-            <p className="text-muted-foreground text-base leading-relaxed mb-6">
-              {template.description}
-            </p>
-
-            {/* CTA */}
-            {isComingSoon ? (
-              <ComingSoonCTA title={template.title} slug={template.slug} />
-            ) : (
-              <TrackedLink
-                href={`/app?intent=personalize&story=${template.slug}`}
-                trackParams={{ location: "story_detail_hero", label: "Personalize with your child", story_slug: template.slug, intent: "personalize" }}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-8 h-12 text-base shadow-lg shadow-primary/30 transition-colors w-full sm:w-auto"
-              >
-                Personalize with your child
-                <ChevronRight className="w-5 h-5" />
-              </TrackedLink>
-            )}
-          </div>
-        </div>
-
-        {/* Story Preview Viewer for complete stories */}
-        {previewScenes && previewScenes.length > 0 && (
-          <section className="mb-12">
-            <h2
-              className="text-xl font-bold mb-2"
-              style={{ fontFamily: "var(--font-display)" }}
-            >
-              Story Preview
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">
-              The personalized storybook will feature your child in place of the model and your child&apos;s name in the text, in a full-screen viewer with audio narration.
-            </p>
+        ) : (
+          previewScenes && previewScenes.length > 0 && (
             <StoryPreviewViewer
               title={template.title}
               characterName={previewCharacterName}
@@ -246,29 +208,38 @@ export default async function StoryPage({ params }: Props) {
               }))}
               coverImageUrl={coverUrl}
               personalizeUrl={`/app?intent=personalize&story=${template.slug}`}
+              storySlug={template.slug}
             />
+          )
+        )}
 
-            {/* CTAs after viewer */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <TrackedLink
-                href={`/app?intent=personalize&story=${template.slug}`}
-                trackParams={{ location: "story_detail_footer", label: "Personalize with your child", story_slug: template.slug, intent: "personalize" }}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-8 h-12 text-base shadow-lg shadow-primary/30 transition-colors"
-              >
-                Personalize with your child
-                <ChevronRight className="w-5 h-5" />
-              </TrackedLink>
-              <TrackedLink
-                href="/stories"
-                trackParams={{ location: "story_detail_footer", label: "Browse all stories", story_slug: template.slug }}
-                className="inline-flex items-center justify-center gap-2 border border-border hover:bg-muted text-foreground font-medium rounded-full px-8 h-12 text-base transition-colors"
-              >
-                Browse all stories
-              </TrackedLink>
-            </div>
+        {/* Description below viewer — kept for SEO, visually de-emphasized */}
+        {!isComingSoon && (
+          <section className="mt-8 max-w-2xl">
+            <h2 className="sr-only">About this story</h2>
+            <p className="text-sm text-muted-foreground/70 leading-relaxed">
+              {template.description}
+            </p>
           </section>
         )}
       </main>
+
+      {/* Sticky bottom CTA — only for ready stories. Always visible at viewport bottom. */}
+      {!isComingSoon && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-3 py-2 shadow-[0_-4px_20px_rgba(0,0,0,0.25)]">
+          <div className="max-w-3xl mx-auto">
+            <TrackedLink
+              href={`/app?intent=personalize&story=${template.slug}`}
+              trackParams={{ location: "story_detail_sticky_bar", label: "Personalize with your child", story_slug: template.slug, intent: "personalize" }}
+              className="flex items-center justify-center gap-2 w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 h-12 text-base shadow-lg shadow-primary/30 transition-colors"
+            >
+              <Sparkles className="w-5 h-5" />
+              Personalize with your child
+              <ChevronRight className="w-5 h-5" />
+            </TrackedLink>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

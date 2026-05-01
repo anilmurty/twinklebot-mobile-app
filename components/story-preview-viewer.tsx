@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Sparkles, BookOpen } from "lucide-react"
 import Link from "next/link"
+import { trackEvent } from "@/lib/utils/analytics"
 
 interface Scene {
   scene_number: number
@@ -18,6 +19,7 @@ interface StoryPreviewViewerProps {
   scenes: Scene[]
   coverImageUrl: string | null
   personalizeUrl: string
+  storySlug?: string
 }
 
 export function StoryPreviewViewer({
@@ -27,6 +29,7 @@ export function StoryPreviewViewer({
   scenes,
   coverImageUrl,
   personalizeUrl,
+  storySlug,
 }: StoryPreviewViewerProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [textExpanded, setTextExpanded] = useState(false)
@@ -96,6 +99,16 @@ export function StoryPreviewViewer({
 
   const coverImg = coverImageUrl || scenes[0]?.image_url || null
 
+  const trackCtaClick = (location: string, extra?: Record<string, string | number | boolean | undefined>) => {
+    trackEvent("cta_click", {
+      location,
+      label: "Personalize with your child",
+      story_slug: storySlug,
+      intent: "personalize",
+      ...extra,
+    })
+  }
+
   return (
     <div
       className="relative w-full rounded-2xl overflow-hidden bg-black select-none border border-border"
@@ -122,6 +135,14 @@ export function StoryPreviewViewer({
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
             <p className="text-white/70 text-sm font-serif italic">{description}</p>
+            <Link
+              href={personalizeUrl}
+              onClick={() => trackCtaClick("story_detail_cover_overlay")}
+              className="mt-5 inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
+            >
+              <Sparkles className="w-4 h-4" />
+              Make this YOUR child&apos;s story
+            </Link>
             <p className="text-white/50 text-xs mt-4">Swipe or click → to read</p>
           </div>
         </div>
@@ -190,6 +211,18 @@ export function StoryPreviewViewer({
             </div>
           )}
 
+          {/* Per-scene Personalize pill — small, semi-transparent, bottom-right above the
+              show/hide toolbar. Doesn't conflict with the headline's scene counter (top-right). */}
+          <Link
+            href={personalizeUrl}
+            onClick={() => trackCtaClick("story_detail_scene_pill", { scene_number: scene.scene_number })}
+            className="absolute bottom-12 right-2 z-20 inline-flex items-center gap-1 bg-primary/80 hover:bg-primary text-primary-foreground rounded-full pl-3 pr-2 py-1 text-[11px] font-semibold shadow-md backdrop-blur-sm"
+          >
+            <Sparkles className="w-3 h-3" />
+            Personalize
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+
           {/* Show/hide text toggle */}
           {scene.script_text && (
             <div className="absolute bottom-0 left-0 right-0 z-10 bg-black/80 px-4 py-1.5 flex justify-between items-center">
@@ -227,6 +260,7 @@ export function StoryPreviewViewer({
             </div>
             <Link
               href={personalizeUrl}
+              onClick={() => trackCtaClick("story_detail_end_card")}
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg"
             >
               <BookOpen className="w-4 h-4" />
