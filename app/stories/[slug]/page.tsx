@@ -105,8 +105,8 @@ export default async function StoryPage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card/70 backdrop-blur-md border-b border-border">
+      {/* Header — hidden on mobile to give the viewer the full viewport. */}
+      <header className="hidden sm:block sticky top-0 z-50 bg-card/70 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
             <Link href="/" className="flex items-center">
@@ -141,7 +141,13 @@ export default async function StoryPage({ params }: Props) {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-2 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6">
+      <main
+        className={
+          isComingSoon
+            ? "max-w-3xl mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-6"
+            : "max-w-3xl mx-auto sm:px-6 lg:px-8 sm:pt-4 sm:pb-6"
+        }
+      >
         {/* SEO: keep H1 in DOM but visually hidden — title is shown inside the viewer's cover slide. */}
         <h1 className="sr-only">{template.title}</h1>
 

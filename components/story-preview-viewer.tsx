@@ -111,7 +111,7 @@ export function StoryPreviewViewer({
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden bg-black select-none border border-border h-[calc(100svh-5rem)] sm:h-auto sm:aspect-[3/4]"
+      className="relative w-full overflow-hidden bg-black select-none h-svh sm:h-auto sm:aspect-[3/4] sm:rounded-2xl sm:border sm:border-border"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
