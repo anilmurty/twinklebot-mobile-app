@@ -7,6 +7,7 @@ import { getStorageUrl } from "@/lib/supabase/storage"
 import { ChevronRight, Sparkles } from "lucide-react"
 import { StoryPreviewViewer } from "@/components/story-preview-viewer"
 import { TrackedLink } from "@/components/TrackedLink"
+import { StoryPageViewedTracker } from "@/components/StoryPageViewedTracker"
 
 export const dynamic = "force-dynamic"
 
@@ -150,6 +151,7 @@ export default async function StoryPage({ params }: Props) {
       >
         {/* SEO: keep H1 in DOM but visually hidden — title is shown inside the viewer's cover slide. */}
         <h1 className="sr-only">{template.title}</h1>
+        <StoryPageViewedTracker storySlug={template.slug} />
 
         {isComingSoon ? (
           // Coming soon: no viewer — show cover image and signup CTA
