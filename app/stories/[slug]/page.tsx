@@ -191,15 +191,6 @@ export default async function StoryPage({ params }: Props) {
           )
         )}
 
-        {/* Description below viewer — kept for SEO, visually de-emphasized */}
-        {!isComingSoon && (
-          <section className="mt-8 max-w-2xl">
-            <h2 className="sr-only">About this story</h2>
-            <p className="text-sm text-muted-foreground/70 leading-relaxed">
-              {template.description}
-            </p>
-          </section>
-        )}
       </main>
     </div>
   )
