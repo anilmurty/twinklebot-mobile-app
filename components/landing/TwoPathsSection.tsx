@@ -36,7 +36,7 @@ export function TwoPathsSection() {
             <Link
               href="/stories"
               onClick={() =>
-                trackEvent("cta_click", { location: "two_paths", label: "Browse the library" })
+                trackEvent("cta_click", { location: "two_paths", label: "Browse the library", intent: "browse" })
               }
               className="inline-block"
             >
@@ -68,7 +68,7 @@ export function TwoPathsSection() {
             <a
               href="/app"
               onClick={() =>
-                trackEvent("cta_click", { location: "two_paths", label: "Get started" })
+                trackEvent("cta_click", { location: "two_paths", label: "Get started", intent: "personalize" })
               }
               className="inline-block"
             >

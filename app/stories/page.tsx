@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server"
 import { getStorageUrl } from "@/lib/supabase/storage"
 import { STORY_CATEGORIES, getDisplayCategory } from "@/lib/story-constants"
 import { TrackedLink } from "@/components/TrackedLink"
+import { TrackedStoryTile } from "@/components/TrackedStoryTile"
 
 // This page fetches from DB at request time — cannot be statically rendered
 export const dynamic = "force-dynamic"
@@ -105,7 +106,7 @@ export default async function StoriesPage() {
             </nav>
             <TrackedLink
               href="/app"
-              trackParams={{ location: "stories_list_header", label: "Login" }}
+              trackParams={{ location: "stories_list_header", label: "Login", intent: "personalize" }}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
             >
               Login
@@ -149,10 +150,13 @@ export default async function StoriesPage() {
                   const imgUrl = getThumbnailUrl(t.thumbnail_url)
                   const complete = isComplete(t)
                   return (
-                    <TrackedLink
+                    <TrackedStoryTile
                       key={t.id}
                       href={`/stories/${t.slug}`}
-                      trackParams={{ location: "stories_list_tile", label: t.title, story_slug: t.slug }}
+                      storySlug={t.slug}
+                      storyTitle={t.title}
+                      visibleLocation="stories_grid"
+                      clickLocation="stories_list_tile"
                       className="group block rounded-xl overflow-hidden bg-card border border-border hover:border-primary/40 transition-all hover:scale-[1.02]"
                     >
                       <div className="relative aspect-square">
@@ -185,7 +189,7 @@ export default async function StoriesPage() {
                           </span>
                         </div>
                       </div>
-                    </TrackedLink>
+                    </TrackedStoryTile>
                   )
                 })}
               </div>

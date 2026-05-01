@@ -137,7 +137,7 @@ export default async function StoryPage({ params }: Props) {
             </nav>
             <TrackedLink
               href="/app"
-              trackParams={{ location: "story_detail_header", label: "Login", story_slug: slug }}
+              trackParams={{ location: "story_detail_header", label: "Login", story_slug: slug, intent: "personalize" }}
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25 px-6 py-2 rounded-md text-sm"
             >
               Login

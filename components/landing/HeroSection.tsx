@@ -18,12 +18,12 @@ const SAMPLE_PAIRS = [
 ]
 
 function handlePrimary(location: string) {
-  trackEvent("cta_click", { location, label: "Get Started Free" })
+  trackEvent("cta_click", { location, label: "Get Started Free", intent: "personalize" })
   window.location.href = "/app"
 }
 
 function handleSecondary(location: string) {
-  trackEvent("cta_click", { location, label: "Browse Free Stories" })
+  trackEvent("cta_click", { location, label: "Browse Free Stories", intent: "browse" })
 }
 
 /**

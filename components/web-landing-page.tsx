@@ -18,6 +18,7 @@ import { STORY_CATEGORIES, type StoryCategoryId, getTagline } from "@/lib/story-
 import { FeatureShowcase } from "@/components/landing/FeatureShowcase"
 import { HeroSection } from "@/components/landing/HeroSection"
 import { TwoPathsSection } from "@/components/landing/TwoPathsSection"
+import { TrackedStoryTile } from "@/components/TrackedStoryTile"
 import { PricingSection } from "@/components/PricingSection"
 import { trackEvent } from "@/lib/utils/analytics"
 
@@ -43,7 +44,7 @@ export function WebLandingPage() {
   const [showContact, setShowContact] = useState(false)
 
   const handleCta = (location: string) => {
-    trackEvent("cta_click", { location, label: "Get Started" })
+    trackEvent("cta_click", { location, label: "Get Started", intent: "personalize" })
     window.location.href = "/app"
   }
 
@@ -264,15 +265,13 @@ export function WebLandingPage() {
                         const tagline = getTagline(story.title)
                         const slug = titleToSlug(story.title)
                         return (
-                          <Link
+                          <TrackedStoryTile
                             key={i}
                             href={`/stories/${slug}`}
-                            onClick={() =>
-                              trackEvent("cta_click", {
-                                location: "stories_carousel",
-                                label: story.title,
-                              })
-                            }
+                            storySlug={slug}
+                            storyTitle={story.title}
+                            visibleLocation="homepage_carousel"
+                            clickLocation="stories_carousel"
                             className="group/card relative rounded-3xl overflow-hidden shadow-lg border border-border/50 flex-shrink-0 w-[280px] sm:w-[320px] block transition-transform hover:scale-[1.02]"
                           >
                             <div className="aspect-[4/3] relative">
@@ -298,7 +297,7 @@ export function WebLandingPage() {
                               <p className="text-white/80 text-sm mb-2">{story.description}</p>
                               <p className="text-white/60 text-xs">Ages {story.age} · {story.scenes} pages</p>
                             </div>
-                          </Link>
+                          </TrackedStoryTile>
                         )
                       })}
                     </div>
