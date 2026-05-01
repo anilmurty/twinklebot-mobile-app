@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { Lock } from "lucide-react"
@@ -207,9 +208,13 @@ export function LandingPage() {
   return (
     <div className="relative min-h-screen flex flex-col">
       {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url(/zoo-entrance-background.jpeg)" }}
+      <Image
+        src="/zoo-entrance-background.jpeg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center -z-10"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 

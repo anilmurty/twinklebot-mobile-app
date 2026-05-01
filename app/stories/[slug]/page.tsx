@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import ReactDOM from "react-dom"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { getTransformedImageUrl } from "@/lib/supabase/storage"
 import { ChevronRight, Sparkles } from "lucide-react"
@@ -115,6 +116,16 @@ export default async function StoryPage({ params }: Props) {
   const isComingSoon = !scenes || !Array.isArray(scenes) || scenes.length === 0
   const previewScenes = isComingSoon ? null : deriveScenes(template)
   const previewCharacterName = template.mock_story_data?.character_name || "Alex"
+
+  // Start fetching the cover during HTML streaming, before JS hydrates.
+  if (coverUrl) {
+    ReactDOM.preload(coverUrl, { as: "image", fetchPriority: "high" })
+  }
+  // Warm the first scene image too — it's the next thing the user sees on swipe.
+  if (previewScenes?.[0]?.image_url) {
+    const firstSceneUrl = getSceneImageUrl(previewScenes[0].image_url)
+    ReactDOM.preload(firstSceneUrl, { as: "image" })
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
