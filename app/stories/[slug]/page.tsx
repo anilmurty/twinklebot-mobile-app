@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { supabaseAdmin } from "@/lib/supabase/server"
-import { getStorageUrl } from "@/lib/supabase/storage"
+import { getTransformedImageUrl } from "@/lib/supabase/storage"
 import { ChevronRight, Sparkles } from "lucide-react"
 import { StoryPreviewViewer } from "@/components/story-preview-viewer"
 import { TrackedLink } from "@/components/TrackedLink"
@@ -29,20 +29,32 @@ async function getTemplate(slug: string) {
   return data
 }
 
+// 1080w covers all phones at 2x DPI; quality 70 is visually indistinguishable
+// from the original PNG and ~10x smaller after Supabase's WebP conversion.
+const VIEWER_IMG_WIDTH = 1080
+const VIEWER_IMG_QUALITY = 70
+
 function getThumbnailUrl(thumbnailUrl: string | null): string | null {
   if (!thumbnailUrl) return null
   if (thumbnailUrl.startsWith("/") && !thumbnailUrl.startsWith("http")) {
-    return getStorageUrl("story-template-assets", thumbnailUrl.slice(1))
+    return getTransformedImageUrl("story-template-assets", thumbnailUrl.slice(1), {
+      width: VIEWER_IMG_WIDTH,
+      quality: VIEWER_IMG_QUALITY,
+    })
   }
   return thumbnailUrl
 }
 
 function getSceneImageUrl(imageUrl: string): string {
   if (imageUrl.startsWith("/") && !imageUrl.startsWith("http")) {
-    return getStorageUrl("story-template-assets", imageUrl.slice(1))
+    return getTransformedImageUrl("story-template-assets", imageUrl.slice(1), {
+      width: VIEWER_IMG_WIDTH,
+      quality: VIEWER_IMG_QUALITY,
+    })
   }
   return imageUrl
 }
+
 
 function deriveScenes(template: any): any[] | null {
   // Use mock_story_data if available

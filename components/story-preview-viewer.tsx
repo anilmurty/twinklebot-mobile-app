@@ -99,6 +99,23 @@ export function StoryPreviewViewer({
 
   const coverImg = coverImageUrl || scenes[0]?.image_url || null
 
+  // Warm the browser cache for cover + every scene image as soon as the viewer
+  // mounts, so swiping doesn't stall on slow networks (cellular, in-app
+  // browsers). Without this, each scene's <img> only starts loading after the
+  // previous scene unmounts — users see a blank gap during the swap.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const urls: string[] = []
+    if (coverImg) urls.push(coverImg)
+    scenes.forEach((s) => {
+      if (s.image_url) urls.push(s.image_url)
+    })
+    urls.forEach((src) => {
+      const img = new window.Image()
+      img.src = src
+    })
+  }, [coverImg, scenes])
+
   const trackCtaClick = (location: string, extra?: Record<string, string | number | boolean | undefined>) => {
     trackEvent("cta_click", {
       location,
@@ -120,7 +137,15 @@ export function StoryPreviewViewer({
       {isCover && (
         <div className="absolute inset-0 flex items-center justify-center">
           {coverImg && (
-            <img src={coverImg} alt="Cover" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+            <img
+              src={coverImg}
+              alt="Cover"
+              loading="eager"
+              decoding="async"
+              // @ts-expect-error fetchpriority is valid HTML, React 19 types lag behind
+              fetchpriority="high"
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
+            />
           )}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
           <div className="relative z-10 text-center px-6 max-w-lg">
@@ -153,6 +178,7 @@ export function StoryPreviewViewer({
             <img
               src={scene.image_url}
               alt={scene.headline || `Scene ${sceneIndex + 1}`}
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
