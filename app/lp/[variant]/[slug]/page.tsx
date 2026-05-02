@@ -7,7 +7,6 @@ import { ChevronRight } from "lucide-react"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { getTransformedImageUrl } from "@/lib/supabase/storage"
 import { StoryPreviewViewer } from "@/components/story-preview-viewer"
-import { LpPageViewedTracker } from "@/components/LpPageViewedTracker"
 import { StaticBeforeAfter } from "@/components/landing/StaticBeforeAfter"
 import { TrackedLink } from "@/components/TrackedLink"
 
@@ -202,6 +201,34 @@ export default async function LpPage({ params }: Props) {
   )
 }
 
+/**
+ * Inline tracker that fires lp_page_viewed during HTML parse, before
+ * React hydration. Captures fast bouncers (users who leave inside the
+ * 100-800ms hydration window) that a useEffect-based tracker would miss.
+ * Also dedupes naturally — runs exactly once per page load.
+ */
+function LpPageViewedInlineScript({
+  variant,
+  slug,
+}: {
+  variant: string
+  slug: string
+}) {
+  const payload = JSON.stringify({ lp_variant: variant, story_slug: slug })
+  return (
+    <script
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{
+        __html: `
+          window.dataLayer = window.dataLayer || [];
+          window.gtag = window.gtag || function(){dataLayer.push(arguments);};
+          window.gtag('event', 'lp_page_viewed', ${payload});
+        `,
+      }}
+    />
+  )
+}
+
 function LpShell({
   children,
   variant,
@@ -213,7 +240,7 @@ function LpShell({
 }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LpPageViewedTracker variant={variant} storySlug={slug} />
+      <LpPageViewedInlineScript variant={variant} slug={slug} />
       <main className="max-w-3xl mx-auto sm:px-6 lg:px-8 sm:pt-4 sm:pb-6">{children}</main>
     </div>
   )
