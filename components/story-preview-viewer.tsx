@@ -345,12 +345,12 @@ export function StoryPreviewViewer({
               aria-hidden="true"
             />
           )}
-          {/* Top-fade keeps the upper half of the scene visible; bottom
-              fades to black under the signup card. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/95" />
-          {/* Signup card pinned to the bottom, like a paywall over the scene. */}
-          <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-8 pt-6">
-            <div className="max-w-md mx-auto text-center backdrop-blur-md bg-black/40 border border-white/10 rounded-2xl px-5 py-5">
+          {/* Soft radial vignette darkens behind the centered card without
+              hiding the scene art. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
+          {/* Signup card centered over the scene. */}
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-5">
+            <div className="max-w-md w-full text-center backdrop-blur-md bg-black/50 border border-white/10 rounded-2xl px-5 py-5">
               <Sparkles className="w-6 h-6 text-primary mx-auto mb-2" />
               <h2 className="text-xl md:text-2xl font-bold text-white font-serif mb-2 drop-shadow-lg">
                 {wallSlide.headline}
@@ -364,9 +364,6 @@ export function StoryPreviewViewer({
                 {wallSlide.ctaText}
                 <ChevronRight className="w-5 h-5" />
               </Link>
-              {wallSlide.ctaSubtext && (
-                <p className="text-white/60 text-xs mt-2.5">{wallSlide.ctaSubtext}</p>
-              )}
             </div>
           </div>
         </div>

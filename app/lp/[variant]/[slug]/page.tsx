@@ -181,7 +181,6 @@ export default async function LpPage({ params }: Props) {
           subtitle: "Continue reading + put your child in every scene",
           ctaText: "Make my child the hero — Free",
           ctaHref: personalizeUrl,
-          ctaSubtext: "First story free. No credit card.",
           backgroundImageUrl: wallBgUrl,
         }}
         extraEventParams={{ lp_variant: "v2" }}
