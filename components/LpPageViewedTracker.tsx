@@ -1,14 +1,15 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect } from "react"
 import { trackEvent } from "@/lib/utils/analytics"
 
-/**
- * Fires lp_page_viewed exactly once per component instance.
- * The ref guard exists because the inline-script-pre-hydration approach
- * didn't fire reliably in production, and a plain useEffect was firing
- * twice (likely a React 19 / Next 16 hydration quirk).
- */
+// Module-scoped guard. A useRef-on-instance guard didn't survive whatever
+// is causing the LP page to remount mid-visit (likely a React 19 + Next 16
+// hydration / Suspense quirk). The TTL (30s) lets a legit re-entry from
+// /app fire again, while collapsing back-to-back duplicate fires.
+const FIRED = new Set<string>()
+const TTL_MS = 30_000
+
 export function LpPageViewedTracker({
   variant,
   slug,
@@ -16,10 +17,11 @@ export function LpPageViewedTracker({
   variant: string
   slug: string
 }) {
-  const fired = useRef(false)
   useEffect(() => {
-    if (fired.current) return
-    fired.current = true
+    const key = `${variant}:${slug}`
+    if (FIRED.has(key)) return
+    FIRED.add(key)
+    setTimeout(() => FIRED.delete(key), TTL_MS)
     trackEvent("lp_page_viewed", { lp_variant: variant, story_slug: slug })
   }, [variant, slug])
   return null
