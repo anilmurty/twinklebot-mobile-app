@@ -235,17 +235,6 @@ export function LandingPage() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
 
-      {/* Mobile-only intent banner — positioned between the "Welcome" sign
-          and the child's face in the background, so the kid's expression
-          stays visible. Desktop renders the banner inline in the card. */}
-      {intentBanner && (
-        <div className="absolute left-4 right-4 top-[33vh] z-20 sm:hidden">
-          <div className="max-w-md mx-auto p-2.5 bg-black/60 backdrop-blur-sm border border-primary/40 rounded-2xl">
-            <p className="text-sm text-white text-center">{intentBanner}</p>
-          </div>
-        </div>
-      )}
-
       {/* Content */}
       <div className="relative z-10 flex flex-col min-h-screen justify-end sm:justify-center items-center px-4 pb-10 sm:py-8">
 
@@ -253,11 +242,6 @@ export function LandingPage() {
         <div className="w-full max-w-md">
           <div className="p-5 w-full">
 
-            {intentBanner && (
-              <div className="hidden sm:block mb-3 p-2.5 bg-black/60 backdrop-blur-sm border border-primary/40 rounded-2xl">
-                <p className="text-sm text-white text-center">{intentBanner}</p>
-              </div>
-            )}
 
             {error && (
               <div className="mb-3 p-2.5 bg-red-500/90 rounded-2xl">
