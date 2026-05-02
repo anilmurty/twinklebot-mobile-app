@@ -273,14 +273,14 @@ function V3Static({
             href={personalizeUrl}
             trackParams={{
               location: "lp_v3_secondary",
-              label: "Make my child the hero",
+              label: "Read all 10 scenes of the story",
               story_slug: slug,
               intent: "signup",
               lp_variant: "v3",
             }}
             className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full px-8 h-14 text-lg shadow-xl shadow-primary/40 w-full sm:w-auto"
           >
-            Make my child the hero
+            Read all 10 scenes of the story
             <ChevronRight className="w-5 h-5" />
           </TrackedLink>
         </div>
@@ -289,12 +289,12 @@ function V3Static({
   )
 }
 
-function V3Triptych({ title, scenes }: { title: string; scenes: TriptychScene[] }) {
+function V3Triptych({ title: _title, scenes }: { title: string; scenes: TriptychScene[] }) {
   if (scenes.length === 0) return null
   return (
     <section className="mt-10">
       <h2 className="text-center text-sm font-semibold uppercase tracking-widest text-muted-foreground mb-4">
-        A peek at {title}
+        A peek inside the <span className="text-primary">10 scene</span> story
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {scenes.map((scene, i) => (
