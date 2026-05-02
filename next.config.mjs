@@ -37,12 +37,12 @@ const nextConfig = {
         destination: 'https://www.googletagmanager.com/gtag/js?id=G-J60V4T7WKW',
       },
       {
-        source: '/_ga/collect',
-        destination: 'https://www.google-analytics.com/g/collect',
+        source: '/_ga/g/:path*',
+        destination: 'https://www.google-analytics.com/g/:path*',
       },
       {
-        source: '/_ga/j/collect',
-        destination: 'https://www.google-analytics.com/j/collect',
+        source: '/_ga/j/:path*',
+        destination: 'https://www.google-analytics.com/j/:path*',
       },
     ]
   },
