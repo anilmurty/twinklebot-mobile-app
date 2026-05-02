@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import ReactDOM from "react-dom"
-import { ChevronRight, Sparkles } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { supabaseAdmin } from "@/lib/supabase/server"
 import { getTransformedImageUrl } from "@/lib/supabase/storage"
 import { StoryPreviewViewer } from "@/components/story-preview-viewer"
@@ -175,6 +175,7 @@ export default async function LpPage({ params }: Props) {
         coverImageUrl={coverUrl}
         personalizeUrl={personalizeUrl}
         storySlug={slug}
+        hideCoverCta
         wallSlide={{
           headline: "Make this YOUR child's adventure",
           subtitle: "Continue reading + put your child in every scene",
@@ -264,7 +265,6 @@ function V3Static({
             Make my child the hero
             <ChevronRight className="w-5 h-5" />
           </TrackedLink>
-          <p className="text-sm text-muted-foreground">First story free. No credit card.</p>
         </div>
 
         <V3Triptych title={title} scenes={triptychScenes} />
@@ -284,10 +284,6 @@ function V3Static({
             Make my child the hero
             <ChevronRight className="w-5 h-5" />
           </TrackedLink>
-          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            Made by parents in Washington state
-          </p>
         </div>
       </main>
     </div>

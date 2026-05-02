@@ -332,34 +332,42 @@ export function StoryPreviewViewer({
 
       {/* ── End Page (or Wall slide for V2 LP variant) ── */}
       {isEnd && wallSlide && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0">
+          {/* The next scene shows fully behind a partial dark overlay so
+              the user feels they're being shown what they're missing,
+              not blocked by an opaque wall. */}
           {wallSlide.backgroundImageUrl && (
             <img
               src={wallSlide.backgroundImageUrl}
               alt=""
               decoding="async"
-              className="absolute inset-0 w-full h-full object-cover opacity-30"
+              className="absolute inset-0 w-full h-full object-cover"
               aria-hidden="true"
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black" />
-          <div className="relative z-10 text-center px-6 max-w-lg">
-            <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-            <h2 className="text-2xl md:text-3xl font-bold text-white font-serif mb-3 drop-shadow-lg">
-              {wallSlide.headline}
-            </h2>
-            <p className="text-white/80 text-base mb-6">{wallSlide.subtitle}</p>
-            <Link
-              href={wallSlide.ctaHref}
-              onClick={() => trackCtaClick("lp_wall_cta")}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full px-8 py-3.5 text-base shadow-xl shadow-primary/40"
-            >
-              {wallSlide.ctaText}
-              <ChevronRight className="w-5 h-5" />
-            </Link>
-            {wallSlide.ctaSubtext && (
-              <p className="text-white/60 text-xs mt-3">{wallSlide.ctaSubtext}</p>
-            )}
+          {/* Top-fade keeps the upper half of the scene visible; bottom
+              fades to black under the signup card. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/95" />
+          {/* Signup card pinned to the bottom, like a paywall over the scene. */}
+          <div className="absolute inset-x-0 bottom-0 z-10 px-5 pb-8 pt-6">
+            <div className="max-w-md mx-auto text-center backdrop-blur-md bg-black/40 border border-white/10 rounded-2xl px-5 py-5">
+              <Sparkles className="w-6 h-6 text-primary mx-auto mb-2" />
+              <h2 className="text-xl md:text-2xl font-bold text-white font-serif mb-2 drop-shadow-lg">
+                {wallSlide.headline}
+              </h2>
+              <p className="text-white/80 text-sm mb-4">{wallSlide.subtitle}</p>
+              <Link
+                href={wallSlide.ctaHref}
+                onClick={() => trackCtaClick("lp_wall_cta")}
+                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full px-6 py-3 text-base shadow-xl shadow-primary/40 w-full"
+              >
+                {wallSlide.ctaText}
+                <ChevronRight className="w-5 h-5" />
+              </Link>
+              {wallSlide.ctaSubtext && (
+                <p className="text-white/60 text-xs mt-2.5">{wallSlide.ctaSubtext}</p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -400,18 +408,22 @@ export function StoryPreviewViewer({
       {isCover ? (
         // Cover: arrows hug the swipe-helper text in the center, positioned
         // midway between the CTA button and the bottom of the viewer.
-        <div className="absolute bottom-[28%] left-0 right-0 z-20 flex items-center justify-center gap-3">
-          <p className="text-white/60 text-xs">Swipe or click to read</p>
-          {currentPage < totalPages - 1 && (
-            <button
-              onClick={goNext}
-              className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
-              aria-label="Next"
-            >
-              <ChevronRight className="w-5 h-5 text-primary" />
-            </button>
-          )}
-        </div>
+        // Hidden on LP variants where the prominent "Swipe or tap" button
+        // is already the primary affordance.
+        !hideCoverCta && (
+          <div className="absolute bottom-[28%] left-0 right-0 z-20 flex items-center justify-center gap-3">
+            <p className="text-white/60 text-xs">Swipe or click to read</p>
+            {currentPage < totalPages - 1 && (
+              <button
+                onClick={goNext}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-sm transition-colors"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5 text-primary" />
+              </button>
+            )}
+          </div>
+        )
       ) : (
         // Scenes / end: arrows pinned at the left/right edges, vertically centered
         // so they sit above the bottom text overlay instead of on top of the script.
