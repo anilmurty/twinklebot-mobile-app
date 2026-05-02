@@ -200,7 +200,10 @@ export function LandingPage() {
           return
         }
         await signUpWithEmail(email, password)
-        alert("Account created! Please check your email to verify your account.")
+        // Email confirmation is disabled in Supabase, so the user is signed
+        // in immediately. Auth state change handler will navigate them
+        // forward — no confirmation alert needed (it added friction and
+        // misled users who could already use the app).
       } else {
         await signInWithEmail(email, password)
       }
