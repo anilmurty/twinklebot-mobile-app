@@ -12,6 +12,15 @@ interface Scene {
   image_url?: string
 }
 
+interface WallSlide {
+  headline: string
+  subtitle: string
+  ctaText: string
+  ctaHref: string
+  ctaSubtext?: string
+  backgroundImageUrl?: string | null
+}
+
 interface StoryPreviewViewerProps {
   title: string
   characterName: string
@@ -20,6 +29,10 @@ interface StoryPreviewViewerProps {
   coverImageUrl: string | null
   personalizeUrl: string
   storySlug?: string
+  // LP variant flags
+  hideCoverCta?: boolean
+  wallSlide?: WallSlide | null
+  ctaExtraParams?: Record<string, string | number | boolean | undefined>
 }
 
 export function StoryPreviewViewer({
@@ -30,6 +43,9 @@ export function StoryPreviewViewer({
   coverImageUrl,
   personalizeUrl,
   storySlug,
+  hideCoverCta = false,
+  wallSlide = null,
+  ctaExtraParams,
 }: StoryPreviewViewerProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [textExpanded, setTextExpanded] = useState(false)
@@ -155,6 +171,7 @@ export function StoryPreviewViewer({
       label: "Personalize with your child",
       story_slug: storySlug,
       intent: "personalize",
+      ...ctaExtraParams,
       ...extra,
     })
   }
@@ -193,14 +210,25 @@ export function StoryPreviewViewer({
               <span className="text-amber-500 font-bold">{characterName}</span>
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <Link
-              href={personalizeUrl}
-              onClick={() => trackCtaClick("story_detail_cover_overlay")}
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
-            >
-              Make this YOUR child&apos;s story
-              <ChevronRight className="w-4 h-4" />
-            </Link>
+            {hideCoverCta ? (
+              <button
+                onClick={goNext}
+                className="group inline-flex items-center gap-2 rounded-full px-6 py-3 text-base font-semibold text-yellow-300 bg-white/10 backdrop-blur-sm border border-yellow-300/40 shadow-lg shadow-yellow-300/10 animate-pulse"
+                aria-label="Read the story"
+              >
+                Swipe or tap to read
+                <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </button>
+            ) : (
+              <Link
+                href={personalizeUrl}
+                onClick={() => trackCtaClick("story_detail_cover_overlay")}
+                className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full px-6 py-2.5 text-sm shadow-lg shadow-primary/30"
+              >
+                Make this YOUR child&apos;s story
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            )}
           </div>
         </div>
       )}
@@ -300,8 +328,40 @@ export function StoryPreviewViewer({
         </div>
       )}
 
-      {/* ── End Page ── */}
-      {isEnd && (
+      {/* ── End Page (or Wall slide for V2 LP variant) ── */}
+      {isEnd && wallSlide && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          {wallSlide.backgroundImageUrl && (
+            <img
+              src={wallSlide.backgroundImageUrl}
+              alt=""
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover opacity-30"
+              aria-hidden="true"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/80 to-black" />
+          <div className="relative z-10 text-center px-6 max-w-lg">
+            <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
+            <h2 className="text-2xl md:text-3xl font-bold text-white font-serif mb-3 drop-shadow-lg">
+              {wallSlide.headline}
+            </h2>
+            <p className="text-white/80 text-base mb-6">{wallSlide.subtitle}</p>
+            <Link
+              href={wallSlide.ctaHref}
+              onClick={() => trackCtaClick("lp_wall_cta")}
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full px-8 py-3.5 text-base shadow-xl shadow-primary/40"
+            >
+              {wallSlide.ctaText}
+              <ChevronRight className="w-5 h-5" />
+            </Link>
+            {wallSlide.ctaSubtext && (
+              <p className="text-white/60 text-xs mt-3">{wallSlide.ctaSubtext}</p>
+            )}
+          </div>
+        </div>
+      )}
+      {isEnd && !wallSlide && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="absolute inset-0 bg-gradient-to-b from-amber-900/30 via-black to-black" />
           <div className="relative z-10 text-center px-6 max-w-lg">
