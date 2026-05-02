@@ -41,6 +41,10 @@ export function StoryPreviewViewer({
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
+  // Track when each page became active so we can compute image load time.
+  // Keyed by page index; cleared after the corresponding image fires onLoad.
+  const pageShownAtRef = useRef<Record<number, number>>({})
+
   // Total: cover (0) + scenes (1..n) + end (n+1)
   const totalPages = scenes.length + 2
   const isCover = currentPage === 0
@@ -65,6 +69,7 @@ export function StoryPreviewViewer({
   // no scroll/click events and registers as 0s engagement time.
   useEffect(() => {
     const pageType = currentPage === 0 ? "cover" : currentPage === totalPages - 1 ? "end" : "scene"
+    pageShownAtRef.current[currentPage] = Date.now()
     trackEvent("scene_view", {
       story_slug: storySlug,
       page_index: currentPage,
@@ -72,6 +77,21 @@ export function StoryPreviewViewer({
       total_pages: totalPages,
     })
   }, [currentPage, storySlug, totalPages])
+
+  // Fired by <img onLoad>. The gap between scene_view count and
+  // scene_image_loaded count = abandonment-during-load (latency bounce).
+  // load_ms histogram by browser tells us if Safari is the slow one.
+  const handleImageLoaded = (pageIndex: number) => {
+    const startedAt = pageShownAtRef.current[pageIndex]
+    if (startedAt == null) return
+    const load_ms = Date.now() - startedAt
+    delete pageShownAtRef.current[pageIndex]
+    trackEvent("scene_image_loaded", {
+      story_slug: storySlug,
+      page_index: pageIndex,
+      load_ms,
+    })
+  }
 
   // Check overflow
   useEffect(() => {
@@ -157,6 +177,7 @@ export function StoryPreviewViewer({
               decoding="async"
               // @ts-expect-error fetchpriority is valid HTML, React 19 types lag behind
               fetchpriority="high"
+              onLoad={() => handleImageLoaded(0)}
               className="absolute inset-0 w-full h-full object-cover opacity-40"
             />
           )}
@@ -192,6 +213,7 @@ export function StoryPreviewViewer({
               src={scene.image_url}
               alt={scene.headline || `Scene ${sceneIndex + 1}`}
               decoding="async"
+              onLoad={() => handleImageLoaded(currentPage)}
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
