@@ -32,7 +32,7 @@ interface StoryPreviewViewerProps {
   // LP variant flags
   hideCoverCta?: boolean
   wallSlide?: WallSlide | null
-  ctaExtraParams?: Record<string, string | number | boolean | undefined>
+  extraEventParams?: Record<string, string | number | boolean | undefined>
 }
 
 export function StoryPreviewViewer({
@@ -45,7 +45,7 @@ export function StoryPreviewViewer({
   storySlug,
   hideCoverCta = false,
   wallSlide = null,
-  ctaExtraParams,
+  extraEventParams,
 }: StoryPreviewViewerProps) {
   const [currentPage, setCurrentPage] = useState(0)
   const [textExpanded, setTextExpanded] = useState(false)
@@ -91,8 +91,9 @@ export function StoryPreviewViewer({
       page_index: currentPage,
       page_type: pageType,
       total_pages: totalPages,
+      ...extraEventParams,
     })
-  }, [currentPage, storySlug, totalPages])
+  }, [currentPage, storySlug, totalPages, extraEventParams])
 
   // Fired by <img onLoad>. The gap between scene_view count and
   // scene_image_loaded count = abandonment-during-load (latency bounce).
@@ -106,6 +107,7 @@ export function StoryPreviewViewer({
       story_slug: storySlug,
       page_index: pageIndex,
       load_ms,
+      ...extraEventParams,
     })
   }
 
@@ -171,7 +173,7 @@ export function StoryPreviewViewer({
       label: "Personalize with your child",
       story_slug: storySlug,
       intent: "personalize",
-      ...ctaExtraParams,
+      ...extraEventParams,
       ...extra,
     })
   }

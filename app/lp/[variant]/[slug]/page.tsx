@@ -149,7 +149,7 @@ export default async function LpPage({ params }: Props) {
           personalizeUrl={personalizeUrl}
           storySlug={slug}
           hideCoverCta
-          ctaExtraParams={{ lp_variant: "v1" }}
+          extraEventParams={{ lp_variant: "v1" }}
         />
       </LpShell>
     )
@@ -183,7 +183,7 @@ export default async function LpPage({ params }: Props) {
           ctaSubtext: "First story free. No credit card.",
           backgroundImageUrl: wallBgUrl,
         }}
-        ctaExtraParams={{ lp_variant: "v2" }}
+        extraEventParams={{ lp_variant: "v2" }}
       />
     </LpShell>
   )
