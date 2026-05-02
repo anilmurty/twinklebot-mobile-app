@@ -1,9 +1,25 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { Fragment, useState, useEffect, useRef, type ReactNode } from "react"
 import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { trackEvent } from "@/lib/utils/analytics"
+
+// Replace [Name] / [name] / [NAME] placeholders with the character's name,
+// styled in primary yellow so it pops on every scene.
+const NAME_PLACEHOLDER = /\[name\]/gi
+function renderWithName(text: string, name: string): ReactNode {
+  const parts = text.split(NAME_PLACEHOLDER)
+  if (parts.length === 1) return text
+  return parts.map((part, i) => (
+    <Fragment key={i}>
+      {part}
+      {i < parts.length - 1 && (
+        <span className="text-amber-400 font-bold">{name}</span>
+      )}
+    </Fragment>
+  ))
+}
 
 interface Scene {
   scene_number: number
@@ -203,9 +219,11 @@ export function StoryPreviewViewer({
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/80" />
           <div className="relative z-10 text-center px-6 max-w-lg">
             <h2 className="text-2xl md:text-3xl font-bold text-white font-serif mb-3 drop-shadow-lg">
-              {title}
+              {renderWithName(title, characterName)}
             </h2>
-            <p className="text-white/70 text-sm font-serif italic mb-4">{description}</p>
+            <p className="text-white/70 text-sm font-serif italic mb-4">
+              {renderWithName(description, characterName)}
+            </p>
             <div className="flex items-center justify-center gap-2 mb-4">
               <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-white/80 text-sm">Starring</span>
@@ -257,7 +275,7 @@ export function StoryPreviewViewer({
                   className="text-yellow-300 text-lg md:text-xl font-bold font-serif text-center px-12"
                   style={{ textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}
                 >
-                  {scene.headline}
+                  {renderWithName(scene.headline, characterName)}
                 </h3>
                 <span className="absolute top-0 right-0 text-white text-xs bg-amber-800/70 px-2 py-0.5 rounded-full">
                   {sceneIndex + 1}/{scenes.length}
@@ -302,7 +320,7 @@ export function StoryPreviewViewer({
                         className="text-white text-sm md:text-base leading-relaxed font-serif"
                         style={{ textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}
                       >
-                        {line}
+                        {renderWithName(line, characterName)}
                       </p>
                     ))}
                   </div>
