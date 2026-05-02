@@ -218,6 +218,7 @@ export default async function StoryPage({ params }: Props) {
               coverImageUrl={coverUrl}
               personalizeUrl={`/app?intent=personalize&story=${template.slug}`}
               storySlug={template.slug}
+              hideCoverCta
             />
           )
         )}
