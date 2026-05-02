@@ -265,7 +265,7 @@ function V3Static({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <LpPageViewedTracker variant="v3" storySlug={slug} />
+      <LpPageViewedInlineScript variant="v3" slug={slug} />
       <main className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-10">
         <div className="text-center mb-6">
           <h1
