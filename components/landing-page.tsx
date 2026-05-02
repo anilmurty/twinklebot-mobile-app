@@ -1,11 +1,12 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { Lock } from "lucide-react"
 import { trackEvent, trackAuthEvent, trackAuthError } from "@/lib/utils/analytics"
+import { isInAppBrowser } from "@/lib/utils/in-app-browser"
 
 const FB_AUTH_ENABLED = process.env.NEXT_PUBLIC_FB_AUTH_ENABLED === "true"
 
@@ -21,6 +22,10 @@ function markAuthStart(method: "google" | "email" | "facebook") {
 export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const inWebView = useMemo(() => isInAppBrowser(), [])
+  // FB/IG WebViews break Google OAuth, so default new users to the email
+  // form. Existing-flow users on real browsers see the previous Google-first
+  // layout unchanged.
   const [showEmailForm, setShowEmailForm] = useState(false)
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState("")
@@ -64,7 +69,16 @@ export function LandingPage() {
       utm_source: params.get("utm_source") ?? undefined,
       utm_medium: params.get("utm_medium") ?? undefined,
       utm_campaign: params.get("utm_campaign") ?? undefined,
+      in_app_browser: inWebView,
     })
+
+    if (inWebView) {
+      // Default WebView users to the email signup form, since Google OAuth
+      // is unreliable here. They came from an ad, so default to sign-up mode.
+      trackEvent("auth_form_in_webview", { user_agent: navigator.userAgent.slice(0, 100) })
+      setShowEmailForm(true)
+      setIsSignUp(true)
+    }
 
     // Stash intent params for post-auth handling
     const intent = params.get("intent")
@@ -114,7 +128,7 @@ export function LandingPage() {
       interactionEvents.forEach((ev) => document.removeEventListener(ev, resetIdle))
       window.clearInterval(idleInterval)
     }
-  }, [])
+  }, [inWebView])
 
   const handleSignInWithGoogle = async () => {
     try {
@@ -291,6 +305,14 @@ export function LandingPage() {
               </>
             ) : (
               <>
+                {inWebView && (
+                  <div className="mb-3 p-2.5 bg-black/60 backdrop-blur-sm border border-white/20 rounded-2xl">
+                    <p className="text-xs text-white/80 text-center leading-relaxed">
+                      Sign up with your email below. Google sign-in doesn&apos;t
+                      always work inside Facebook&apos;s browser.
+                    </p>
+                  </div>
+                )}
                 {/* Email form inline */}
                 <div className="space-y-3">
                   <input
@@ -337,15 +359,17 @@ export function LandingPage() {
                     {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
                   </button>
 
-                  <button
-                    onClick={() => {
-                      setShowEmailForm(false)
-                      setError(null)
-                    }}
-                    className="w-full text-center text-sm text-white/70 hover:text-white"
-                  >
-                    ← Back to login options
-                  </button>
+                  {!inWebView && (
+                    <button
+                      onClick={() => {
+                        setShowEmailForm(false)
+                        setError(null)
+                      }}
+                      className="w-full text-center text-sm text-white/70 hover:text-white"
+                    >
+                      ← Back to login options
+                    </button>
+                  )}
 
                   <p className="text-center text-xs text-white/60">
                     By using TwinkleBot you agree to the{" "}
