@@ -92,7 +92,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <head>
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-J60V4T7WKW"
+          src="/_ga/gtag.js"
           strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
@@ -108,7 +108,11 @@ export default function RootLayout({
             } catch (e) {}
             var gaDebug = false;
             try { gaDebug = sessionStorage.getItem('ga_debug') === '1'; } catch (e) {}
-            var configParams = { app_platform: appPlatform };
+            var configParams = {
+              app_platform: appPlatform,
+              transport_url: window.location.origin + '/_ga',
+              first_party_collection: true,
+            };
             if (gaDebug) configParams.debug_mode = true;
             gtag('config', 'G-J60V4T7WKW', configParams);
           `}

@@ -27,6 +27,25 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    // First-party proxy for Google Analytics so Safari ITP doesn't block
+    // gtag.js as a known third-party tracker. Without this, ~90% of Safari
+    // sessions emit zero analytics events.
+    return [
+      {
+        source: '/_ga/gtag.js',
+        destination: 'https://www.googletagmanager.com/gtag/js?id=G-J60V4T7WKW',
+      },
+      {
+        source: '/_ga/collect',
+        destination: 'https://www.google-analytics.com/g/collect',
+      },
+      {
+        source: '/_ga/j/collect',
+        destination: 'https://www.google-analytics.com/j/collect',
+      },
+    ]
+  },
   async headers() {
     return [
       {
