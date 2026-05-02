@@ -74,17 +74,30 @@ function deriveScenes(template: any): any[] {
   return []
 }
 
+const VARIANT_TITLE_SUFFIX: Record<string, string> = {
+  v1: "Read Now",
+  v2: "Preview",
+  v3: "Make YOUR Child the Hero",
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { variant, slug } = await params
   const template = await getTemplate(slug)
   if (!template) return { title: "Not Found" }
   const imageUrl = getImageUrl(template.thumbnail_url)
+  const suffix = VARIANT_TITLE_SUFFIX[variant] || variant
+  // Each variant gets a distinctive title so GA4 reports that aggregate
+  // by Page title (e.g. Realtime overview) split rather than collapse.
+  const pageTitle =
+    variant === "v3"
+      ? `${suffix} | Twinklebot`
+      : `${template.title} — ${suffix} | Twinklebot`
   return {
-    title: `${template.title} — Make YOUR child the hero`,
+    title: pageTitle,
     description: template.description,
     robots: { index: false, follow: false }, // LPs are paid-traffic only
     openGraph: {
-      title: `${template.title} | Twinklebot`,
+      title: pageTitle,
       description: template.description,
       type: "article",
       ...(imageUrl && {
