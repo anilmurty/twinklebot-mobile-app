@@ -60,6 +60,19 @@ export function StoryPreviewViewer({
     setTextExpanded(false)
   }, [currentPage])
 
+  // Fire a scene_view event on every page change so GA4 has an explicit
+  // engagement signal — the fullscreen swipe-only viewer otherwise produces
+  // no scroll/click events and registers as 0s engagement time.
+  useEffect(() => {
+    const pageType = currentPage === 0 ? "cover" : currentPage === totalPages - 1 ? "end" : "scene"
+    trackEvent("scene_view", {
+      story_slug: storySlug,
+      page_index: currentPage,
+      page_type: pageType,
+      total_pages: totalPages,
+    })
+  }, [currentPage, storySlug, totalPages])
+
   // Check overflow
   useEffect(() => {
     if (textHidden) return
