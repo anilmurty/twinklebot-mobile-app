@@ -319,6 +319,26 @@ export function LandingPage() {
               </>
             ) : (
               <>
+                {/* In WebView contexts, Google OAuth is blocked. Surface FB
+                    Login at the top — most ad clicks come from inside FB's
+                    own app where FB Login is one-tap. */}
+                {inWebView && FB_AUTH_ENABLED && (
+                  <div className="mb-4 space-y-2">
+                    <Button
+                      onClick={handleSignInWithFacebook}
+                      disabled={isLoading}
+                      size="lg"
+                      className="w-full rounded-full h-12 text-base font-medium bg-[#1877F2] hover:bg-[#1877F2]/90 text-white"
+                    >
+                      {isLoading ? "Signing in..." : "Continue with Facebook"}
+                    </Button>
+                    <div className="flex items-center gap-2 px-1">
+                      <div className="flex-1 h-px bg-white/20" />
+                      <span className="text-[11px] uppercase tracking-wider text-white/60">or use email</span>
+                      <div className="flex-1 h-px bg-white/20" />
+                    </div>
+                  </div>
+                )}
                 {/* Email form inline */}
                 <div className="space-y-3">
                   <input
