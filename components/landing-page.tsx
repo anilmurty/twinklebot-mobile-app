@@ -308,14 +308,6 @@ export function LandingPage() {
               </>
             ) : (
               <>
-                {inWebView && (
-                  <div className="mb-3 p-2.5 bg-black/60 backdrop-blur-sm border border-white/20 rounded-2xl">
-                    <p className="text-xs text-white/80 text-center leading-relaxed">
-                      Sign up with your email below. Google sign-in doesn&apos;t
-                      always work inside Facebook&apos;s browser.
-                    </p>
-                  </div>
-                )}
                 {/* Email form inline */}
                 <div className="space-y-3">
                   <input
