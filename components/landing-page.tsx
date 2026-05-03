@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Lock } from "lucide-react"
 import { trackEvent, trackAuthEvent, trackAuthError } from "@/lib/utils/analytics"
 import { isInAppBrowser } from "@/lib/utils/in-app-browser"
+import { useIsMobile } from "@/lib/utils/device-detection"
 
 const FB_AUTH_ENABLED = process.env.NEXT_PUBLIC_FB_AUTH_ENABLED === "true"
 
@@ -23,6 +24,11 @@ export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const inWebView = useMemo(() => isInAppBrowser(), [])
+  const isMobile = useIsMobile()
+  // Google OAuth is unreliable on mobile (WebViews block it outright; iOS
+  // Safari often loses the session on the redirect back). Hide it on mobile
+  // entirely to push users into FB Login or email — both of which complete.
+  const showGoogle = !inWebView && !isMobile
   // FB/IG WebViews break Google OAuth, so default new users to the email
   // form. Existing-flow users on real browsers see the previous Google-first
   // layout unchanged.
@@ -30,7 +36,6 @@ export function LandingPage() {
   const [isSignUp, setIsSignUp] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [intentBanner, setIntentBanner] = useState<string | null>(null)
   const methodAttemptedRef = useRef<string | null>(null)
@@ -39,7 +44,7 @@ export function LandingPage() {
   const lastInteractionRef = useRef<number>(typeof window !== "undefined" ? Date.now() : 0)
   const fieldErrorsFiredRef = useRef<Set<string>>(new Set())
 
-  const reportFieldError = (field: "email" | "password" | "confirm_password", reason: string) => {
+  const reportFieldError = (field: "email" | "password", reason: string) => {
     const key = `${field}:${reason}`
     if (fieldErrorsFiredRef.current.has(key)) return
     fieldErrorsFiredRef.current.add(key)
@@ -56,11 +61,6 @@ export function LandingPage() {
     if (!password) return
     if (password.length < 6) reportFieldError("password", "too_short")
   }
-  const handleConfirmPasswordBlur = () => {
-    if (!confirmPassword) return
-    if (password && confirmPassword !== password) reportFieldError("confirm_password", "mismatch")
-  }
-
   useEffect(() => {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
@@ -187,6 +187,17 @@ export function LandingPage() {
   }
 
   const handleEmailAuth = async () => {
+    // Guard against empty payloads — Supabase routes empty signUp calls to
+    // its anonymous-sign-in path, which surfaces as a confusing 422 in logs.
+    if (!email || !password) {
+      trackAuthError({
+        step: isSignUp ? "email_signup" : "email_signin",
+        method: "email",
+        error_code: "empty_fields",
+      })
+      setError("Please enter your email and password")
+      return
+    }
     try {
       methodAttemptedRef.current = "email"
       trackAuthEvent("auth_email_submitted", { email })
@@ -194,11 +205,6 @@ export function LandingPage() {
       setIsLoading(true)
       setError(null)
       if (isSignUp) {
-        if (password !== confirmPassword) {
-          trackAuthError({ step: "email_signup", method: "email", error_code: "password_mismatch" })
-          setError("Passwords do not match")
-          return
-        }
         await signUpWithEmail(email, password)
         // Email confirmation is disabled in Supabase, so the user is signed
         // in immediately. Auth state change handler will navigate them
@@ -264,14 +270,16 @@ export function LandingPage() {
                     </Button>
                   )}
 
-                  <Button
-                    onClick={handleSignInWithGoogle}
-                    disabled={isLoading}
-                    size="lg"
-                    className="w-full rounded-full h-12 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900"
-                  >
-                    {isLoading ? "Signing in..." : "Continue with Google"}
-                  </Button>
+                  {showGoogle && (
+                    <Button
+                      onClick={handleSignInWithGoogle}
+                      disabled={isLoading}
+                      size="lg"
+                      className="w-full rounded-full h-12 text-base font-medium bg-[#F5C563] hover:bg-[#F5C563]/90 text-gray-900"
+                    >
+                      {isLoading ? "Signing in..." : "Continue with Google"}
+                    </Button>
+                  )}
 
                   <Button
                     onClick={() => {
@@ -342,17 +350,6 @@ export function LandingPage() {
                     onBlur={handlePasswordBlur}
                     className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 text-gray-900 placeholder:text-gray-500"
                   />
-
-                  {isSignUp && (
-                    <input
-                      type="password"
-                      placeholder="Confirm Password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      onBlur={handleConfirmPasswordBlur}
-                      className="w-full px-4 py-3 border border-white/30 rounded-full focus:outline-none focus:ring-2 focus:ring-[#F5C563] text-base bg-white/90 text-gray-900 placeholder:text-gray-500"
-                    />
-                  )}
 
                   <Button
                     onClick={handleEmailAuth}
