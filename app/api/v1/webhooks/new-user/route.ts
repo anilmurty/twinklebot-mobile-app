@@ -17,12 +17,29 @@ function summarizeUserAgent(ua: string | null | undefined): string | null {
   return ua.slice(0, 60)
 }
 
+async function fetchSignupDiagnostics(userId: string) {
+  // The web client posts to /api/v1/internal/signup-context right after
+  // SIGNED_IN, but the profiles INSERT (which fires this webhook) may land
+  // first. Poll briefly to give the client time to write.
+  for (let i = 0; i < 4; i++) {
+    const { data } = await supabaseAdmin
+      .from('signup_diagnostics')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+    if (data) return data as any
+    await new Promise((r) => setTimeout(r, 800))
+  }
+  return null
+}
+
 async function fetchSignupContext(userId: string): Promise<{
   provider: string | null
   fullName: string | null
   ipAddress: string | null
   country: string | null
   userAgentSummary: string | null
+  lpSource: string | null
 }> {
   const out = {
     provider: null as string | null,
@@ -30,6 +47,7 @@ async function fetchSignupContext(userId: string): Promise<{
     ipAddress: null as string | null,
     country: null as string | null,
     userAgentSummary: null as string | null,
+    lpSource: null as string | null,
   }
 
   try {
@@ -47,31 +65,18 @@ async function fetchSignupContext(userId: string): Promise<{
     console.error('[webhook:new-user] getUserById failed', err)
   }
 
-  // The most recent auth.audit_log_entries row for this user has the IP + UA
-  // from the signup request. Service role can read auth schema directly via RPC.
-  try {
-    const { data } = await (supabaseAdmin as any).rpc('get_signup_audit', { p_user_id: userId })
-    const row = Array.isArray(data) ? data[0] : data
-    if (row) {
-      out.ipAddress = row.ip_address || null
-      out.userAgentSummary = summarizeUserAgent(row.user_agent)
-    }
-  } catch {
-    // RPC may not exist yet — non-fatal
-  }
-
-  if (out.ipAddress) {
-    try {
-      const res = await fetch(`https://ipapi.co/${out.ipAddress}/country_name/`, {
-        signal: AbortSignal.timeout(2000),
-      })
-      if (res.ok) {
-        const text = (await res.text()).trim()
-        if (text && !text.toLowerCase().startsWith('error')) out.country = text
-      }
-    } catch {
-      // geolocation lookup is best-effort
-    }
+  const diag = await fetchSignupDiagnostics(userId)
+  if (diag) {
+    out.ipAddress = diag.ip_address || null
+    out.userAgentSummary =
+      diag.ua_summary || summarizeUserAgent(diag.user_agent) || null
+    const cityRegion = [diag.city, diag.region].filter(Boolean).join(', ')
+    out.country = diag.country
+      ? cityRegion
+        ? `${diag.country} (${cityRegion})`
+        : diag.country
+      : null
+    out.lpSource = diag.lp_source || null
   }
 
   return out

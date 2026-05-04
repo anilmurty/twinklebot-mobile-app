@@ -109,10 +109,11 @@ export async function sendNewUserAlert(opts: {
   ipAddress?: string | null
   country?: string | null
   userAgentSummary?: string | null
+  lpSource?: string | null
 }): Promise<void> {
   const {
     userId, email, createdAt,
-    provider, fullName, ipAddress, country, userAgentSummary,
+    provider, fullName, ipAddress, country, userAgentSummary, lpSource,
   } = opts
 
   const providerLabel = provider
@@ -124,6 +125,7 @@ export async function sendNewUserAlert(opts: {
     `<tr><td style="color:#666;white-space:nowrap;"><strong>Method:</strong></td><td>${providerLabel}</td></tr>`,
     country ? `<tr><td style="color:#666;white-space:nowrap;"><strong>Country:</strong></td><td>${country}</td></tr>` : '',
     userAgentSummary ? `<tr><td style="color:#666;white-space:nowrap;"><strong>Device:</strong></td><td>${userAgentSummary}</td></tr>` : '',
+    lpSource ? `<tr><td style="color:#666;white-space:nowrap;"><strong>Source:</strong></td><td>${lpSource}</td></tr>` : '',
     ipAddress ? `<tr><td style="color:#666;white-space:nowrap;"><strong>IP:</strong></td><td><code>${ipAddress}</code></td></tr>` : '',
   ].filter(Boolean).join('')
 

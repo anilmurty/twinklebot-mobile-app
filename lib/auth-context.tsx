@@ -180,6 +180,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             window.sessionStorage.removeItem('auth_started_at')
           }
         } catch {}
+        if (session?.access_token && typeof window !== 'undefined') {
+          // Fire-and-forget: record request-side context (IP/geo/UA/source) for
+          // admin alert. Server pulls headers; client supplies LP source.
+          const lpSource = (() => {
+            try {
+              const intent = window.sessionStorage.getItem('auth_intent') || ''
+              const story = window.sessionStorage.getItem('auth_intent_story') || ''
+              const params = new URLSearchParams(window.location.search)
+              const utmSource = params.get('utm_source') || ''
+              const refSource = params.get('source') || ''
+              return refSource || utmSource || (intent && story ? `${intent}_${story}` : '')
+            } catch {
+              return ''
+            }
+          })()
+          fetch('/api/v1/internal/signup-context', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              lp_source: lpSource || undefined,
+              referrer: document.referrer || undefined,
+            }),
+            keepalive: true,
+          }).catch(() => {})
+        }
         // Handle post-auth intent (personalize / notify)
         if (session?.user?.id) {
           handlePostAuthIntent(session.user.id, session.access_token)
