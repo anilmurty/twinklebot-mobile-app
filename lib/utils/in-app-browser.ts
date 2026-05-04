@@ -8,9 +8,28 @@
  * email/password signup instead.
  */
 export function isInAppBrowser(): boolean {
-  if (typeof window === "undefined" || !navigator?.userAgent) return false
+  return getInAppBrowserKind() !== null
+}
+
+export type InAppBrowserKind = "facebook" | "instagram" | "other"
+
+/**
+ * Identifies *which* in-app browser the user is in. We need to differentiate
+ * Facebook from Instagram because:
+ *   - Facebook in-app supports FB Login (session is shared with the FB app),
+ *     so showing the FB Login button there is one-tap and works.
+ *   - Instagram's WebView is a separate session even though both apps are
+ *     Meta-owned. FB Login redirects loop after captcha because the post-
+ *     login session cookie can't write back into the WebView. So in
+ *     Instagram, FB Login is broken in practice and should be hidden too.
+ */
+export function getInAppBrowserKind(): InAppBrowserKind | null {
+  if (typeof window === "undefined" || !navigator?.userAgent) return null
   const ua = navigator.userAgent
-  // Order: Meta family (FB / IG / Threads), TikTok, Snapchat, X/Twitter,
-  // LinkedIn, Line, Pinterest. All of these block Google OAuth.
-  return /\bFBAN\b|\bFBAV\b|\bFB_IAB\b|Instagram|Threads|BareIosWebViewBridge|BytedanceWebview|musical_ly|Snapchat|Twitter|LinkedInApp|Line\/|Pinterest/i.test(ua)
+  if (/\bFBAN\b|\bFBAV\b|\bFB_IAB\b/i.test(ua)) return "facebook"
+  if (/Instagram|Threads/i.test(ua)) return "instagram"
+  if (/BareIosWebViewBridge|BytedanceWebview|musical_ly|Snapchat|Twitter|LinkedInApp|Line\/|Pinterest/i.test(ua)) {
+    return "other"
+  }
+  return null
 }

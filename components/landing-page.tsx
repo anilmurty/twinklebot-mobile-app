@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { useAuth } from "@/lib/auth-context"
 import { Lock } from "lucide-react"
 import { trackEvent, trackAuthEvent, trackAuthError } from "@/lib/utils/analytics"
-import { isInAppBrowser } from "@/lib/utils/in-app-browser"
+import { getInAppBrowserKind } from "@/lib/utils/in-app-browser"
 import { useIsMobile } from "@/lib/utils/device-detection"
 
 const FB_AUTH_ENABLED = process.env.NEXT_PUBLIC_FB_AUTH_ENABLED === "true"
@@ -23,12 +23,17 @@ function markAuthStart(method: "google" | "email" | "facebook") {
 export function LandingPage() {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
-  const inWebView = useMemo(() => isInAppBrowser(), [])
+  const webViewKind = useMemo(() => getInAppBrowserKind(), [])
+  const inWebView = webViewKind !== null
   const isMobile = useIsMobile()
   // Google OAuth is unreliable on mobile (WebViews block it outright; iOS
   // Safari often loses the session on the redirect back). Hide it on mobile
   // entirely to push users into FB Login or email — both of which complete.
   const showGoogle = !inWebView && !isMobile
+  // FB Login works inside Facebook's own in-app browser (shared session) but
+  // loops after captcha inside Instagram and other WebViews. Show only when
+  // we know the user is in Facebook itself.
+  const showFacebook = FB_AUTH_ENABLED && webViewKind !== "instagram" && webViewKind !== "other"
   // FB/IG WebViews break Google OAuth, so default new users to the email
   // form. Existing-flow users on real browsers see the previous Google-first
   // layout unchanged.
@@ -259,7 +264,7 @@ export function LandingPage() {
               <>
                 {/* Login buttons */}
                 <div className="space-y-3">
-                  {FB_AUTH_ENABLED && (
+                  {showFacebook && (
                     <Button
                       onClick={handleSignInWithFacebook}
                       disabled={isLoading}
@@ -312,9 +317,11 @@ export function LandingPage() {
             ) : (
               <>
                 {/* In WebView contexts, Google OAuth is blocked. Surface FB
-                    Login at the top — most ad clicks come from inside FB's
-                    own app where FB Login is one-tap. */}
-                {inWebView && FB_AUTH_ENABLED && (
+                    Login at the top *only* when we're inside Facebook's own
+                    in-app browser (showFacebook gate handles this). FB Login
+                    is broken inside Instagram/other WebViews — those users
+                    get email-only. */}
+                {inWebView && showFacebook && (
                   <div className="mb-4 space-y-2">
                     <Button
                       onClick={handleSignInWithFacebook}
