@@ -254,13 +254,26 @@ function V3Static({
           </p>
         </div>
 
-        <StaticBeforeAfter
-          leftImage="/lp-alex-photo.jpg"
-          rightImage="/lp-lungs-scene.jpg"
-          leftAlt="Photo of Alex"
-          rightAlt={`Storybook scene from ${title}`}
-          caption="Sample shown with Alex. Your story features your child."
-        />
+        <TrackedLink
+          href={personalizeUrl}
+          trackParams={{
+            location: "lp_v3_hero",
+            label: "Hero before/after",
+            story_slug: slug,
+            intent: "signup",
+            lp_variant: "v3",
+          }}
+          className="block"
+          aria-label="Make my child the hero"
+        >
+          <StaticBeforeAfter
+            leftImage="/lp-alex-photo.jpg"
+            rightImage="/lp-lungs-scene.jpg"
+            leftAlt="Photo of Alex"
+            rightAlt={`Storybook scene from ${title}`}
+            caption="Sample shown with Alex. Your story features your child."
+          />
+        </TrackedLink>
 
         <div className="mt-6 flex flex-col items-center gap-2">
           <TrackedLink
