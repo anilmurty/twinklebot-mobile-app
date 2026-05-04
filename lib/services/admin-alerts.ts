@@ -104,14 +104,35 @@ export async function sendNewUserAlert(opts: {
   userId: string
   email: string
   createdAt: string
+  provider?: string | null
+  fullName?: string | null
+  ipAddress?: string | null
+  country?: string | null
+  userAgentSummary?: string | null
 }): Promise<void> {
-  const { userId, email, createdAt } = opts
+  const {
+    userId, email, createdAt,
+    provider, fullName, ipAddress, country, userAgentSummary,
+  } = opts
+
+  const providerLabel = provider
+    ? provider.charAt(0).toUpperCase() + provider.slice(1)
+    : 'Unknown'
+
+  const optionalRows = [
+    fullName ? `<tr><td style="color:#666;white-space:nowrap;"><strong>Name:</strong></td><td>${fullName}</td></tr>` : '',
+    `<tr><td style="color:#666;white-space:nowrap;"><strong>Method:</strong></td><td>${providerLabel}</td></tr>`,
+    country ? `<tr><td style="color:#666;white-space:nowrap;"><strong>Country:</strong></td><td>${country}</td></tr>` : '',
+    userAgentSummary ? `<tr><td style="color:#666;white-space:nowrap;"><strong>Device:</strong></td><td>${userAgentSummary}</td></tr>` : '',
+    ipAddress ? `<tr><td style="color:#666;white-space:nowrap;"><strong>IP:</strong></td><td><code>${ipAddress}</code></td></tr>` : '',
+  ].filter(Boolean).join('')
 
   const html = `
     <div style="font-family:sans-serif;max-width:600px;">
       <h2 style="color:#333;">New Signup</h2>
       <table cellspacing="0" cellpadding="4" style="border-collapse:collapse;font-size:14px;">
         <tr><td style="color:#666;white-space:nowrap;"><strong>Email:</strong></td><td>${email}</td></tr>
+        ${optionalRows}
         <tr><td style="color:#666;white-space:nowrap;"><strong>User ID:</strong></td><td><code>${userId}</code></td></tr>
         <tr><td style="color:#666;white-space:nowrap;"><strong>Joined:</strong></td><td>${new Date(createdAt).toLocaleString('en-US', { timeZone: 'UTC' })} UTC</td></tr>
       </table>
@@ -122,7 +143,7 @@ export async function sendNewUserAlert(opts: {
     </div>
   `
 
-  await sendEmail(`[New Signup] ${email}`, html)
+  await sendEmail(`[New Signup ${providerLabel}${country ? ` ${country}` : ''}] ${email}`, html)
 }
 
 /**
