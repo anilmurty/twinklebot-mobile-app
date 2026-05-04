@@ -255,8 +255,8 @@ function V3Static({
         </div>
 
         <StaticBeforeAfter
-          leftImage="/lp-alex-photo.png"
-          rightImage="/lp-lungs-scene.png"
+          leftImage="/lp-alex-photo.jpg"
+          rightImage="/lp-lungs-scene.jpg"
           leftAlt="Photo of Alex"
           rightAlt={`Storybook scene from ${title}`}
           caption="Sample shown with Alex. Your story features your child."
