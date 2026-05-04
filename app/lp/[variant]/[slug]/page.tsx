@@ -319,7 +319,9 @@ function V3Triptych({ title: _title, scenes }: { title: string; scenes: Triptych
                   alt={scene.headline || `Scene ${scene.scene_number}`}
                   fill
                   sizes="(min-width: 640px) 33vw, 100vw"
-                  loading="lazy"
+                  {...(i === 0
+                    ? { priority: true, fetchPriority: "high" as const }
+                    : { loading: "lazy" as const })}
                   className="object-cover"
                 />
               )}
