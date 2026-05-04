@@ -279,7 +279,12 @@ function V3Static({
           </TrackedLink>
         </div>
 
-        <V3Triptych title={title} scenes={triptychScenes} />
+        <V3Triptych
+          title={title}
+          scenes={triptychScenes}
+          personalizeUrl={personalizeUrl}
+          slug={slug}
+        />
 
         <div className="mt-10 flex flex-col items-center gap-2">
           <TrackedLink
@@ -302,7 +307,17 @@ function V3Static({
   )
 }
 
-function V3Triptych({ title: _title, scenes }: { title: string; scenes: TriptychScene[] }) {
+function V3Triptych({
+  title: _title,
+  scenes,
+  personalizeUrl,
+  slug,
+}: {
+  title: string
+  scenes: TriptychScene[]
+  personalizeUrl: string
+  slug: string
+}) {
   if (scenes.length === 0) return null
   return (
     <section className="mt-10">
@@ -311,27 +326,40 @@ function V3Triptych({ title: _title, scenes }: { title: string; scenes: Triptych
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {scenes.map((scene, i) => (
-          <figure key={i} className="rounded-2xl overflow-hidden border border-border/50 bg-card">
-            <div className="relative aspect-square">
-              {scene.image_url && (
-                <Image
-                  src={scene.image_url}
-                  alt={scene.headline || `Scene ${scene.scene_number}`}
-                  fill
-                  sizes="(min-width: 640px) 33vw, 100vw"
-                  {...(i === 0
-                    ? { priority: true, fetchPriority: "high" as const }
-                    : { loading: "lazy" as const })}
-                  className="object-cover"
-                />
+          <TrackedLink
+            key={i}
+            href={personalizeUrl}
+            trackParams={{
+              location: `lp_v3_triptych_${i + 1}`,
+              label: scene.headline || `Scene ${scene.scene_number}`,
+              story_slug: slug,
+              intent: "signup",
+              lp_variant: "v3",
+            }}
+            className="block rounded-2xl overflow-hidden border border-border/50 bg-card hover:border-primary/60 transition-colors"
+          >
+            <figure>
+              <div className="relative aspect-square">
+                {scene.image_url && (
+                  <Image
+                    src={scene.image_url}
+                    alt={scene.headline || `Scene ${scene.scene_number}`}
+                    fill
+                    sizes="(min-width: 640px) 33vw, 100vw"
+                    {...(i === 0
+                      ? { priority: true, fetchPriority: "high" as const }
+                      : { loading: "lazy" as const })}
+                    className="object-cover"
+                  />
+                )}
+              </div>
+              {scene.headline && (
+                <figcaption className="px-3 py-2 text-sm text-foreground/80 text-center line-clamp-2">
+                  {scene.headline}
+                </figcaption>
               )}
-            </div>
-            {scene.headline && (
-              <figcaption className="px-3 py-2 text-sm text-foreground/80 text-center line-clamp-2">
-                {scene.headline}
-              </figcaption>
-            )}
-          </figure>
+            </figure>
+          </TrackedLink>
         ))}
       </div>
     </section>
